@@ -14,12 +14,12 @@ public class DataStore {
 	public final static String SERVER_STORAGE_MAP_NAME = "serverdb";
 
 	private DB db;
-	private HTreeMap<String, String> map;
+	private HTreeMap<String, String> userMap;
 	private Gson gson;
 
 	public DataStore() {
 		db = DBMaker.fileDB(SERVER_STORAGE_FILE).fileMmapEnableIfSupported().closeOnJvmShutdown().make();
-		map = db.hashMap(SERVER_STORAGE_MAP_NAME)
+		userMap = db.hashMap(SERVER_STORAGE_MAP_NAME)
 				.keySerializer(Serializer.STRING)
 				.valueSerializer(Serializer.STRING)
 				.counterEnable()
@@ -34,10 +34,10 @@ public class DataStore {
 		boolean result = false;
 		if (username != null && password != null && userType != null && (userType == 0  || userType == 1)) {
 			try {
-				if (!map.containsKey(username)) 
+				if (!userMap.containsKey(username)) 
 				{
 					User user = new User(username, password, userType);
-					map.put(username, gson.toJson(user));
+					userMap.put(username, gson.toJson(user));
 					db.commit();
 					result = true;
 				}
@@ -53,9 +53,9 @@ public class DataStore {
 		boolean result = false;
 		if (username != null && password != null && userType != null && (userType == 0 || userType == 1))  {
 			try {
-				if (map.containsKey(username)) {
+				if (userMap.containsKey(username)) {
 					User user = new User(username, password, userType);
-					map.put(username, gson.toJson(user));
+					userMap.put(username, gson.toJson(user));
 					db.commit();
 					result = true;
 				}
@@ -72,8 +72,8 @@ public class DataStore {
 		boolean result = false;
 		if (username != null) {
 			try {
-				if (map.containsKey(username)) {
-					map.remove(username);
+				if (userMap.containsKey(username)) {
+					userMap.remove(username);
 					db.commit();
 					result = true;
 				}
@@ -86,15 +86,15 @@ public class DataStore {
 	}
 	
 	public boolean doesUsernameExist(String username) {
-		return map.containsKey(username);
+		return userMap.containsKey(username);
 	}
 
 	public boolean doesUserExist(String username, String password) {
 		boolean result = false;
 		if (username != null && password != null) {
 			try {
-				if (map.containsKey(username)) {
-					String value = map.get(username);
+				if (userMap.containsKey(username)) {
+					String value = userMap.get(username);
 					User user = gson.fromJson(value, User.class);
 					if (user.password.equals(password)) {
 						result = true;
@@ -103,6 +103,7 @@ public class DataStore {
 			}
 			catch (Exception e) {
 				result = false;
+				e.printStackTrace();
 			}
 		}
 		return result;
@@ -112,8 +113,8 @@ public class DataStore {
 	{
 		if (username != null)  {
 			try {
-				if (map.containsKey(username)) {
-					String value = map.get(username);
+				if (userMap.containsKey(username)) {
+					String value = userMap.get(username);
 					return gson.fromJson(value, User.class);
 				}
 			}
@@ -126,7 +127,7 @@ public class DataStore {
 
 
 	public void clear() {
-		map.clear();
+		userMap.clear();
 		db.commit();
 	}
 
@@ -134,8 +135,8 @@ public class DataStore {
 		db.close();
 	}
 	
-	public int getNumberOfRecords() {
-		return map.size();
+	public int getNumberOfUserRecords() {
+		return userMap.size();
 	}
 
 }

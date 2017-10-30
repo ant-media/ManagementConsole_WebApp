@@ -27,6 +27,7 @@ public class AuthenticationFilter implements Filter {
 		if (path.equals("/Console/rest/isAuthenticated") ||
 			path.equals("/Console/rest/authenticateUser") || 
 			path.equals("/Console/rest/addInitialUser") ||
+			path.equals("/Console/rest/isFirstLogin") ||
 			RestService.isAuthenticated(request.getServletContext())) {
 			chain.doFilter(request, response);
 		}

@@ -11,6 +11,8 @@ import com.antstreaming.console.User;
 import com.antstreaming.console.rest.RestService;
 import com.antstreaming.console.rest.RestService.OperationResult;
 
+import io.antmedia.rest.BroadcastRestService.Result;
+
 public class RestServiceTest {
 	
 	private RestService restService;
@@ -58,24 +60,41 @@ public class RestServiceTest {
 	@Test
 	public void testEditUser() {
 		
-		Integer userType = 0;
+		Integer userType = 1;
 		String password = "password";
 		String userName = "username";
 		User user = new User(userName, password, userType);
-		OperationResult result = restService.addUser(user);
+		OperationResult result = restService.addInitialUser(user);
 		assertTrue(result.isSuccess());
 		assertEquals(password, dbStore.getUser(userName).password);
 		assertEquals((int)userType, dbStore.getUser(userName).userType);
 		
 		//TODO: open below test
-		/*
-		String password2="password2";
-		Integer userType2 = 1;
-		result = restService.editUser(userName, password2, userType2);
-		assertTrue(result.isSuccess());
-		assertEquals(password2, dbStore.getUser(userName).password);
-		assertEquals((int)userType2, dbStore.getUser(userName).userType);
 		
+		
+		user.newPassword = "password2";
+		Result result2 = restService.changeUserPasswordInternal(userName, user);
+		assertTrue(result2.success);
+		
+		assertEquals(user.newPassword, dbStore.getUser(userName).password);
+		//assertEquals((int)userType2, dbStore.getUser(userName).userType);
+		
+		user.password = user.newPassword;
+		user.newPassword = "12345";
+		result2 = restService.changeUserPasswordInternal(userName, user);
+		assertTrue(result2.success);
+		
+		assertEquals(user.newPassword, dbStore.getUser(userName).password);
+		
+		
+		user.password = user.newPassword;
+		user.newPassword = "12345678";
+		result2 = restService.changeUserPasswordInternal(userName, user);
+		assertTrue(result2.success);
+		
+		assertEquals(user.newPassword, dbStore.getUser(userName).password);
+		
+		/*
 		result = restService.editUser("notexist", password2, userType2);
 		assertFalse(result.isSuccess());
 		
@@ -83,8 +102,8 @@ public class RestServiceTest {
 		result = restService.editUser(userName, password2, 3);
 		//should fail because user type is 3, it should 0 or 1
 		assertFalse(result.isSuccess());
-		
 		*/
+		
 		
 	}
 	

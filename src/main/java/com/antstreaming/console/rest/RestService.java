@@ -159,16 +159,28 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public OperationResult addInitialUser(User user) {
-		//TODO: check that request is coming from authorized user
 		boolean result = false;
 		int errorId = -1;
-		if (getDataStore().getNumberOfRecords() == 0) {
+		if (getDataStore().getNumberOfUserRecords() == 0) {
 			result = getDataStore().addUser(user.email, user.password, 1);
 		}
 
 		OperationResult operationResult = new OperationResult(result);
 		operationResult.setErrorId(errorId);
 		return operationResult;
+	}
+	
+	@GET
+	@Path("/isFirstLogin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public OperationResult isFirstLogin() 
+	{
+		boolean result = false;
+		if (getDataStore().getNumberOfUserRecords() == 0) {
+			result = true;
+		}
+		return new OperationResult(result);
 	}
 
 	/**
@@ -276,9 +288,16 @@ public class RestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
 		//TODO: check that request is coming from authorized user
+		
+		String userMail = (String)servletContext.getAttribute(USER_EMAIL);
+		
+		return changeUserPasswordInternal(userMail, user);
+		
+	}
+	
+	public Result changeUserPasswordInternal(String userMail, User user) {
 		boolean result = false;
 		String message = null;
-		String userMail = (String)servletContext.getAttribute(USER_EMAIL);
 		if (userMail != null) {
 			result = getDataStore().doesUserExist(userMail, user.password);
 			//boolean result = true;
@@ -286,9 +305,11 @@ public class RestService {
 				result = getDataStore().editUser(userMail, user.newPassword, 1);
 			
 				if (result) {
-					servletContext.setAttribute(IS_AUTHENTICATED, true);
-					servletContext.setAttribute(USER_EMAIL, user.email);
-					servletContext.setAttribute(USER_PASSWORD, user.newPassword);
+					if (servletContext != null) {
+						servletContext.setAttribute(IS_AUTHENTICATED, true);
+						servletContext.setAttribute(USER_EMAIL, userMail);
+						servletContext.setAttribute(USER_PASSWORD, user.newPassword);
+					}
 				}
 			}
 			else {

@@ -98,6 +98,9 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		List<ApplicationInfo> appsInfo = new ArrayList<>();
 		IScope root = getRootScope();
 		for (String name : appNames) {
+			if (name.equals("Console")) {
+				continue;
+			}
 			ApplicationInfo info = new ApplicationInfo();
 			info.name = name;
 			info.liveStreamCount = getRootScope().getScope(name).getBasicScopeNames(ScopeType.BROADCAST).size();

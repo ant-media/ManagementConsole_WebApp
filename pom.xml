@@ -9,7 +9,7 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-	    <ant-media-server.version>1.0.9-M2</ant-media-server.version>
+		<ant-media-server.version>1.0.9-M2</ant-media-server.version>
 		<red5-server.version>1.0.7-RELEASE</red5-server.version>
 		<red5-client.version>1.0.7-RELEASE</red5-client.version>
 		<spring.version>4.2.5.RELEASE</spring.version>
@@ -17,7 +17,7 @@
 		<logback.version></logback.version>
 		<mina.version>2.0.13</mina.version>
 		<servlet.version>2.5</servlet.version>
-		<junit.version>4.10</junit.version>
+		<junit.version>4.11</junit.version>
 		<jersey.version>1.19.1</jersey.version>
 		<mapdb.version>3.0.2</mapdb.version>
 	</properties>
@@ -32,15 +32,7 @@
 					<target>1.8</target>
 				</configuration>
 			</plugin>
-			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<artifactId>maven-javadoc-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-			</plugin>
+
 			<plugin>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>3.0.0</version>
@@ -50,6 +42,52 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<version>2.3.7</version>
 				<extensions>true</extensions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>2.20.1</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.maven.surefire</groupId>
+						<artifactId>surefire-junit47</artifactId>
+						<version>2.20.1</version>
+					</dependency>
+				</dependencies>
+				<configuration>
+					<groups>com.test.annotation.type.IntegrationTest</groups>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+						<configuration>
+							<includes>
+								<include>**/*.class</include>
+							</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.6.0</version>
+				<executions>
+					<execution>
+						<id>some-execution</id>
+						<phase>install</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<executable>redeploy.sh</executable>
+
+				</configuration>
 			</plugin>
 		</plugins>
 		<resources>

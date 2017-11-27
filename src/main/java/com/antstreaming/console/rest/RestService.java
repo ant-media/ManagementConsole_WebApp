@@ -490,7 +490,9 @@ public class RestService {
 		JsonArray jsonArray = new JsonArray();
 
 		for (String appName : applications) {
-			jsonArray.add(appName);
+			if (!appName.equals("Console")) {
+				jsonArray.add(appName);
+			}
 		}
 		jsonObject.add("applications", jsonArray);
 		return gson.toJson(jsonObject);
@@ -648,7 +650,7 @@ public class RestService {
 	@Path("/isEnterpriseEdition")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
-		boolean isEnterprise = isClass("io.antmedia.enterprise.ant_media_adaptive.EncoderAdaptor");
+		boolean isEnterprise = isClass("io.antmedia.enterprise.adaptive.EncoderAdaptor");
 		return new Result(isEnterprise, "");
 	}
 

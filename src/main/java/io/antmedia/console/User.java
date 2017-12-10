@@ -1,4 +1,4 @@
-package com.antstreaming.console;
+package io.antmedia.console;
 
 public class User {
 	

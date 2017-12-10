@@ -1,4 +1,4 @@
-package com.antstreaming.console;
+package io.antmedia.console;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -23,10 +23,9 @@ import org.red5.server.api.statistics.IScopeStatistics;
 import org.red5.server.util.ScopeUtils;
 import org.springframework.context.ApplicationContext;
 
-import com.antstreaming.console.rest.RestService.AppSettingsModel;
-
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
+import io.antmedia.console.rest.RestService.AppSettingsModel;
 
 
 

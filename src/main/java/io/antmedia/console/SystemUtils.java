@@ -1,4 +1,4 @@
-package com.antstreaming.console;
+package io.antmedia.console;
 
 /*
  * RED5 Open Source Flash Server - http://code.google.com/p/red5/

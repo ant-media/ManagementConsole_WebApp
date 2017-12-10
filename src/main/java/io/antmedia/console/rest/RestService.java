@@ -1,4 +1,4 @@
-package com.antstreaming.console.rest;
+package io.antmedia.console.rest;
 
 import java.util.List;
 
@@ -20,18 +20,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import com.antstreaming.console.AdminApplication;
-import com.antstreaming.console.AdminApplication.ApplicationInfo;
-import com.antstreaming.console.AdminApplication.BroadcastInfo;
-import com.antstreaming.console.DataStore;
-import com.antstreaming.console.SystemUtils;
-import com.antstreaming.console.User;
-import com.antstreaming.console.rest.RestService.OperationResult;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import io.antmedia.EncoderSettings;
+import io.antmedia.console.AdminApplication;
+import io.antmedia.console.AdminApplication.ApplicationInfo;
+import io.antmedia.console.AdminApplication.BroadcastInfo;
+import io.antmedia.console.DataStore;
+import io.antmedia.console.SystemUtils;
+import io.antmedia.console.User;
+import io.antmedia.console.rest.RestService.OperationResult;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.rest.BroadcastRestService.Result;
 
@@ -490,7 +490,7 @@ public class RestService {
 		JsonArray jsonArray = new JsonArray();
 
 		for (String appName : applications) {
-			if (!appName.equals("Console")) {
+			if (!appName.equals("ConsoleApp")) {
 				jsonArray.add(appName);
 			}
 		}

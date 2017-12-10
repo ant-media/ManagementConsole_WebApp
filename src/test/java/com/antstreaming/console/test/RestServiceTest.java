@@ -6,11 +6,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.antstreaming.console.DataStore;
-import com.antstreaming.console.User;
-import com.antstreaming.console.rest.RestService;
-import com.antstreaming.console.rest.RestService.OperationResult;
-
+import io.antmedia.console.DataStore;
+import io.antmedia.console.User;
+import io.antmedia.console.rest.RestService;
+import io.antmedia.console.rest.RestService.OperationResult;
 import io.antmedia.rest.BroadcastRestService.Result;
 
 public class RestServiceTest {

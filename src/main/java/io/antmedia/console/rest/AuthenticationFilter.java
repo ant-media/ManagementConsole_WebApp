@@ -1,4 +1,4 @@
-package com.antstreaming.console.rest;
+package io.antmedia.console.rest;
 
 import java.io.IOException;
 
@@ -24,10 +24,10 @@ public class AuthenticationFilter implements Filter {
 			throws IOException, ServletException {
 		
 		String path = ((HttpServletRequest) request).getRequestURI();
-		if (path.equals("/Console/rest/isAuthenticated") ||
-			path.equals("/Console/rest/authenticateUser") || 
-			path.equals("/Console/rest/addInitialUser") ||
-			path.equals("/Console/rest/isFirstLogin") ||
+		if (path.equals("/ConsoleApp/rest/isAuthenticated") ||
+			path.equals("/ConsoleApp/rest/authenticateUser") || 
+			path.equals("/ConsoleApp/rest/addInitialUser") ||
+			path.equals("/ConsoleApp/rest/isFirstLogin") ||
 			RestService.isAuthenticated(request.getServletContext())) {
 			chain.doFilter(request, response);
 		}

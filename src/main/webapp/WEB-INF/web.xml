@@ -6,13 +6,13 @@
 
 	<!-- The display-name element contains a short name that is intended to be 
 		displayed by tools. The display name need not be unique. -->
-	<display-name>Console</display-name>
+	<display-name>ConsoleApp</display-name>
 
 	<!-- The context-param element contains the declaration of a web application's 
 		servlet context initialization parameters. -->
 	<context-param>
 		<param-name>webAppRootKey</param-name>
-		<param-value>/Console</param-value>
+		<param-value>/ConsoleApp</param-value>
 	</context-param>
 
 	<listener>
@@ -54,7 +54,7 @@
 		</servlet-class>
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-			<param-value>com.antstreaming.console.rest</param-value>
+			<param-value>io.antmedia.console.rest</param-value>
 		</init-param>
 		<init-param>
 			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
@@ -78,7 +78,7 @@
 	
 	<filter>
     	<filter-name>AuthenticationFilter</filter-name>
-   		<filter-class>com.antstreaming.console.rest.AuthenticationFilter</filter-class>
+   		<filter-class>io.antmedia.console.rest.AuthenticationFilter</filter-class>
   	</filter>
   	
   	<filter-mapping>

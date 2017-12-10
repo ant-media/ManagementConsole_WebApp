@@ -1,4 +1,4 @@
-package com.antstreaming.console;
+package io.antmedia.console;
 
 import org.mapdb.DB;
 import org.mapdb.DBMaker;

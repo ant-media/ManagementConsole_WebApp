@@ -4,9 +4,12 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
 
 public class DataStore {
 
@@ -16,9 +19,11 @@ public class DataStore {
 	private DB db;
 	private HTreeMap<String, String> userMap;
 	private Gson gson;
+	
+	protected static Logger logger = LoggerFactory.getLogger(DataStore.class);
 
 	public DataStore() {
-		db = DBMaker.fileDB(SERVER_STORAGE_FILE).fileMmapEnableIfSupported().closeOnJvmShutdown().make();
+		db = DBMaker.fileDB(SERVER_STORAGE_FILE).transactionEnable().make();
 		userMap = db.hashMap(SERVER_STORAGE_MAP_NAME)
 				.keySerializer(Serializer.STRING)
 				.valueSerializer(Serializer.STRING)
@@ -41,8 +46,12 @@ public class DataStore {
 					db.commit();
 					result = true;
 				}
+				else {
+					logger.warn("user with " + username + " already exist");
+				}
 			}
 			catch (Exception e) {
+				e.printStackTrace();
 				result = false;
 			}
 		}

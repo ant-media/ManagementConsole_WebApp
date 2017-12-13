@@ -15,6 +15,8 @@ import javax.ws.rs.core.MediaType;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.red5.server.util.ScopeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
@@ -49,6 +51,9 @@ public class RestService {
 	Gson gson = new Gson();
 
 	private DataStore dataStore;
+	
+	protected static Logger logger = LoggerFactory.getLogger(RestService.class);
+
 
 	@Context 
 	private ServletContext servletContext;
@@ -146,6 +151,13 @@ public class RestService {
 
 		}
 		else {
+			if (user == null) {
+				logger.info("user variable null");
+			}
+			else {
+				logger.info("user already exist in db");
+			}
+			
 			errorId = 1;
 		}
 		OperationResult operationResult = new OperationResult(result);

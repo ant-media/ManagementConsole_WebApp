@@ -37,6 +37,9 @@ import io.antmedia.console.rest.RestService.AppSettingsModel;
 public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 	//private static Logger log = Red5LoggerFactory.getLogger(Application.class);
+	
+	
+	public static final String APP_NAME = "ConsoleApp";
 
 	public static class ApplicationInfo {
 		public String name;
@@ -97,7 +100,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		List<ApplicationInfo> appsInfo = new ArrayList<>();
 		IScope root = getRootScope();
 		for (String name : appNames) {
-			if (name.equals("Console")) {
+			if (name.equals(APP_NAME)) {
 				continue;
 			}
 			ApplicationInfo info = new ApplicationInfo();

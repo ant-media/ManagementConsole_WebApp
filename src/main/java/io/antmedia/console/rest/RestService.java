@@ -502,7 +502,7 @@ public class RestService {
 		JsonArray jsonArray = new JsonArray();
 
 		for (String appName : applications) {
-			if (!appName.equals("ConsoleApp")) {
+			if (!appName.equals(AdminApplication.APP_NAME)) {
 				jsonArray.add(appName);
 			}
 		}

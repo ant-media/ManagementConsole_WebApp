@@ -4,7 +4,7 @@
 	<groupId>io.antmedia.app</groupId>
 	<artifactId>ConsoleApp</artifactId>
 	<packaging>war</packaging>
-	<version>1.2.0-SNAPSHOT</version>
+	<version>1.2.0</version>
 	<name>Console Maven Webapp</name>
 	<url>http://maven.apache.org</url>
 
@@ -18,7 +18,7 @@
 		<mina.version>2.0.13</mina.version>
 		<servlet.version>2.5</servlet.version>
 		<junit.version>4.11</junit.version>
-		<jersey.version>1.19.1</jersey.version>
+		<jersey.version>2.26</jersey.version>
 		<mapdb.version>3.0.5</mapdb.version>
 	</properties>
 
@@ -32,6 +32,20 @@
 			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 	</distributionManagement>
+	<developers>
+    		<developer>
+      		<id>mekya</id>
+      		<email>mekya@antmedia.io</email>
+    		</developer>
+  	</developers>
+  	<licenses>
+		<license>
+			<name>Apache 2</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
 	<build>
 		<finalName>ConsoleApp</finalName>
 		<plugins>
@@ -142,49 +156,34 @@
 			<type>bundle</type>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-server</artifactId>
-			<version>${jersey.version}</version>
-			<scope>provided</scope>
+		  <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+            <version>${jersey.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+    			<groupId>org.glassfish.jersey.ext</groupId>
+    			<artifactId>jersey-spring4</artifactId>
+    			<version>${jersey.version}</version>
+    			<scope>provided</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-json</artifactId>
-			<version>${jersey.version}</version>
-			<scope>provided</scope>
-		</dependency>
+
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 			<version>2.8.0</version>
 		</dependency>
-		<dependency>
-			<groupId>com.sun.jersey.contribs</groupId>
-			<artifactId>jersey-spring</artifactId>
-			<version>${jersey.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.springframework</groupId>
-					<artifactId>spring</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.springframework</groupId>
-					<artifactId>spring-core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.springframework</groupId>
-					<artifactId>spring-web</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.springframework</groupId>
-					<artifactId>spring-beans</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.springframework</groupId>
-					<artifactId>spring-context</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
+		
 	</dependencies>
+	<description>Backend for the Web Management Console</description>
+	<organization>
+		<name>Ant Media</name>
+		<url>http://antmedia.io</url>
+	</organization>
+	<scm>
+		<url>https://gitlab.com/Ant-Media/ManagementConsole_WebApp</url>
+		<connection>https://gitlab.com/Ant-Media/ManagementConsole_WebApp</connection>
+		<developerConnection>https://gitlab.com/Ant-Media/ManagementConsole_WebApp</developerConnection>
+	</scm>
 </project>

@@ -50,15 +50,11 @@
 	<servlet>
 		<servlet-name>jersey-serlvet</servlet-name>
 		<servlet-class>
-			com.sun.jersey.spi.container.servlet.ServletContainer
+			org.glassfish.jersey.servlet.ServletContainer
 		</servlet-class>
 		<init-param>
-			<param-name>com.sun.jersey.config.property.packages</param-name>
+			<param-name>jersey.config.server.provider.packages</param-name>
 			<param-value>io.antmedia.console.rest</param-value>
-		</init-param>
-		<init-param>
-			<param-name>com.sun.jersey.api.json.POJOMappingFeature</param-name>
-			<param-value>true</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
@@ -66,6 +62,7 @@
 		<servlet-name>jersey-serlvet</servlet-name>
 		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping>
+	
 
 	<filter>
 		<filter-name>CorsFilter</filter-name>

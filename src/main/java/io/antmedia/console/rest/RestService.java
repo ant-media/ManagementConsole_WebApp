@@ -34,6 +34,7 @@ import io.antmedia.console.SystemUtils;
 import io.antmedia.console.User;
 import io.antmedia.console.rest.RestService.OperationResult;
 import io.antmedia.datastore.preference.PreferenceStore;
+import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.BroadcastRestService.Result;
 
 @Component
@@ -648,20 +649,11 @@ public class RestService {
 		return gson.toJson(new OperationResult(store.save()));
 	}
 
-	public boolean isClass(String className) {
-		try  {
-			Class.forName(className);
-			return true;
-		}  catch (ClassNotFoundException e) {
-			return false;
-		}
-	}
-
 	@GET
 	@Path("/isEnterpriseEdition")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
-		boolean isEnterprise = isClass("io.antmedia.enterprise.adaptive.EncoderAdaptor");
+		boolean isEnterprise = BroadcastRestService.isEnterprise();
 		return new Result(isEnterprise, "");
 	}
 

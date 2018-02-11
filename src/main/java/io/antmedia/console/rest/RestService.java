@@ -287,8 +287,6 @@ public class RestService {
 	@Path("/isAuthenticated")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isAuthenticatedRest(){
-		
-		System.out.println("session " + servletRequest.getSession().getId());
 		return new Result(isAuthenticated(servletRequest.getSession()));
 	}
 

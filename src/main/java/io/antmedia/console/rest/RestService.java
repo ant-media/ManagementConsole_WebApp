@@ -3,6 +3,8 @@ package io.antmedia.console.rest;
 import java.util.List;
 
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -59,6 +61,9 @@ public class RestService {
 
 	@Context 
 	private ServletContext servletContext;
+	
+	@Context
+	private HttpServletRequest servletRequest;
 
 
 	/**
@@ -222,9 +227,10 @@ public class RestService {
 		boolean result = getDataStore().doesUserExist(user.email, user.password);
 		//boolean result = true;
 		if (result) {
-			servletContext.setAttribute(IS_AUTHENTICATED, true);
-			servletContext.setAttribute(USER_EMAIL, user.email);
-			servletContext.setAttribute(USER_PASSWORD, user.password);
+			HttpSession session = servletRequest.getSession();
+			session.setAttribute(IS_AUTHENTICATED, true);
+			session.setAttribute(USER_EMAIL, user.email);
+			session.setAttribute(USER_PASSWORD, user.password);
 		}
 		return new Result(result);
 	}
@@ -237,7 +243,8 @@ public class RestService {
 	public Result changeUserPassword(User user) {
 		//TODO: check that request is coming from authorized user
 		
-		String userMail = (String)servletContext.getAttribute(USER_EMAIL);
+		
+		String userMail = (String)servletRequest.getSession().getAttribute(USER_EMAIL);
 		
 		return changeUserPasswordInternal(userMail, user);
 		
@@ -253,10 +260,11 @@ public class RestService {
 				result = getDataStore().editUser(userMail, user.newPassword, 1);
 			
 				if (result) {
-					if (servletContext != null) {
-						servletContext.setAttribute(IS_AUTHENTICATED, true);
-						servletContext.setAttribute(USER_EMAIL, userMail);
-						servletContext.setAttribute(USER_PASSWORD, user.newPassword);
+					HttpSession session = servletRequest.getSession();
+					if (session != null) {
+						session.setAttribute(IS_AUTHENTICATED, true);
+						session.setAttribute(USER_EMAIL, userMail);
+						session.setAttribute(USER_PASSWORD, user.newPassword);
 					}
 				}
 			}
@@ -279,15 +287,17 @@ public class RestService {
 	@Path("/isAuthenticated")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isAuthenticatedRest(){
-
-		return new Result(isAuthenticated(servletContext));
+		
+		System.out.println("session " + servletRequest.getSession().getId());
+		return new Result(isAuthenticated(servletRequest.getSession()));
 	}
 
-	public static boolean isAuthenticated(ServletContext servletContext) 
+	public static boolean isAuthenticated(HttpSession session) 
 	{
-		Object isAuthenticated = servletContext.getAttribute(IS_AUTHENTICATED);
-		Object userEmail = servletContext.getAttribute(USER_EMAIL);
-		Object userPassword = servletContext.getAttribute(USER_PASSWORD);
+		
+		Object isAuthenticated = session.getAttribute(IS_AUTHENTICATED);
+		Object userEmail = session.getAttribute(USER_EMAIL);
+		Object userPassword = session.getAttribute(USER_PASSWORD);
 		boolean result = false;
 		if (isAuthenticated != null && userEmail != null && userPassword != null) {
 			result = true;

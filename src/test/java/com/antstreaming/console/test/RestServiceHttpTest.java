@@ -25,11 +25,10 @@ import com.google.gson.Gson;
 
 import io.antmedia.api.periscope.UserEndpoints;
 import io.antmedia.console.DataStore;
-import io.antmedia.console.User;
 import io.antmedia.console.rest.RestService;
-import io.antmedia.console.rest.RestService.OperationResult;
 import io.antmedia.datastore.db.types.Broadcast;
-import io.antmedia.rest.BroadcastRestService.Result;
+import io.antmedia.rest.model.Result;
+import io.antmedia.rest.model.User;
 
 
 public class RestServiceHttpTest {
@@ -85,21 +84,19 @@ public class RestServiceHttpTest {
 				throw new Exception(result.toString());
 			}
 			System.out.println("result string: " + result.toString());
-			OperationResult tmp = gson.fromJson(result.toString(), OperationResult.class);
+			Result tmp = gson.fromJson(result.toString(), Result.class);
 			
-			assertTrue(tmp.success);
+			assertTrue(tmp.isSuccess());
 			
 			
 			//change password
 			
-			
-
 			String url = ROOT_URL + "/changeUserPassword";
 			CloseableHttpClient client = HttpClients.custom()
 					.setRedirectStrategy(new LaxRedirectStrategy())
 					.build();
 
-			 user = new User();
+			user = new User();
 			user.email = "nope";  // user email is fetched from server session context
 			user.password = "1234567";
 			user.newPassword = "7654321";
@@ -121,7 +118,7 @@ public class RestServiceHttpTest {
 			System.out.println("result string: " + result.toString());
 			Result tmp1 = gson.fromJson(result.toString(), Result.class);
 			
-			assertTrue(tmp1.success);
+			assertTrue(tmp1.isSuccess());
 			
 			
 			//change password again
@@ -144,7 +141,7 @@ public class RestServiceHttpTest {
 			System.out.println("result string: " + result.toString());
 			tmp1 = gson.fromJson(result.toString(), Result.class);
 			
-			assertTrue(tmp1.success);
+			assertTrue(tmp1.isSuccess());
 			
 			
 		} catch (UnsupportedEncodingException e) {
@@ -214,6 +211,8 @@ public class RestServiceHttpTest {
 		return result;
 	}
 
+	
+	
 
 
 

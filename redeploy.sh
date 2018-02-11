@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true
+mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true
 
 SRC=target/ConsoleApp.war
 

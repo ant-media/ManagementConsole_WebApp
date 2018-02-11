@@ -12,10 +12,9 @@ import org.junit.Test;
 
 
 import io.antmedia.console.DataStore;
-import io.antmedia.console.User;
 import io.antmedia.console.rest.RestService;
-import io.antmedia.console.rest.RestService.OperationResult;
-import io.antmedia.rest.BroadcastRestService.Result;
+import io.antmedia.rest.model.Result;
+import io.antmedia.rest.model.User;
 
 public class RestServiceTest {
 
@@ -58,7 +57,7 @@ public class RestServiceTest {
 		String password = "password";
 		String userName = "username" + (int)(Math.random() * 1000000000);
 		User user = new User(userName, password, userType);
-		OperationResult result = restService.addUser(user);
+		Result result = restService.addUser(user);
 		
 		//System.out.println("error id: " + result.errorId);
 		assertTrue(result.isSuccess());
@@ -77,8 +76,6 @@ public class RestServiceTest {
 		result = restService.addUser(user);
 		//should pass because user type is not important right now
 		assertTrue(result.isSuccess());
-
-
 
 	}
 	
@@ -144,7 +141,7 @@ public class RestServiceTest {
 		String userName = "username" + (int)(Math.random() * 100000);
 		User user = new User(userName, password, userType);
 		
-		OperationResult result = restService.addInitialUser(user);
+		Result result = restService.addInitialUser(user);
 		assertTrue(result.isSuccess());
 		assertEquals(password, dbStore.getUser(userName).password);
 		assertEquals((int)userType, dbStore.getUser(userName).userType);
@@ -154,7 +151,7 @@ public class RestServiceTest {
 
 		user.newPassword = "password2";
 		Result result2 = restService.changeUserPasswordInternal(userName, user);
-		assertTrue(result2.success);
+		assertTrue(result2.isSuccess());
 
 		assertEquals(user.newPassword, dbStore.getUser(userName).password);
 		//assertEquals((int)userType2, dbStore.getUser(userName).userType);
@@ -162,7 +159,7 @@ public class RestServiceTest {
 		user.password = user.newPassword;
 		user.newPassword = "12345";
 		result2 = restService.changeUserPasswordInternal(userName, user);
-		assertTrue(result2.success);
+		assertTrue(result2.isSuccess());
 
 		assertEquals(user.newPassword, dbStore.getUser(userName).password);
 
@@ -170,7 +167,7 @@ public class RestServiceTest {
 		user.password = user.newPassword;
 		user.newPassword = "12345678";
 		result2 = restService.changeUserPasswordInternal(userName, user);
-		assertTrue(result2.success);
+		assertTrue(result2.isSuccess());
 
 		assertEquals(user.newPassword, dbStore.getUser(userName).password);
 
@@ -194,7 +191,7 @@ public class RestServiceTest {
 		String password = "password";
 		String userName = "username" + (int)(Math.random() * 100000);
 		User user = new User(userName, password, userType);
-		OperationResult result = restService.addUser(user);
+		Result result = restService.addUser(user);
 		assertTrue(result.isSuccess());
 		assertNotNull(dbStore.getUser(userName));
 		//TODO: open below test
@@ -213,7 +210,7 @@ public class RestServiceTest {
 		String userName = "username" + (int)(Math.random() * 100000);
 		User user = new User(userName, password, userType);
 		System.out.println("username: " + userName);
-		OperationResult result = restService.addUser(user);
+		Result result = restService.addUser(user);
 		assertTrue(result.isSuccess());
 		assertNotNull(dbStore.getUser(userName));
 		//TODO: open below test

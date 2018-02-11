@@ -31,16 +31,18 @@ import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.DataStore;
 import io.antmedia.console.SystemUtils;
-import io.antmedia.console.User;
-import io.antmedia.console.rest.RestService.OperationResult;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.rest.BroadcastRestService;
-import io.antmedia.rest.BroadcastRestService.Result;
+import io.antmedia.rest.model.AppSettingsModel;
+import io.antmedia.rest.model.Result;
+import io.antmedia.rest.model.User;
 
 @Component
 @Path("/")
 public class RestService {
 
+
+	private static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 
 	private static final String USER_PASSWORD = "user.password";
 
@@ -57,64 +59,6 @@ public class RestService {
 
 	@Context 
 	private ServletContext servletContext;
-
-	public static class AppSettingsModel {
-		public boolean mp4MuxingEnabled;
-		public boolean addDateTimeToMp4FileName;
-		public boolean hlsMuxingEnabled;
-		public int hlsListSize;
-		public int hlsTime;
-		public String hlsPlayListType;
-
-		public String facebookClientId;
-		public String facebookClientSecret;
-
-		public String youtubeClientId;
-		public String youtubeClientSecret;
-
-		public String periscopeClientId;
-		public String periscopeClientSecret;
-
-		public List<EncoderSettings> encoderSettings;
-	}
-
-	public static class OperationResult {
-		public boolean success = false;
-
-
-		public OperationResult(boolean success) {
-			this.success = success;
-		}
-
-		//use if required
-		public int id = -1;
-
-		public int errorId = -1;
-
-		public boolean isSuccess() {
-			return success;
-		}
-		public void setSuccess(boolean success) {
-			this.success = success;
-		}
-
-		public int getId() {
-			return id;
-		}
-
-		public void setId(int id) {
-			this.id = id;
-		}
-
-		public int getErrorId() {
-			return errorId;
-		}
-
-		public void setErrorId(int errorId) {
-			this.errorId = errorId;
-		}
-
-	}
 
 
 	/**
@@ -142,13 +86,12 @@ public class RestService {
 	@Path("/addUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public OperationResult addUser(User user) {
+	public Result addUser(User user) {
 		//TODO: check that request is coming from authorized user
 		boolean result = false;
 		int errorId = -1;
 		if (user != null && !getDataStore().doesUsernameExist(user.email)) {
 			result = getDataStore().addUser(user.email, user.password, 1);
-
 		}
 		else {
 			if (user == null) {
@@ -160,7 +103,7 @@ public class RestService {
 			
 			errorId = 1;
 		}
-		OperationResult operationResult = new OperationResult(result);
+		Result operationResult = new Result(result);
 		operationResult.setErrorId(errorId);
 		return operationResult;
 	}
@@ -170,14 +113,14 @@ public class RestService {
 	@Path("/addInitialUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public OperationResult addInitialUser(User user) {
+	public Result addInitialUser(User user) {
 		boolean result = false;
 		int errorId = -1;
 		if (getDataStore().getNumberOfUserRecords() == 0) {
 			result = getDataStore().addUser(user.email, user.password, 1);
 		}
 
-		OperationResult operationResult = new OperationResult(result);
+		Result operationResult = new Result(result);
 		operationResult.setErrorId(errorId);
 		return operationResult;
 	}
@@ -186,13 +129,13 @@ public class RestService {
 	@Path("/isFirstLogin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public OperationResult isFirstLogin() 
+	public Result isFirstLogin() 
 	{
 		boolean result = false;
 		if (getDataStore().getNumberOfUserRecords() == 0) {
 			result = true;
 		}
-		return new OperationResult(result);
+		return new Result(result);
 	}
 
 	/**
@@ -266,22 +209,15 @@ public class RestService {
 	/**
 	 * Authenticates user with userName and password
 	 * 
-	 * Post method should be used.
 	 * 
-	 * application/x-www-form-urlencoded
-	 * 
-	 * form parameters - case sensitive
-	 * "userName" and "password"
-	 * 
-	 * @param userName
-	 * @param password
+	 * @param user
 	 * @return json that shows user is authenticated or not
 	 */
 	@POST
 	@Path("/authenticateUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public OperationResult authenticateUser(User user) {
+	public Result authenticateUser(User user) {
 		//TODO: check that request is coming from authorized user
 		boolean result = getDataStore().doesUserExist(user.email, user.password);
 		//boolean result = true;
@@ -290,7 +226,7 @@ public class RestService {
 			servletContext.setAttribute(USER_EMAIL, user.email);
 			servletContext.setAttribute(USER_PASSWORD, user.password);
 		}
-		return new OperationResult(result);
+		return new Result(result);
 	}
 
 
@@ -342,9 +278,9 @@ public class RestService {
 	@GET
 	@Path("/isAuthenticated")
 	@Produces(MediaType.APPLICATION_JSON)
-	public OperationResult isAuthenticatedRest(){
+	public Result isAuthenticatedRest(){
 
-		return new OperationResult(isAuthenticated(servletContext));
+		return new Result(isAuthenticated(servletContext));
 	}
 
 	public static boolean isAuthenticated(ServletContext servletContext) 
@@ -553,7 +489,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String deleteVoDStream(@PathParam("appname") String name, @FormParam("streamName") String streamName) {
 		boolean deleteVoDStream = getApplication().deleteVoDStream(name, streamName);
-		return gson.toJson(new OperationResult(deleteVoDStream));
+		return gson.toJson(new Result(deleteVoDStream));
 	}
 
 
@@ -572,8 +508,9 @@ public class RestService {
 		store.put("settings.mp4MuxingEnabled", String.valueOf(appsettings.mp4MuxingEnabled));
 		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.addDateTimeToMp4FileName));
 		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.hlsMuxingEnabled));
+		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.acceptOnlyStreamsInDataStore));
 		if (appsettings.hlsListSize < 5) {
-			store.put("settings.hlsListSize", "2");
+			store.put("settings.hlsListSize", "5");
 		}
 		else {
 			store.put("settings.hlsListSize", String.valueOf(appsettings.hlsListSize));
@@ -646,7 +583,7 @@ public class RestService {
 
 		getApplication().updateAppSettings(appname, appsettings);
 
-		return gson.toJson(new OperationResult(store.save()));
+		return gson.toJson(new Result(store.save()));
 	}
 
 	@GET
@@ -657,14 +594,14 @@ public class RestService {
 		return new Result(isEnterprise, "");
 	}
 
-
-
-
 	@GET
 	@Path("/getSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
 	{
+		
+		//TODO: Get bean from app context not read file
+		
 		PreferenceStore store = new PreferenceStore("red5-web.properties");
 		store.setFullPath("webapps/"+appname+"/WEB-INF/red5-web.properties");
 		AppSettingsModel appSettings = new AppSettingsModel();
@@ -692,6 +629,7 @@ public class RestService {
 		appSettings.youtubeClientSecret = store.get("youtube.clientSecret");
 		appSettings.periscopeClientId = store.get("periscope.clientId");
 		appSettings.periscopeClientSecret = store.get("periscope.clientSecret");
+		appSettings.acceptOnlyStreamsInDataStore = Boolean.valueOf(store.get(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE));
 
 		appSettings.encoderSettings = io.antmedia.AppSettings.getEncoderSettingsList(store.get("settings.encoderSettingsString"));
 
@@ -717,10 +655,4 @@ public class RestService {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		return (AdminApplication)ctxt.getBean("web.handler");
 	}
-
-
-
-
-
-
 }

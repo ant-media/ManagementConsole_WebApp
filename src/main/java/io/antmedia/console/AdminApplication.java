@@ -25,8 +25,8 @@ import org.springframework.context.ApplicationContext;
 
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
-import io.antmedia.console.rest.RestService.AppSettingsModel;
-
+import io.antmedia.rest.model.AppSettingsModel;
+import io.antmedia.security.AcceptOnlyStreamsInDataStore;
 
 
 /**
@@ -227,6 +227,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			appSettings.setHlsListSize(String.valueOf(settingsModel.hlsListSize));
 			appSettings.setHlsTime(String.valueOf(settingsModel.hlsTime));
 			appSettings.setHlsPlayListType(settingsModel.hlsPlayListType);
+			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.acceptOnlyStreamsInDataStore);
 			
 			appSettings.setAdaptiveResolutionList(settingsModel.encoderSettings);
 			
@@ -235,6 +236,10 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		else {
 			log.warn("App has no app.settings bean");
+		}
+		if (applicationContext.containsBean(AcceptOnlyStreamsInDataStore.BEAN_NAME)) {
+			AcceptOnlyStreamsInDataStore securityHandler = (AcceptOnlyStreamsInDataStore) applicationContext.getBean(AcceptOnlyStreamsInDataStore.BEAN_NAME);
+			securityHandler.setEnabled(settingsModel.acceptOnlyStreamsInDataStore);
 		}
 	}
 

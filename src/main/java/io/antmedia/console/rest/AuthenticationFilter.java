@@ -35,7 +35,7 @@ public class AuthenticationFilter implements Filter {
 		else {
 			HttpServletResponse resp = (HttpServletResponse) response;
 		   // resp.reset();
-		    resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+		    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
 		}
 		
 	}

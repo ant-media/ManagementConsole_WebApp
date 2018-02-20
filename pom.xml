@@ -4,7 +4,7 @@
 	<groupId>io.antmedia.app</groupId>
 	<artifactId>ConsoleApp</artifactId>
 	<packaging>war</packaging>
-	<version>1.2.3</version>
+	<version>1.2.4</version>
 	<name>Console Maven Webapp</name>
 	<url>http://maven.apache.org</url>
 
@@ -162,6 +162,11 @@
 			<artifactId>ant-media-server</artifactId>
 			<version>${ant-media-server.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+		    <groupId>org.mitre.dsmiley.httpproxy</groupId>
+		    <artifactId>smiley-http-proxy-servlet</artifactId>
+		    <version>1.10</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>

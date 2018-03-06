@@ -19,7 +19,7 @@
 		<junit.version>4.11</junit.version>
 		<jersey.version>2.26</jersey.version>
 		<mapdb.version>3.0.5</mapdb.version>
-		<ant-media-server.version>1.2.2</ant-media-server.version>
+		<ant-media-server.version>1.2.6</ant-media-server.version>
 	</properties>
 
 	<distributionManagement>
@@ -162,6 +162,12 @@
 			<artifactId>ant-media-server</artifactId>
 			<version>${ant-media-server.version}</version>
 			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-databind</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 		    <groupId>org.mitre.dsmiley.httpproxy</groupId>
@@ -191,7 +197,7 @@
             <artifactId>jersey-media-json-jackson</artifactId>
             <version>${jersey.version}</version>
             <scope>provided</scope>
-        </dependency>
+		  </dependency>
         <dependency>
     			<groupId>org.glassfish.jersey.ext</groupId>
     			<artifactId>jersey-spring4</artifactId>

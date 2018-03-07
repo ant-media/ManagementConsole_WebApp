@@ -33,7 +33,7 @@ import io.antmedia.rest.model.User;
 
 public class RestServiceHttpTest {
 
-	private static final String ROOT_URL = "http://localhost:5080/Console/rest";
+	private static final String ROOT_URL = "http://localhost:5080/ConsoleApp/rest";
 
 	Gson gson = new Gson();
 	

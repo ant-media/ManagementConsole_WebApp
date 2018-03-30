@@ -230,6 +230,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.acceptOnlyStreamsInDataStore);
 			
 			appSettings.setAdaptiveResolutionList(settingsModel.encoderSettings);
+			appSettings.setVodFolder(settingsModel.vodFolder);
 			
 			log.warn("app settings updated");
 			

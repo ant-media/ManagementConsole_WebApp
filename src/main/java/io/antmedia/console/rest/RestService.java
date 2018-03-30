@@ -517,6 +517,7 @@ public class RestService {
 		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.addDateTimeToMp4FileName));
 		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.hlsMuxingEnabled));
 		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.acceptOnlyStreamsInDataStore));
+		store.put("settings.vodFolder",appsettings.vodFolder);
 		if (appsettings.hlsListSize < 5) {
 			store.put("settings.hlsListSize", "5");
 		}
@@ -638,6 +639,7 @@ public class RestService {
 		appSettings.periscopeClientId = store.get("periscope.clientId");
 		appSettings.periscopeClientSecret = store.get("periscope.clientSecret");
 		appSettings.acceptOnlyStreamsInDataStore = Boolean.valueOf(store.get(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE));
+		appSettings.vodFolder=store.get("settings.vodFolder");
 
 		appSettings.encoderSettings = io.antmedia.AppSettings.getEncoderSettingsList(store.get("settings.encoderSettingsString"));
 

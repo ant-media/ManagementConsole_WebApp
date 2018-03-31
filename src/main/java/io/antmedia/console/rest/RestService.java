@@ -517,7 +517,12 @@ public class RestService {
 		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.addDateTimeToMp4FileName));
 		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.hlsMuxingEnabled));
 		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.acceptOnlyStreamsInDataStore));
-		store.put("settings.vodFolder",appsettings.vodFolder);
+		
+		if (appsettings.vodFolder == null) {
+			store.put("settings.vodFolder", "");
+		}
+
+		
 		if (appsettings.hlsListSize < 5) {
 			store.put("settings.hlsListSize", "5");
 		}

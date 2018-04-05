@@ -4,7 +4,7 @@
 	<groupId>io.antmedia.app</groupId>
 	<artifactId>ConsoleApp</artifactId>
 	<packaging>war</packaging>
-	<version>1.3.3</version>
+	<version>1.3.4</version>
 	<name>Console Maven Webapp</name>
 	<url>http://maven.apache.org</url>
 

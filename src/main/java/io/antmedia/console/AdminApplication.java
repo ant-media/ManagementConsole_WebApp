@@ -231,9 +231,9 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			
 			appSettings.setAdaptiveResolutionList(settingsModel.encoderSettings);
 			appSettings.setVodFolder(settingsModel.vodFolder);
+			appSettings.setPreviewOverwrite(settingsModel.previewOverwrite);
 			
-			log.warn("app settings updated");
-			
+			log.warn("app settings updated");	
 		}
 		else {
 			log.warn("App has no app.settings bean");

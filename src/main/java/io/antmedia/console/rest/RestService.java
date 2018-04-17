@@ -558,43 +558,8 @@ public class RestService {
 			store.put("settings.encoderSettingsString", io.antmedia.AppSettings.getEncoderSettingsString(appsettings.encoderSettings));
 		}
 
-		/*		
-		if (appsettings.facebookClientSecret == null){
-			store.put("facebook.clientSecret", "");
-		}
-		else {
-			store.put("facebook.clientSecret", appsettings.facebookClientSecret);
-		}
-
-		if (appsettings.youtubeClientId == null) {
-			store.put("youtube.clientId", "");
-		}
-		else {
-			store.put("youtube.clientId", appsettings.youtubeClientId);
-		}
-
-		if (appsettings.youtubeClientSecret == null) {
-			store.put("youtube.clientSecret", "");
-		}
-		else {
-			store.put("youtube.clientSecret", appsettings.youtubeClientSecret);
-		}
-
-		if (appsettings.periscopeClientId == null) {
-			store.put("periscope.clientId", "");
-		}
-		else {
-			store.put("periscope.clientId", appsettings.periscopeClientId);
-		}
-
-		if (appsettings.periscopeClientSecret == null) {
-			store.put("periscope.clientSecret", "");
-		}
-		else {
-			store.put("periscope.clientSecret", appsettings.periscopeClientSecret);
-		}
-		 */	
-
+		store.put("settings.previewOverwrite", String.valueOf(appsettings.previewOverwrite));
+		
 		getApplication().updateAppSettings(appname, appsettings);
 
 		return gson.toJson(new Result(store.save()));
@@ -648,6 +613,9 @@ public class RestService {
 
 		appSettings.encoderSettings = io.antmedia.AppSettings.getEncoderSettingsList(store.get("settings.encoderSettingsString"));
 
+		if (store.get("settings.previewOverwrite") != null) {
+			appSettings.previewOverwrite = Boolean.parseBoolean(store.get("settings.previewOverwrite"));
+		}
 
 		return appSettings;
 	}

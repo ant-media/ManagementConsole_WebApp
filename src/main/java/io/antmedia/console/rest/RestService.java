@@ -521,7 +521,7 @@ public class RestService {
 		if (appsettings.vodFolder == null) {
 			store.put("settings.vodFolder", "");
 		}else {
-			store.put("settings.vodFolder", String.valueOf(appsettings.vodFolder));
+			store.put("settings.vodFolder", appsettings.vodFolder);
 		}
 
 

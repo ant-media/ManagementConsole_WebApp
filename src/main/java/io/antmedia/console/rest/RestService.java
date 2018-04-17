@@ -55,13 +55,13 @@ public class RestService {
 	Gson gson = new Gson();
 
 	private DataStore dataStore;
-	
+
 	protected static Logger logger = LoggerFactory.getLogger(RestService.class);
 
 
 	@Context 
 	private ServletContext servletContext;
-	
+
 	@Context
 	private HttpServletRequest servletRequest;
 
@@ -105,7 +105,7 @@ public class RestService {
 			else {
 				logger.info("user already exist in db");
 			}
-			
+
 			errorId = 1;
 		}
 		Result operationResult = new Result(result);
@@ -129,7 +129,7 @@ public class RestService {
 		operationResult.setErrorId(errorId);
 		return operationResult;
 	}
-	
+
 	@GET
 	@Path("/isFirstLogin")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -242,14 +242,14 @@ public class RestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
 		//TODO: check that request is coming from authorized user
-		
-		
+
+
 		String userMail = (String)servletRequest.getSession().getAttribute(USER_EMAIL);
-		
+
 		return changeUserPasswordInternal(userMail, user);
-		
+
 	}
-	
+
 	public Result changeUserPasswordInternal(String userMail, User user) {
 		boolean result = false;
 		String message = null;
@@ -258,7 +258,7 @@ public class RestService {
 			//boolean result = true;
 			if (result) {
 				result = getDataStore().editUser(userMail, user.newPassword, 1);
-			
+
 				if (result) {
 					HttpSession session = servletRequest.getSession();
 					if (session != null) {
@@ -292,7 +292,7 @@ public class RestService {
 
 	public static boolean isAuthenticated(HttpSession session) 
 	{
-		
+
 		Object isAuthenticated = session.getAttribute(IS_AUTHENTICATED);
 		Object userEmail = session.getAttribute(USER_EMAIL);
 		Object userPassword = session.getAttribute(USER_PASSWORD);
@@ -517,12 +517,14 @@ public class RestService {
 		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.addDateTimeToMp4FileName));
 		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.hlsMuxingEnabled));
 		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.acceptOnlyStreamsInDataStore));
-		
+
 		if (appsettings.vodFolder == null) {
 			store.put("settings.vodFolder", "");
+		}else {
+			store.put("settings.vodFolder", String.valueOf(appsettings.vodFolder));
 		}
 
-		
+
 		if (appsettings.hlsListSize < 5) {
 			store.put("settings.hlsListSize", "5");
 		}
@@ -578,9 +580,9 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
 	{
-		
+
 		//TODO: Get bean from app context not read file
-		
+
 		PreferenceStore store = new PreferenceStore("red5-web.properties");
 		store.setFullPath("webapps/"+appname+"/WEB-INF/red5-web.properties");
 		AppSettingsModel appSettings = new AppSettingsModel();

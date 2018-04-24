@@ -23,6 +23,7 @@ import org.red5.server.api.statistics.IScopeStatistics;
 import org.red5.server.util.ScopeUtils;
 import org.springframework.context.ApplicationContext;
 
+import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
 import io.antmedia.rest.model.AppSettingsModel;
@@ -231,8 +232,16 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			
 			appSettings.setAdaptiveResolutionList(settingsModel.encoderSettings);
 			
-			log.warn("app settings updated");
+			String oldVodFolder = appSettings.getVodFolder();
 			
+			appSettings.setVodFolder(settingsModel.vodFolder);
+			appSettings.setPreviewOverwrite(settingsModel.previewOverwrite);
+	
+			AntMediaApplicationAdapter bean = (AntMediaApplicationAdapter) applicationContext.getBean("web.handler");
+			
+			bean.synchUserVoDFolder(oldVodFolder, settingsModel.vodFolder);
+			
+			log.warn("app settings updated");	
 		}
 		else {
 			log.warn("App has no app.settings bean");

@@ -1,5 +1,10 @@
 package io.antmedia.console;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -10,16 +15,20 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import io.antmedia.console.rest.ClusterNode;
 import io.antmedia.rest.model.User;
+import kotlin.jvm.functions.Function1;
 
 
 public class DataStore {
 
 	public final static String SERVER_STORAGE_FILE = "server.db";
 	public final static String SERVER_STORAGE_MAP_NAME = "serverdb";
-
+	public final static String CLUSTER_STORAGE_MAP_NAME = "clusterdb";
+	
 	private DB db;
 	private HTreeMap<String, String> userMap;
+	private HTreeMap<String, String> nodeMap;
 	private Gson gson;
 	
 	protected static Logger logger = LoggerFactory.getLogger(DataStore.class);
@@ -31,8 +40,12 @@ public class DataStore {
 				.valueSerializer(Serializer.STRING)
 				.counterEnable()
 				.createOrOpen();
+		nodeMap = db.hashMap(CLUSTER_STORAGE_MAP_NAME)
+				.keySerializer(Serializer.STRING)
+				.valueSerializer(Serializer.STRING)
+				.counterEnable()
+				.createOrOpen();
 		gson = new Gson();
-
 	}
 
 
@@ -148,6 +161,51 @@ public class DataStore {
 	
 	public int getNumberOfUserRecords() {
 		return userMap.size();
+	}
+
+
+	public List<ClusterNode> getClusterNodes() {
+		ArrayList<ClusterNode> list = new ArrayList<>();
+		nodeMap.forEach((k,v)->list.add(gson.fromJson(v, ClusterNode.class)));
+		return list;
+	}
+
+
+	public ClusterNode getClusterNode(String nodeId) {
+		ClusterNode node = null;
+		if (nodeMap.containsKey(nodeId)) {
+			node = gson.fromJson(nodeMap.get(nodeId), ClusterNode.class);
+		}
+		return node;
+	}
+
+
+	public boolean addNode(ClusterNode node) {
+		nodeMap.put(node.getId(), gson.toJson(node));
+		db.commit();
+		return true;
+	}
+
+
+	public boolean updateNode(String nodeId, ClusterNode node) {
+		if (nodeMap.containsKey(nodeId)) {
+			nodeMap.put(nodeId, gson.toJson(node));
+			db.commit();
+			return true;
+		}
+		
+		return false;
+	}
+
+
+	public boolean deleteNode(String nodeId) {
+		if (nodeMap.containsKey(nodeId)) {
+			nodeMap.remove(nodeId);
+			db.commit();
+			return true;
+		}
+		
+		return false;
 	}
 
 }

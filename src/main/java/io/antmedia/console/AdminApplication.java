@@ -26,6 +26,7 @@ import org.springframework.context.ApplicationContext;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
+import io.antmedia.datastore.db.IDataStore;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.security.AcceptOnlyStreamsInDataStore;
 
@@ -64,7 +65,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
 		this.scope = scope;
-		return true;
+		return false;
 	}
 
 	/** {@inheritDoc} */
@@ -90,7 +91,15 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		for (String name : names) {
 			IScope scope = root.getScope(name);
 			if (scope != null) {
-				size += scope.getBasicScopeNames(ScopeType.BROADCAST).size();
+				//logger.info("name of the scope: " + );
+				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
+				if (adapter instanceof AntMediaApplicationAdapter) 
+				{
+					IDataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
+					if (dataStore != null) {
+						size +=  dataStore.getActiveBroadcastCount();
+					}
+				}
 			}
 		}
 		return size;

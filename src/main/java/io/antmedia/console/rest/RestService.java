@@ -31,7 +31,10 @@ import io.antmedia.EncoderSettings;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
-import io.antmedia.console.DataStore;
+import io.antmedia.console.datastore.DataStoreFactory;
+import io.antmedia.console.datastore.IDataStore;
+import io.antmedia.console.datastore.MapDBStore;
+import io.antmedia.console.datastore.MongoStore;
 import io.antmedia.console.SystemUtils;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.rest.BroadcastRestService;
@@ -54,7 +57,7 @@ public class RestService {
 
 	Gson gson = new Gson();
 
-	private DataStore dataStore;
+	private IDataStore dataStore;
 
 	protected static Logger logger = LoggerFactory.getLogger(RestService.class);
 
@@ -64,6 +67,8 @@ public class RestService {
 
 	@Context
 	private HttpServletRequest servletRequest;
+
+	private DataStoreFactory dataStoreFactory;
 
 
 	/**
@@ -622,15 +627,14 @@ public class RestService {
 		return appSettings;
 	}
 
-	public void setDataStore(DataStore dataStore) {
+	public void setDataStore(IDataStore dataStore) {
 		this.dataStore = dataStore;
 	}
 
 
-	public DataStore getDataStore() {
+	public IDataStore getDataStore() {
 		if (dataStore == null) {
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			dataStore = (DataStore)ctxt.getBean("dataStore");
+			dataStore = getDataStoreFactory().getDataStore();
 		}
 		return dataStore;
 	}
@@ -639,5 +643,18 @@ public class RestService {
 	public AdminApplication getApplication() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		return (AdminApplication)ctxt.getBean("web.handler");
+	}
+	
+	public DataStoreFactory getDataStoreFactory() {
+		if(dataStoreFactory == null)
+		{
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+		}
+		return dataStoreFactory;
+	}
+
+	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
+		this.dataStoreFactory = dataStoreFactory;
 	}
 }

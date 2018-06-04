@@ -1,4 +1,4 @@
-package io.antmedia.console;
+package io.antmedia.console.datastore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,25 +15,21 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import io.antmedia.console.rest.ClusterNode;
+import io.antmedia.rest.model.ClusterNode;
 import io.antmedia.rest.model.User;
 import kotlin.jvm.functions.Function1;
 
 
-public class DataStore {
+public class MapDBStore implements IDataStore {
 
-	public final static String SERVER_STORAGE_FILE = "server.db";
-	public final static String SERVER_STORAGE_MAP_NAME = "serverdb";
-	public final static String CLUSTER_STORAGE_MAP_NAME = "clusterdb";
-	
 	private DB db;
 	private HTreeMap<String, String> userMap;
 	private HTreeMap<String, String> nodeMap;
 	private Gson gson;
 	
-	protected static Logger logger = LoggerFactory.getLogger(DataStore.class);
+	protected static Logger logger = LoggerFactory.getLogger(MapDBStore.class);
 
-	public DataStore() {
+	public MapDBStore() {
 		db = DBMaker.fileDB(SERVER_STORAGE_FILE).transactionEnable().make();
 		userMap = db.hashMap(SERVER_STORAGE_MAP_NAME)
 				.keySerializer(Serializer.STRING)
@@ -206,6 +202,11 @@ public class DataStore {
 		}
 		
 		return false;
+	}
+
+	@Override
+	public boolean registerAsNode() {
+		return true;
 	}
 
 }

@@ -234,10 +234,12 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			appSettings.setMp4MuxingEnabled(settingsModel.isMp4MuxingEnabled());
 			appSettings.setAddDateTimeToMp4FileName(settingsModel.isAddDateTimeToMp4FileName());
 			appSettings.setHlsMuxingEnabled(settingsModel.isHlsMuxingEnabled());
+			appSettings.setObjectDetectionEnabled(settingsModel.isObjectDetectionEnabled());
 			appSettings.setHlsListSize(String.valueOf(settingsModel.getHlsListSize()));
 			appSettings.setHlsTime(String.valueOf(settingsModel.getHlsTime()));
 			appSettings.setHlsPlayListType(settingsModel.getHlsPlayListType());
 			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.isAcceptOnlyStreamsInDataStore());
+
 			
 			appSettings.setAdaptiveResolutionList(settingsModel.getEncoderSettings());
 			

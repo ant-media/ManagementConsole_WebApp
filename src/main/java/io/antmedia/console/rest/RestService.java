@@ -517,6 +517,7 @@ public class RestService {
 		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.isAddDateTimeToMp4FileName()));
 		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.isHlsMuxingEnabled()));
 		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.isAcceptOnlyStreamsInDataStore()));
+		store.put("settings.objectDetectionEnabled", String.valueOf(appsettings.isObjectDetectionEnabled()));
 
 		if (appsettings.getVodFolder() == null) {
 			store.put("settings.vodFolder", "");
@@ -596,6 +597,10 @@ public class RestService {
 		if (store.get("settings.hlsMuxingEnabled") != null) {
 			appSettings.setHlsMuxingEnabled(Boolean.parseBoolean(store.get("settings.hlsMuxingEnabled")));
 		}
+		if (store.get("settings.objectDetectionEnabled") != null) {
+			appSettings.setObjectDetectionEnabled(Boolean.parseBoolean(store.get("settings.objectDetectionEnabled")));
+		}
+		
 		if (store.get("settings.hlsListSize") != null) {
 			appSettings.setHlsListSize(Integer.valueOf(store.get("settings.hlsListSize")));
 		}

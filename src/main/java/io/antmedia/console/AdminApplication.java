@@ -231,24 +231,24 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) {
 			AppSettings appSettings = (AppSettings) applicationContext.getBean(AppSettings.BEAN_NAME);
 			
-			appSettings.setMp4MuxingEnabled(settingsModel.mp4MuxingEnabled);
-			appSettings.setAddDateTimeToMp4FileName(settingsModel.addDateTimeToMp4FileName);
-			appSettings.setHlsMuxingEnabled(settingsModel.hlsMuxingEnabled);
-			appSettings.setHlsListSize(String.valueOf(settingsModel.hlsListSize));
-			appSettings.setHlsTime(String.valueOf(settingsModel.hlsTime));
-			appSettings.setHlsPlayListType(settingsModel.hlsPlayListType);
-			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.acceptOnlyStreamsInDataStore);
+			appSettings.setMp4MuxingEnabled(settingsModel.isMp4MuxingEnabled());
+			appSettings.setAddDateTimeToMp4FileName(settingsModel.isAddDateTimeToMp4FileName());
+			appSettings.setHlsMuxingEnabled(settingsModel.isHlsMuxingEnabled());
+			appSettings.setHlsListSize(String.valueOf(settingsModel.getHlsListSize()));
+			appSettings.setHlsTime(String.valueOf(settingsModel.getHlsTime()));
+			appSettings.setHlsPlayListType(settingsModel.getHlsPlayListType());
+			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.isAcceptOnlyStreamsInDataStore());
 			
-			appSettings.setAdaptiveResolutionList(settingsModel.encoderSettings);
+			appSettings.setAdaptiveResolutionList(settingsModel.getEncoderSettings());
 			
 			String oldVodFolder = appSettings.getVodFolder();
 			
-			appSettings.setVodFolder(settingsModel.vodFolder);
-			appSettings.setPreviewOverwrite(settingsModel.previewOverwrite);
+			appSettings.setVodFolder(settingsModel.getVodFolder());
+			appSettings.setPreviewOverwrite(settingsModel.isPreviewOverwrite());
 	
 			AntMediaApplicationAdapter bean = (AntMediaApplicationAdapter) applicationContext.getBean("web.handler");
 			
-			bean.synchUserVoDFolder(oldVodFolder, settingsModel.vodFolder);
+			bean.synchUserVoDFolder(oldVodFolder, settingsModel.getVodFolder());
 			
 			log.warn("app settings updated");	
 		}
@@ -257,7 +257,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		if (applicationContext.containsBean(AcceptOnlyStreamsInDataStore.BEAN_NAME)) {
 			AcceptOnlyStreamsInDataStore securityHandler = (AcceptOnlyStreamsInDataStore) applicationContext.getBean(AcceptOnlyStreamsInDataStore.BEAN_NAME);
-			securityHandler.setEnabled(settingsModel.acceptOnlyStreamsInDataStore);
+			securityHandler.setEnabled(settingsModel.isAcceptOnlyStreamsInDataStore());
 		}
 	}
 

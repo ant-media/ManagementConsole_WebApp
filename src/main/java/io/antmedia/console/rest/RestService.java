@@ -513,54 +513,55 @@ public class RestService {
 		PreferenceStore store = new PreferenceStore("red5-web.properties");
 		store.setFullPath("webapps/"+appname+"/WEB-INF/red5-web.properties");
 
-		store.put("settings.mp4MuxingEnabled", String.valueOf(appsettings.mp4MuxingEnabled));
-		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.addDateTimeToMp4FileName));
-		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.hlsMuxingEnabled));
-		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.acceptOnlyStreamsInDataStore));
+		store.put("settings.mp4MuxingEnabled", String.valueOf(appsettings.isMp4MuxingEnabled()));
+		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.isAddDateTimeToMp4FileName()));
+		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.isHlsMuxingEnabled()));
+		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.isAcceptOnlyStreamsInDataStore()));
+		store.put("settings.objectDetectionEnabled", String.valueOf(appsettings.isObjectDetectionEnabled()));
 
-		if (appsettings.vodFolder == null) {
+		if (appsettings.getVodFolder() == null) {
 			store.put("settings.vodFolder", "");
 		}else {
-			store.put("settings.vodFolder", appsettings.vodFolder);
+			store.put("settings.vodFolder", appsettings.getVodFolder());
 		}
 
 
-		if (appsettings.hlsListSize < 5) {
+		if (appsettings.getHlsListSize() < 5) {
 			store.put("settings.hlsListSize", "5");
 		}
 		else {
-			store.put("settings.hlsListSize", String.valueOf(appsettings.hlsListSize));
+			store.put("settings.hlsListSize", String.valueOf(appsettings.getHlsListSize()));
 		}
 
-		if (appsettings.hlsTime < 2) {
+		if (appsettings.getHlsTime() < 2) {
 			store.put("settings.hlsTime", "2");
 		}
 		else {
-			store.put("settings.hlsTime", String.valueOf(appsettings.hlsTime));
+			store.put("settings.hlsTime", String.valueOf(appsettings.getHlsTime()));
 		}
 
-		if (appsettings.hlsPlayListType == null) {
+		if (appsettings.getHlsPlayListType() == null) {
 			store.put("settings.hlsPlayListType", "");
 		}
 		else {
-			store.put("settings.hlsPlayListType", appsettings.hlsPlayListType);
+			store.put("settings.hlsPlayListType", appsettings.getHlsPlayListType());
 		}
 
-		if (appsettings.facebookClientId == null){
+		if (appsettings.getFacebookClientId() == null){
 			store.put("facebook.clientId", "");
 		}
 		else {
-			store.put("facebook.clientId", appsettings.facebookClientId);
+			store.put("facebook.clientId", appsettings.getFacebookClientId());
 		}
 
-		if (appsettings.encoderSettings == null) {
+		if (appsettings.getEncoderSettings() == null) {
 			store.put("settings.encoderSettingsString", "");
 		}
 		else {
-			store.put("settings.encoderSettingsString", io.antmedia.AppSettings.getEncoderSettingsString(appsettings.encoderSettings));
+			store.put("settings.encoderSettingsString", io.antmedia.AppSettings.getEncoderSettingsString(appsettings.getEncoderSettings()));
 		}
 
-		store.put("settings.previewOverwrite", String.valueOf(appsettings.previewOverwrite));
+		store.put("settings.previewOverwrite", String.valueOf(appsettings.isPreviewOverwrite()));
 		
 		getApplication().updateAppSettings(appname, appsettings);
 
@@ -588,35 +589,39 @@ public class RestService {
 		AppSettingsModel appSettings = new AppSettingsModel();
 
 		if (store.get("settings.mp4MuxingEnabled") != null) {
-			appSettings.mp4MuxingEnabled = Boolean.parseBoolean(store.get("settings.mp4MuxingEnabled"));
+			appSettings.setMp4MuxingEnabled(Boolean.parseBoolean(store.get("settings.mp4MuxingEnabled")));
 		}
 		if (store.get("settings.addDateTimeToMp4FileName") != null) {
-			appSettings.addDateTimeToMp4FileName = Boolean.parseBoolean(store.get("settings.addDateTimeToMp4FileName"));
+			appSettings.setAddDateTimeToMp4FileName(Boolean.parseBoolean(store.get("settings.addDateTimeToMp4FileName")));
 		}
 		if (store.get("settings.hlsMuxingEnabled") != null) {
-			appSettings.hlsMuxingEnabled = Boolean.parseBoolean(store.get("settings.hlsMuxingEnabled"));
+			appSettings.setHlsMuxingEnabled(Boolean.parseBoolean(store.get("settings.hlsMuxingEnabled")));
 		}
+		if (store.get("settings.objectDetectionEnabled") != null) {
+			appSettings.setObjectDetectionEnabled(Boolean.parseBoolean(store.get("settings.objectDetectionEnabled")));
+		}
+		
 		if (store.get("settings.hlsListSize") != null) {
-			appSettings.hlsListSize = Integer.valueOf(store.get("settings.hlsListSize"));
+			appSettings.setHlsListSize(Integer.valueOf(store.get("settings.hlsListSize")));
 		}
 
 		if (store.get("settings.hlsTime") != null) {
-			appSettings.hlsTime = Integer.valueOf(store.get("settings.hlsTime"));
+			appSettings.setHlsTime(Integer.valueOf(store.get("settings.hlsTime")));
 		}
-		appSettings.hlsPlayListType = store.get("settings.hlsPlayListType");
-		appSettings.facebookClientId = store.get("facebook.clientId");
-		appSettings.facebookClientSecret = store.get("facebook.clientSecret");
-		appSettings.youtubeClientId = store.get("youtube.clientId");
-		appSettings.youtubeClientSecret = store.get("youtube.clientSecret");
-		appSettings.periscopeClientId = store.get("periscope.clientId");
-		appSettings.periscopeClientSecret = store.get("periscope.clientSecret");
-		appSettings.acceptOnlyStreamsInDataStore = Boolean.valueOf(store.get(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE));
-		appSettings.vodFolder=store.get("settings.vodFolder");
+		appSettings.setHlsPlayListType(store.get("settings.hlsPlayListType"));
+		appSettings.setFacebookClientId(store.get("facebook.clientId"));
+		appSettings.setFacebookClientSecret(store.get("facebook.clientSecret"));
+		appSettings.setYoutubeClientId(store.get("youtube.clientId"));
+		appSettings.setYoutubeClientSecret(store.get("youtube.clientSecret"));
+		appSettings.setPeriscopeClientId(store.get("periscope.clientId"));
+		appSettings.setPeriscopeClientSecret(store.get("periscope.clientSecret"));
+		appSettings.setAcceptOnlyStreamsInDataStore(Boolean.valueOf(store.get(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE)));
+		appSettings.setVodFolder(store.get("settings.vodFolder"));
 
-		appSettings.encoderSettings = io.antmedia.AppSettings.getEncoderSettingsList(store.get("settings.encoderSettingsString"));
+		appSettings.setEncoderSettings(io.antmedia.AppSettings.getEncoderSettingsList(store.get("settings.encoderSettingsString")));
 
 		if (store.get("settings.previewOverwrite") != null) {
-			appSettings.previewOverwrite = Boolean.parseBoolean(store.get("settings.previewOverwrite"));
+			appSettings.setPreviewOverwrite(Boolean.parseBoolean(store.get("settings.previewOverwrite")));
 		}
 
 		return appSettings;

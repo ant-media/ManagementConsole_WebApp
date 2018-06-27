@@ -631,7 +631,7 @@ public class RestService {
 	}
 	
 	@GET
-	@Path("/getSettings")
+	@Path("/getServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ServerSettings getServerSettings() 
 	{

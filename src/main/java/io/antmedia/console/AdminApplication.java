@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
@@ -45,6 +46,7 @@ import io.antmedia.settings.ServerSettings;
 public class AdminApplication extends MultiThreadedApplicationAdapter {
 	@Context 
 	private ServletContext servletContext;
+	private ApplicationContext appCtx;
 
 	//private static Logger log = Red5LoggerFactory.getLogger(Application.class);
 
@@ -68,6 +70,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 	}
 	private IScope rootScope;
+	private ServerSettings serverSettings;
 
 	/** {@inheritDoc} */
 	@Override
@@ -273,11 +276,9 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 
 	public void updateServerSettings( ServerSettings settings) {
-		
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		ServerSettings serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+		serverSettings = getServerSettings();
 
-		serverSettings.setServerName(settings.getServerName());
+	//	serverSettings.setServerName(settings.getServerName());
 		serverSettings.setLicenceKey(settings.getLicenceKey());
 
 		log.warn(" settings updated");	
@@ -288,6 +289,24 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		IScope root = ScopeUtils.findRoot(scope);
 		return getScopes(root, scopeName);
 	}
+	
+	@Nullable
+	private ApplicationContext getAppContext() {
+		if (servletContext != null) {
+			appCtx = (ApplicationContext) servletContext
+					.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE);
+		}
+		return appCtx;
+	}
+
+	public ServerSettings getServerSettings() {
+
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+		serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+		
+		return serverSettings;
+	}
+
 
 	/**
 	 * Search through all the scopes in the given scope to a scope with the

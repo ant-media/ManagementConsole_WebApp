@@ -580,12 +580,26 @@ public class RestService {
 
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
+		
+		if(serverSettings.getServerName() == null) {
+			store.put("ant.media.server.name", "");
+			getServerSettings().setLicenceKey("");
 
-		store.put("ant.media.server.name", serverSettings.getServerName());
-		store.put("licence.key", serverSettings.getLicenceKey());
+		}else {
+			store.put("ant.media.server.name", serverSettings.getServerName());
+			getServerSettings().setLicenceKey(serverSettings.getServerName());
+		}
+
+		if (serverSettings.getLicenceKey() == null) {
+			store.put("licence.key","");
+			getServerSettings().setLicenceKey("");
+		}else {
+			store.put("licence.key", serverSettings.getLicenceKey());
+			getServerSettings().setLicenceKey(serverSettings.getLicenceKey());
+		}
 		
 		
-		getApplication().updateServerSettings(serverSettings);
+		
 
 		return gson.toJson(new Result(store.save()));
 	}
@@ -673,10 +687,10 @@ public class RestService {
 	}
 	
 	public ServerSettings fetchServerSettings() {
-		if (serverSettings == null) {
+
 			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			serverSettings = (ServerSettings)ctxt.getBean("ant.media.server.settings");
-		}
+			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+		
 		return serverSettings;
 	}
 

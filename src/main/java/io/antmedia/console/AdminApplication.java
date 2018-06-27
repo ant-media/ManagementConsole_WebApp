@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import javax.servlet.ServletContext;
+import javax.ws.rs.core.Context;
+
 import org.apache.commons.io.FileUtils;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
@@ -22,6 +25,8 @@ import org.red5.server.api.statistics.IScopeStatistics;
 //import org.slf4j.Logger;
 import org.red5.server.util.ScopeUtils;
 import org.springframework.context.ApplicationContext;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
@@ -29,6 +34,7 @@ import io.antmedia.EncoderSettings;
 import io.antmedia.datastore.db.IDataStore;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.security.AcceptOnlyStreamsInDataStore;
+import io.antmedia.settings.ServerSettings;
 
 
 /**
@@ -37,10 +43,12 @@ import io.antmedia.security.AcceptOnlyStreamsInDataStore;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class AdminApplication extends MultiThreadedApplicationAdapter {
+	@Context 
+	private ServletContext servletContext;
 
 	//private static Logger log = Red5LoggerFactory.getLogger(Application.class);
-	
-	
+
+
 	public static final String APP_NAME = "ConsoleApp";
 
 	public static class ApplicationInfo {
@@ -151,8 +159,8 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		return null;
 	}
-	
-	
+
+
 
 	public List<BroadcastInfo> getAppLiveStreams(String name) {
 		IScope root = getRootScope();
@@ -178,7 +186,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		return vodFileList;
 	}
-	
+
 	public boolean deleteVoDStream(String appname, String streamName) {
 		File vodStream = new File("webapps/"+appname+"/streams/"+ streamName);
 		boolean result = false;
@@ -225,12 +233,12 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		return connections;
 	}
-	
+
 	public void updateAppSettings(String scopeName, AppSettingsModel settingsModel) {
 		ApplicationContext applicationContext = getScope(scopeName).getContext().getApplicationContext();
 		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) {
 			AppSettings appSettings = (AppSettings) applicationContext.getBean(AppSettings.BEAN_NAME);
-			
+
 			appSettings.setMp4MuxingEnabled(settingsModel.isMp4MuxingEnabled());
 			appSettings.setAddDateTimeToMp4FileName(settingsModel.isAddDateTimeToMp4FileName());
 			appSettings.setHlsMuxingEnabled(settingsModel.isHlsMuxingEnabled());
@@ -240,18 +248,18 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			appSettings.setHlsPlayListType(settingsModel.getHlsPlayListType());
 			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.isAcceptOnlyStreamsInDataStore());
 
-			
+
 			appSettings.setAdaptiveResolutionList(settingsModel.getEncoderSettings());
-			
+
 			String oldVodFolder = appSettings.getVodFolder();
-			
+
 			appSettings.setVodFolder(settingsModel.getVodFolder());
 			appSettings.setPreviewOverwrite(settingsModel.isPreviewOverwrite());
-	
+
 			AntMediaApplicationAdapter bean = (AntMediaApplicationAdapter) applicationContext.getBean("web.handler");
-			
+
 			bean.synchUserVoDFolder(oldVodFolder, settingsModel.getVodFolder());
-			
+
 			log.warn("app settings updated");	
 		}
 		else {
@@ -261,6 +269,19 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			AcceptOnlyStreamsInDataStore securityHandler = (AcceptOnlyStreamsInDataStore) applicationContext.getBean(AcceptOnlyStreamsInDataStore.BEAN_NAME);
 			securityHandler.setEnabled(settingsModel.isAcceptOnlyStreamsInDataStore());
 		}
+	}
+
+
+	public void updateServerSettings( ServerSettings settings) {
+		
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+		ServerSettings serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+
+		serverSettings.setServerName(settings.getServerName());
+		serverSettings.setLicenceKey(settings.getLicenceKey());
+
+		log.warn(" settings updated");	
+
 	}
 
 	private IScope getScope(String scopeName) {

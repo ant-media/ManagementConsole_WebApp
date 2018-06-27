@@ -570,6 +570,25 @@ public class RestService {
 
 		return gson.toJson(new Result(store.save()));
 	}
+	
+	@POST
+	@Path("/changeServerSettings")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String changeServerSettings(ServerSettings serverSettings){
+
+
+		PreferenceStore store = new PreferenceStore("red5.properties");
+		store.setFullPath("conf/red5.properties");
+
+		store.put("ant.media.server.name", serverSettings.getServerName());
+		store.put("licence.key", serverSettings.getLicenceKey());
+		
+		
+		getApplication().updateServerSettings(serverSettings);
+
+		return gson.toJson(new Result(store.save()));
+	}
 
 	@GET
 	@Path("/isEnterpriseEdition")

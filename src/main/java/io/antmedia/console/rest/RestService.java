@@ -38,6 +38,7 @@ import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
+import io.antmedia.settings.ServerSettings;
 
 @Component
 @Path("/")
@@ -64,6 +65,8 @@ public class RestService {
 
 	@Context
 	private HttpServletRequest servletRequest;
+
+	private ServerSettings serverSettings;
 
 
 	/**
@@ -626,6 +629,16 @@ public class RestService {
 
 		return appSettings;
 	}
+	
+	@GET
+	@Path("/getSettings")
+	@Produces(MediaType.APPLICATION_JSON)
+	public ServerSettings getServerSettings() 
+	{
+
+		return fetchServerSettings();
+	}
+	
 
 	public void setDataStore(DataStore dataStore) {
 		this.dataStore = dataStore;
@@ -639,8 +652,16 @@ public class RestService {
 		}
 		return dataStore;
 	}
+	
+	public ServerSettings fetchServerSettings() {
+		if (serverSettings == null) {
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			serverSettings = (ServerSettings)ctxt.getBean("ant.media.server.settings");
+		}
+		return serverSettings;
+	}
 
-
+	
 	public AdminApplication getApplication() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		return (AdminApplication)ctxt.getBean("web.handler");

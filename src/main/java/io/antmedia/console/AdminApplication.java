@@ -275,15 +275,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	}
 
 
-	public void updateServerSettings( ServerSettings settings) {
-		serverSettings = getServerSettings();
-
-	//	serverSettings.setServerName(settings.getServerName());
-		serverSettings.setLicenceKey(settings.getLicenceKey());
-
-		log.warn(" settings updated");	
-
-	}
 
 	private IScope getScope(String scopeName) {
 		IScope root = ScopeUtils.findRoot(scope);
@@ -299,13 +290,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return appCtx;
 	}
 
-	public ServerSettings getServerSettings() {
-
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-		
-		return serverSettings;
-	}
 
 
 	/**

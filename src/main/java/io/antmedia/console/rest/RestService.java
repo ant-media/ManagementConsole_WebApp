@@ -571,38 +571,7 @@ public class RestService {
 		return gson.toJson(new Result(store.save()));
 	}
 	
-	@POST
-	@Path("/changeServerSettings")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public String changeServerSettings(ServerSettings serverSettings){
 
-
-		PreferenceStore store = new PreferenceStore("red5.properties");
-		store.setFullPath("conf/red5.properties");
-		
-		if(serverSettings.getServerName() == null) {
-			store.put("ant.media.server.name", "");
-			getServerSettings().setLicenceKey("");
-
-		}else {
-			store.put("ant.media.server.name", serverSettings.getServerName());
-			getServerSettings().setLicenceKey(serverSettings.getServerName());
-		}
-
-		if (serverSettings.getLicenceKey() == null) {
-			store.put("licence.key","");
-			getServerSettings().setLicenceKey("");
-		}else {
-			store.put("licence.key", serverSettings.getLicenceKey());
-			getServerSettings().setLicenceKey(serverSettings.getLicenceKey());
-		}
-		
-		
-		
-
-		return gson.toJson(new Result(store.save()));
-	}
 
 	@GET
 	@Path("/isEnterpriseEdition")
@@ -662,16 +631,7 @@ public class RestService {
 
 		return appSettings;
 	}
-	
-	@GET
-	@Path("/getServerSettings")
-	@Produces(MediaType.APPLICATION_JSON)
-	public ServerSettings getServerSettings() 
-	{
 
-		return fetchServerSettings();
-	}
-	
 
 	public void setDataStore(DataStore dataStore) {
 		this.dataStore = dataStore;
@@ -685,14 +645,7 @@ public class RestService {
 		}
 		return dataStore;
 	}
-	
-	public ServerSettings fetchServerSettings() {
 
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-		
-		return serverSettings;
-	}
 
 	
 	public AdminApplication getApplication() {

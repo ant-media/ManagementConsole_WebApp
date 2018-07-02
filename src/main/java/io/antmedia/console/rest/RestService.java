@@ -33,7 +33,10 @@ import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.DataStore;
 import io.antmedia.console.SystemUtils;
+import io.antmedia.datastore.db.types.Broadcast;
+import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
+import io.antmedia.licence.LicenceService;
 import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.rest.model.Result;
@@ -54,6 +57,7 @@ public class RestService {
 	public static final String IS_AUTHENTICATED = "isAuthenticated";
 
 	Gson gson = new Gson();
+	Gson gson2 = new Gson();
 
 	private DataStore dataStore;
 
@@ -67,6 +71,8 @@ public class RestService {
 	private HttpServletRequest servletRequest;
 
 	private ServerSettings serverSettings;
+
+	private LicenceService licenceService;
 
 
 	/**
@@ -456,7 +462,7 @@ public class RestService {
 		jsonObject.add("applications", jsonArray);
 		return gson.toJson(jsonObject);
 	}
-
+ 
 	@GET
 	@Path("/getLiveClientsSize")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -598,8 +604,6 @@ public class RestService {
 			getServerSettings().setLicenceKey(serverSettings.getLicenceKey());
 		}
 		
-		
-		
 
 		return gson.toJson(new Result(store.save()));
 	}
@@ -672,6 +676,33 @@ public class RestService {
 		return fetchServerSettings();
 	}
 	
+	@GET
+	@Path("/requestLicence")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Result resuestLicence(String key) 
+	{
+		Result result = new Result(false);
+		
+		getLicenceServiceInstance().checkLicence(key);
+		result.setSuccess(true);
+		
+		return result;
+	}
+	
+	@GET
+	@Path("/getLicenceStatus")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Licence getLicenceStatus() 
+	{
+		Licence result = new Licence();
+
+		result = getLicenceServiceInstance().getLicenceStatusResponse();
+
+		
+		return result;
+	}
+	
+	
 
 	public void setDataStore(DataStore dataStore) {
 		this.dataStore = dataStore;
@@ -694,6 +725,13 @@ public class RestService {
 		return serverSettings;
 	}
 
+	public LicenceService getLicenceServiceInstance () {
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+		licenceService = (LicenceService)ctxt.getBean("ant.media.licence.service");
+		
+		return licenceService;
+	}
+	
 	
 	public AdminApplication getApplication() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 

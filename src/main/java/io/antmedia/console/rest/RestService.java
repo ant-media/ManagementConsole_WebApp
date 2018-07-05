@@ -493,13 +493,7 @@ public class RestService {
 		return gson.toJson(appLiveStreams);
 	}
 
-	@GET
-	@Path("/getAppVoDStreams/{appname}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getAppVoDStreams(@PathParam("appname") String name) {
-		List<BroadcastInfo> appLiveStreams = getApplication().getAppVoDStreams(name);
-		return gson.toJson(appLiveStreams);
-	}
+
 
 	@POST
 	@Path("/deleteVoDStream/{appname}")

@@ -38,6 +38,7 @@ import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
+import io.antmedia.settings.ServerSettings;
 
 @Component
 @Path("/")
@@ -64,6 +65,8 @@ public class RestService {
 
 	@Context
 	private HttpServletRequest servletRequest;
+
+	private ServerSettings serverSettings;
 
 
 	/**
@@ -567,6 +570,8 @@ public class RestService {
 
 		return gson.toJson(new Result(store.save()));
 	}
+	
+
 
 	@GET
 	@Path("/isEnterpriseEdition")
@@ -627,6 +632,7 @@ public class RestService {
 		return appSettings;
 	}
 
+
 	public void setDataStore(DataStore dataStore) {
 		this.dataStore = dataStore;
 	}
@@ -641,6 +647,7 @@ public class RestService {
 	}
 
 
+	
 	public AdminApplication getApplication() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		return (AdminApplication)ctxt.getBean("web.handler");

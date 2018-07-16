@@ -583,11 +583,11 @@ public class RestService {
 		
 		if(serverSettings.getServerName() == null) {
 			store.put("ant.media.server.name", "");
-			getServerSettings().setLicenceKey("");
+			getServerSettings().setServerName("");
 
 		}else {
 			store.put("ant.media.server.name", serverSettings.getServerName());
-			getServerSettings().setLicenceKey(serverSettings.getServerName());
+			getServerSettings().setServerName(serverSettings.getServerName());
 		}
 
 		if (serverSettings.getLicenceKey() == null) {
@@ -688,12 +688,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus() 
 	{
-		Licence result = new Licence();
-
-		result = getLicenceServiceInstance().getLicenceStatusResponse();
-
-		
-		return result;
+		return getLicenceServiceInstance().getLicenceStatusResponse();
 	}
 	
 	

@@ -27,6 +27,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+
 	<classpathentry kind="var" path="M2_REPO/io/antmedia/ant-media-server/1.3.4/ant-media-server-1.3.4.jar" sourcepath="M2_REPO/io/antmedia/ant-media-server/1.3.4/ant-media-server-1.3.4-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/io/antmedia/ipcamera/onvif/ONVIF/1.0.0-SNAPSHOT/ONVIF-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-codec/commons-codec/1.11/commons-codec-1.11.jar"/>
@@ -46,7 +47,6 @@
 	<classpathentry kind="var" path="M2_REPO/org/springframework/spring-context-support/4.3.6.RELEASE/spring-context-support-4.3.6.RELEASE.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/springframework/spring-webmvc/4.3.6.RELEASE/spring-webmvc-4.3.6.RELEASE.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/springframework/spring-web/4.3.4.RELEASE/spring-web-4.3.4.RELEASE.jar"/>
-	<classpathentry kind="var" path="M2_REPO/org/red5/red5-server-common/1.3.4/red5-server-common-1.3.4.jar" sourcepath="M2_REPO/org/red5/red5-server-common/1.3.4/red5-server-common-1.3.4-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/amazonaws/aws-java-sdk-s3/1.11.268/aws-java-sdk-s3-1.11.268.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/amazonaws/aws-java-sdk-kms/1.11.268/aws-java-sdk-kms-1.11.268.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/amazonaws/aws-java-sdk-core/1.11.268/aws-java-sdk-core-1.11.268.jar"/>
@@ -93,7 +93,6 @@
 	<classpathentry kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/3.4.0/mongo-java-driver-3.4.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/cglib/cglib-nodep/2.2.2/cglib-nodep-2.2.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/thoughtworks/proxytoys/proxytoys/1.0/proxytoys-1.0.jar"/>
-	<classpathentry kind="var" path="M2_REPO/io/antmedia/ant-media-server-service/1.2.1/ant-media-server-service-1.2.1.jar" sourcepath="M2_REPO/io/antmedia/ant-media-server-service/1.2.1/ant-media-server-service-1.2.1-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-daemon/commons-daemon/1.0.15/commons-daemon-1.0.15.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/mina/mina-integration-beans/2.0.16/mina-integration-beans-2.0.16.jar"/>
 	<classpathentry kind="var" path="M2_REPO/io/antmedia/api/periscope/PeriscopeAPI/1.1.0/PeriscopeAPI-1.1.0.jar"/>
@@ -151,6 +150,11 @@
 	<classpathentry kind="var" path="M2_REPO/net/jpountz/lz4/lz4/1.3.0/lz4-1.3.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/mapdb/elsa/3.0.0-M5/elsa-3.0.0-M5.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/mitre/dsmiley/httpproxy/smiley-http-proxy-servlet/1.10/smiley-http-proxy-servlet-1.10.jar"/>
+	<classpathentry excluding="**" kind="src" output="target/classes" path="src/main/resources">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>

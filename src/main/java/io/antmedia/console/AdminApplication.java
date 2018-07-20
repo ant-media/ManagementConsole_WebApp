@@ -10,6 +10,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+import javax.servlet.ServletContext;
+import javax.ws.rs.core.Context;
+
 import org.apache.commons.io.FileUtils;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
@@ -22,12 +26,17 @@ import org.red5.server.api.scope.ScopeType;
 //import org.slf4j.Logger;
 import org.red5.server.util.ScopeUtils;
 import org.springframework.context.ApplicationContext;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
 import io.antmedia.console.datastore.DataStoreFactory;
+import io.antmedia.EncoderSettings;
+import io.antmedia.datastore.db.IDataStore;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.security.AcceptOnlyStreamsInDataStore;
+import io.antmedia.settings.ServerSettings;
 
 
 /**
@@ -36,10 +45,13 @@ import io.antmedia.security.AcceptOnlyStreamsInDataStore;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class AdminApplication extends MultiThreadedApplicationAdapter {
+	@Context 
+	private ServletContext servletContext;
+	private ApplicationContext appCtx;
 
 	//private static Logger log = Red5LoggerFactory.getLogger(Application.class);
-	
-	
+
+
 	public static final String APP_NAME = "ConsoleApp";
 	private DataStoreFactory dataStoreFactory;
 
@@ -60,6 +72,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 	}
 	private IScope rootScope;
+	private ServerSettings serverSettings;
 
 
 	public boolean appStart(IScope app) {
@@ -78,7 +91,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
 		this.scope = scope;
-		return true;
+		return false;
 	}
 
 	/** {@inheritDoc} */
@@ -104,7 +117,15 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		for (String name : names) {
 			IScope scope = root.getScope(name);
 			if (scope != null) {
-				size += scope.getBasicScopeNames(ScopeType.BROADCAST).size();
+				//logger.info("name of the scope: " + );
+				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
+				if (adapter instanceof AntMediaApplicationAdapter) 
+				{
+					IDataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
+					if (dataStore != null) {
+						size +=  dataStore.getActiveBroadcastCount();
+					}
+				}
 			}
 		}
 		return size;
@@ -156,8 +177,8 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		return null;
 	}
-	
-	
+
+
 
 	public List<BroadcastInfo> getAppLiveStreams(String name) {
 		IScope root = getRootScope();
@@ -183,7 +204,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		return vodFileList;
 	}
-	
+
 	public boolean deleteVoDStream(String appname, String streamName) {
 		File vodStream = new File("webapps/"+appname+"/streams/"+ streamName);
 		boolean result = false;
@@ -230,31 +251,33 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		return connections;
 	}
-	
+
 	public void updateAppSettings(String scopeName, AppSettingsModel settingsModel) {
 		ApplicationContext applicationContext = getScope(scopeName).getContext().getApplicationContext();
 		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) {
 			AppSettings appSettings = (AppSettings) applicationContext.getBean(AppSettings.BEAN_NAME);
-			
-			appSettings.setMp4MuxingEnabled(settingsModel.mp4MuxingEnabled);
-			appSettings.setAddDateTimeToMp4FileName(settingsModel.addDateTimeToMp4FileName);
-			appSettings.setHlsMuxingEnabled(settingsModel.hlsMuxingEnabled);
-			appSettings.setHlsListSize(String.valueOf(settingsModel.hlsListSize));
-			appSettings.setHlsTime(String.valueOf(settingsModel.hlsTime));
-			appSettings.setHlsPlayListType(settingsModel.hlsPlayListType);
-			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.acceptOnlyStreamsInDataStore);
-			
-			appSettings.setAdaptiveResolutionList(settingsModel.encoderSettings);
-			
+
+			appSettings.setMp4MuxingEnabled(settingsModel.isMp4MuxingEnabled());
+			appSettings.setAddDateTimeToMp4FileName(settingsModel.isAddDateTimeToMp4FileName());
+			appSettings.setHlsMuxingEnabled(settingsModel.isHlsMuxingEnabled());
+			appSettings.setObjectDetectionEnabled(settingsModel.isObjectDetectionEnabled());
+			appSettings.setHlsListSize(String.valueOf(settingsModel.getHlsListSize()));
+			appSettings.setHlsTime(String.valueOf(settingsModel.getHlsTime()));
+			appSettings.setHlsPlayListType(settingsModel.getHlsPlayListType());
+			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.isAcceptOnlyStreamsInDataStore());
+
+
+			appSettings.setAdaptiveResolutionList(settingsModel.getEncoderSettings());
+
 			String oldVodFolder = appSettings.getVodFolder();
-			
-			appSettings.setVodFolder(settingsModel.vodFolder);
-			appSettings.setPreviewOverwrite(settingsModel.previewOverwrite);
-	
+
+			appSettings.setVodFolder(settingsModel.getVodFolder());
+			appSettings.setPreviewOverwrite(settingsModel.isPreviewOverwrite());
+
 			AntMediaApplicationAdapter bean = (AntMediaApplicationAdapter) applicationContext.getBean("web.handler");
-			
-			bean.synchUserVoDFolder(oldVodFolder, settingsModel.vodFolder);
-			
+
+			bean.synchUserVoDFolder(oldVodFolder, settingsModel.getVodFolder());
+
 			log.warn("app settings updated");	
 		}
 		else {
@@ -262,14 +285,27 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		if (applicationContext.containsBean(AcceptOnlyStreamsInDataStore.BEAN_NAME)) {
 			AcceptOnlyStreamsInDataStore securityHandler = (AcceptOnlyStreamsInDataStore) applicationContext.getBean(AcceptOnlyStreamsInDataStore.BEAN_NAME);
-			securityHandler.setEnabled(settingsModel.acceptOnlyStreamsInDataStore);
+			securityHandler.setEnabled(settingsModel.isAcceptOnlyStreamsInDataStore());
 		}
 	}
+
+
 
 	private IScope getScope(String scopeName) {
 		IScope root = ScopeUtils.findRoot(scope);
 		return getScopes(root, scopeName);
 	}
+	
+	@Nullable
+	private ApplicationContext getAppContext() {
+		if (servletContext != null) {
+			appCtx = (ApplicationContext) servletContext
+					.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE);
+		}
+		return appCtx;
+	}
+
+
 
 	/**
 	 * Search through all the scopes in the given scope to a scope with the

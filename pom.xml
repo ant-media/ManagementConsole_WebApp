@@ -3,7 +3,9 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.3.7.1-SNAPSHOT</version>
+
+		<version>1.4.0-SNAPSHOT</version>
+
 	</parent>
 	
 	<modelVersion>4.0.0</modelVersion>
@@ -11,6 +13,7 @@
 	<artifactId>ConsoleApp</artifactId>
 	<packaging>war</packaging>
 	<version>${consoleapp.version}</version>
+
 	<name>Console Maven Webapp</name>
 	<url>http://maven.apache.org</url>
 	<distributionManagement>
@@ -153,6 +156,12 @@
 			<artifactId>ant-media-server</artifactId>
 			<version>${ant-media-server.version}</version>
 			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-databind</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 		    <groupId>org.mitre.dsmiley.httpproxy</groupId>
@@ -182,7 +191,7 @@
             <artifactId>jersey-media-json-jackson</artifactId>
             <version>${jersey.version}</version>
             <scope>provided</scope>
-        </dependency>
+		  </dependency>
         <dependency>
     			<groupId>org.glassfish.jersey.ext</groupId>
     			<artifactId>jersey-spring4</artifactId>

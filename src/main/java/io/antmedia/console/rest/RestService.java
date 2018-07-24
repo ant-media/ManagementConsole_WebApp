@@ -462,7 +462,7 @@ public class RestService {
 		jsonObject.add("applications", jsonArray);
 		return gson.toJson(jsonObject);
 	}
- 
+
 	@GET
 	@Path("/getLiveClientsSize")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -565,12 +565,14 @@ public class RestService {
 		}
 
 		store.put("settings.previewOverwrite", String.valueOf(appsettings.isPreviewOverwrite()));
-		
+
 		getApplication().updateAppSettings(appname, appsettings);
 
 		return gson.toJson(new Result(store.save()));
 	}
-	
+
+
+
 	@POST
 	@Path("/changeServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -580,7 +582,7 @@ public class RestService {
 
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
-		
+
 		if(serverSettings.getServerName() == null) {
 			store.put("ant.media.server.name", "");
 			getServerSettings().setServerName("");
@@ -597,7 +599,7 @@ public class RestService {
 			store.put("licence.key", serverSettings.getLicenceKey());
 			getServerSettings().setLicenceKey(serverSettings.getLicenceKey());
 		}
-		
+
 
 		return gson.toJson(new Result(store.save()));
 	}
@@ -634,7 +636,7 @@ public class RestService {
 		if (store.get("settings.objectDetectionEnabled") != null) {
 			appSettings.setObjectDetectionEnabled(Boolean.parseBoolean(store.get("settings.objectDetectionEnabled")));
 		}
-		
+
 		if (store.get("settings.hlsListSize") != null) {
 			appSettings.setHlsListSize(Integer.valueOf(store.get("settings.hlsListSize")));
 		}
@@ -660,7 +662,8 @@ public class RestService {
 
 		return appSettings;
 	}
-	
+
+
 	@GET
 	@Path("/getServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -669,20 +672,21 @@ public class RestService {
 
 		return fetchServerSettings();
 	}
-	
+
+
 	@GET
 	@Path("/requestLicence")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result resuestLicence(String key) 
 	{
 		Result result = new Result(false);
-		
+
 		getLicenceServiceInstance().checkLicence(key);
 		result.setSuccess(true);
-		
+
 		return result;
 	}
-	
+
 	@GET
 	@Path("/getLicenceStatus")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -690,8 +694,9 @@ public class RestService {
 	{
 		return getLicenceServiceInstance().getLicenceStatusResponse();
 	}
-	
-	
+
+
+
 
 	public void setDataStore(DataStore dataStore) {
 		this.dataStore = dataStore;
@@ -705,23 +710,25 @@ public class RestService {
 		}
 		return dataStore;
 	}
-	
+
 	public ServerSettings fetchServerSettings() {
 
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-		
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+		serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+
 		return serverSettings;
 	}
+
+
 
 	public LicenceService getLicenceServiceInstance () {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		licenceService = (LicenceService)ctxt.getBean("ant.media.licence.service");
-		
+
 		return licenceService;
 	}
-	
-	
+
+
 	public AdminApplication getApplication() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		return (AdminApplication)ctxt.getBean("web.handler");

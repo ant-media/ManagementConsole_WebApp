@@ -283,6 +283,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 	}
 
+
 	private IScope getScope(String scopeName) {
 		IScope root = ScopeUtils.findRoot(scope);
 		return getScopes(root, scopeName);
@@ -297,6 +298,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return appCtx;
 	}
 
+
 	public ServerSettings getServerSettings() {
 
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
@@ -304,6 +306,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 		return serverSettings;
 	}
+
 
 
 	/**

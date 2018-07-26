@@ -183,16 +183,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return broadcastInfoList;
 	}
 
-	public List<BroadcastInfo> getAppVoDStreams(String name) {
-		String[] voDFiles = getVoDFiles(name);
-		List<BroadcastInfo> vodFileList = new ArrayList<>();
-		if (voDFiles != null) {
-			for (String vodName : voDFiles) {
-				vodFileList.add(new BroadcastInfo(vodName, 0));
-			}
-		}
-		return vodFileList;
-	}
 
 	public boolean deleteVoDStream(String appname, String streamName) {
 		File vodStream = new File("webapps/"+appname+"/streams/"+ streamName);

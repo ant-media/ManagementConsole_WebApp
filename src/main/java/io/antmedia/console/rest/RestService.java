@@ -494,19 +494,6 @@ public class RestService {
 	}
 
 
-	/**
-	 * Refactor remove this function and use ProxyServlet to get this info
-	 * Before deleting check web panel does not use it
-	 * @param name
-	 * @return
-	 */
-	@GET
-	@Path("/getAppVoDStreams/{appname}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getAppVoDStreams(@PathParam("appname") String name) {
-		List<BroadcastInfo> appLiveStreams = getApplication().getAppVoDStreams(name);
-		return gson.toJson(appLiveStreams);
-	}
 
 	/**
 	 * Refactor remove this function and use ProxyServlet to get this info

@@ -102,7 +102,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		for (String name : names) {
 			IScope scope = root.getScope(name);
 			if (scope != null) {
-				//logger.info("name of the scope: " + );
 				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
 				if (adapter instanceof AntMediaApplicationAdapter) 
 				{
@@ -119,15 +118,17 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	public List<ApplicationInfo> getApplicationInfo() {
 		List<String> appNames = getApplications();
 		List<ApplicationInfo> appsInfo = new ArrayList<>();
-		IScope root = getRootScope();
 		for (String name : appNames) {
 			if (name.equals(APP_NAME)) {
 				continue;
 			}
 			ApplicationInfo info = new ApplicationInfo();
 			info.name = name;
+			//TODO: get live stream count from database
 			info.liveStreamCount = getRootScope().getScope(name).getBasicScopeNames(ScopeType.BROADCAST).size();
+			//TODO: should return vod in database
 			info.vodCount = getVoDCount(name);
+			
 			info.storage = getStorage(name);
 			appsInfo.add(info);
 		}

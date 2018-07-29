@@ -226,9 +226,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result authenticateUser(User user) {
-		//TODO: check that request is coming from authorized user
 		boolean result = getDataStore().doesUserExist(user.email, user.password);
-		//boolean result = true;
 		if (result) {
 			HttpSession session = servletRequest.getSession();
 			session.setAttribute(IS_AUTHENTICATED, true);
@@ -244,8 +242,6 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
-		//TODO: check that request is coming from authorized user
-
 
 		String userMail = (String)servletRequest.getSession().getAttribute(USER_EMAIL);
 
@@ -258,7 +254,6 @@ public class RestService {
 		String message = null;
 		if (userMail != null) {
 			result = getDataStore().doesUserExist(userMail, user.password);
-			//boolean result = true;
 			if (result) {
 				result = getDataStore().editUser(userMail, user.newPassword, 1);
 
@@ -279,7 +274,6 @@ public class RestService {
 			message = "User name does not exist in context";
 		}
 
-		//System.out.println("user name: " + user.email + " pass:" + user.password + " user newpass:" + user.getNewPassword());
 		return new Result(result, message);
 	}
 
@@ -457,11 +451,17 @@ public class RestService {
 		return gson.toJson(jsonObject);
 	}
 
+	/**
+	 * Refactor name getTotalLiveStreamSize
+	 * only return totalLiveStreamSize
+	 * @return
+	 */
 	@GET
 	@Path("/getLiveClientsSize")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLiveClientsSize() 
 	{
+		//TODO: total connection size should be removed because it only shows rtmp clients
 		int totalConnectionSize = getApplication().getTotalConnectionSize();
 		int totalLiveStreamSize = getApplication().getTotalLiveStreamSize();
 		JsonObject jsonObject = new JsonObject();
@@ -479,6 +479,12 @@ public class RestService {
 		return gson.toJson(info);
 	}
 
+	/**
+	 * Refactor remove this function and use ProxyServlet to get this info
+	 * Before deleting check web panel does not use it
+	 * @param name
+	 * @return
+	 */
 	@GET
 	@Path("/getAppLiveStreams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -487,6 +493,13 @@ public class RestService {
 		return gson.toJson(appLiveStreams);
 	}
 
+
+	/**
+	 * Refactor remove this function and use ProxyServlet to get this info
+	 * Before deleting check web panel does not use it
+	 * @param name
+	 * @return
+	 */
 	@GET
 	@Path("/getAppVoDStreams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -495,6 +508,12 @@ public class RestService {
 		return gson.toJson(appLiveStreams);
 	}
 
+	/**
+	 * Refactor remove this function and use ProxyServlet to get this info
+	 * Before deleting check web panel does not use it
+	 * @param name
+	 * @return
+	 */
 	@POST
 	@Path("/deleteVoDStream/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -502,8 +521,6 @@ public class RestService {
 		boolean deleteVoDStream = getApplication().deleteVoDStream(name, streamName);
 		return gson.toJson(new Result(deleteVoDStream));
 	}
-
-
 
 
 	@POST
@@ -586,9 +603,6 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
 	{
-
-		//TODO: Get bean from app context not read file
-
 		PreferenceStore store = new PreferenceStore("red5-web.properties");
 		store.setFullPath("webapps/"+appname+"/WEB-INF/red5-web.properties");
 		AppSettingsModel appSettings = new AppSettingsModel();

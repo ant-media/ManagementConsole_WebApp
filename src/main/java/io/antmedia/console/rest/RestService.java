@@ -525,7 +525,8 @@ public class RestService {
 		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.isHlsMuxingEnabled()));
 		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.isAcceptOnlyStreamsInDataStore()));
 		store.put("settings.objectDetectionEnabled", String.valueOf(appsettings.isObjectDetectionEnabled()));
-
+		store.put("settings.tokenControlEnabled", String.valueOf(appsettings.isTokenControlEnabled()));
+		
 		if (appsettings.getVodFolder() == null) {
 			store.put("settings.vodFolder", "");
 		}else {

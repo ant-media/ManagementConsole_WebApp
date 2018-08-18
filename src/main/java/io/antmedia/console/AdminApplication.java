@@ -117,7 +117,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		for (String name : names) {
 			IScope scope = root.getScope(name);
 			if (scope != null) {
-				//logger.info("name of the scope: " + );
 				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
 				if (adapter instanceof AntMediaApplicationAdapter) 
 				{
@@ -134,15 +133,17 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	public List<ApplicationInfo> getApplicationInfo() {
 		List<String> appNames = getApplications();
 		List<ApplicationInfo> appsInfo = new ArrayList<>();
-		IScope root = getRootScope();
 		for (String name : appNames) {
 			if (name.equals(APP_NAME)) {
 				continue;
 			}
 			ApplicationInfo info = new ApplicationInfo();
 			info.name = name;
+			//TODO: get live stream count from database
 			info.liveStreamCount = getRootScope().getScope(name).getBasicScopeNames(ScopeType.BROADCAST).size();
+			//TODO: should return vod in database
 			info.vodCount = getVoDCount(name);
+			
 			info.storage = getStorage(name);
 			appsInfo.add(info);
 		}
@@ -155,28 +156,32 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return FileUtils.sizeOfDirectory(appFolder);
 	}
 
-	private int getVoDCount(String name) {
-		String[] voDFiles = getVoDFiles(name);
-		int fileCount = 0;
-		if (voDFiles != null) {
-			fileCount = voDFiles.length;
-		}
-		return fileCount;
-	}
+	private int getVoDCount(String appName) {
 
-	private String[] getVoDFiles(String name) {
-		File appFolder = new File("webapps/"+name+"/streams");
-		if (appFolder.exists()) {
-			return appFolder.list(new FilenameFilter() {
 
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.endsWith(".mp4") || name.endsWith(".flv") || name.endsWith(".mkv");
+		IScope root = getRootScope();
+		java.util.Set<String> names = root.getScopeNames();
+		int size = 0;
+		for (String name : names) {
+
+			IScope scope = root.getScope(name);
+
+			if (scope != null && appName.equals(scope.getName())){
+				//logger.info("name of the scope:{} ", scope.getName() );
+
+				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
+				if (adapter instanceof AntMediaApplicationAdapter) 
+				{
+					IDataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
+					if (dataStore != null) {
+						size =  (int) dataStore.getTotalVodNumber();
+					}
 				}
-			});
+			}
 		}
-		return null;
+		return size;
 	}
+
 
 
 
@@ -194,16 +199,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return broadcastInfoList;
 	}
 
-	public List<BroadcastInfo> getAppVoDStreams(String name) {
-		String[] voDFiles = getVoDFiles(name);
-		List<BroadcastInfo> vodFileList = new ArrayList<>();
-		if (voDFiles != null) {
-			for (String vodName : voDFiles) {
-				vodFileList.add(new BroadcastInfo(vodName, 0));
-			}
-		}
-		return vodFileList;
-	}
 
 	public boolean deleteVoDStream(String appname, String streamName) {
 		File vodStream = new File("webapps/"+appname+"/streams/"+ streamName);
@@ -295,7 +290,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		IScope root = ScopeUtils.findRoot(scope);
 		return getScopes(root, scopeName);
 	}
-	
+
 	@Nullable
 	private ApplicationContext getAppContext() {
 		if (servletContext != null) {

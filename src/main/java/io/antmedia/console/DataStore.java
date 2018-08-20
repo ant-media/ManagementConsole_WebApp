@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -17,14 +18,15 @@ import com.google.gson.GsonBuilder;
 
 import io.antmedia.console.rest.ClusterNode;
 import io.antmedia.rest.model.User;
+import io.antmedia.rest.model.UserType;
 import kotlin.jvm.functions.Function1;
 
 
 public class DataStore {
 
-	public final static String SERVER_STORAGE_FILE = "server.db";
-	public final static String SERVER_STORAGE_MAP_NAME = "serverdb";
-	public final static String CLUSTER_STORAGE_MAP_NAME = "clusterdb";
+	public static final  String SERVER_STORAGE_FILE = "server.db";
+	public static final  String SERVER_STORAGE_MAP_NAME = "serverdb";
+	public static final  String CLUSTER_STORAGE_MAP_NAME = "clusterdb";
 	
 	private DB db;
 	private HTreeMap<String, String> userMap;
@@ -49,10 +51,10 @@ public class DataStore {
 	}
 
 
-	public boolean addUser(String username, String password, Integer userType) {
+	public boolean addUser(String username, String password, UserType userType) {
 
 		boolean result = false;
-		if (username != null && password != null && userType != null && (userType == 0  || userType == 1)) {
+		if (username != null && password != null && userType != null) {
 			try {
 				if (!userMap.containsKey(username)) 
 				{
@@ -62,20 +64,20 @@ public class DataStore {
 					result = true;
 				}
 				else {
-					logger.warn("user with " + username + " already exist");
+					logger.warn("user with {} already exist", username);
 				}
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+				logger.error(ExceptionUtils.getStackTrace(e));
 				result = false;
 			}
 		}
 		return result;
 	}
 
-	public boolean editUser(String username, String password, Integer userType) {
+	public boolean editUser(String username, String password, UserType userType) {
 		boolean result = false;
-		if (username != null && password != null && userType != null && (userType == 0 || userType == 1))  {
+		if (username != null && password != null && userType != null)  {
 			try {
 				if (userMap.containsKey(username)) {
 					User user = new User(username, password, userType);
@@ -120,14 +122,13 @@ public class DataStore {
 				if (userMap.containsKey(username)) {
 					String value = userMap.get(username);
 					User user = gson.fromJson(value, User.class);
-					if (user.password.equals(password)) {
+					if (user.getPassword().equals(password)) {
 						result = true;
 					}
 				}
 			}
 			catch (Exception e) {
-				result = false;
-				e.printStackTrace();
+				logger.error(ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return result;
@@ -143,7 +144,7 @@ public class DataStore {
 				}
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+				logger.error(ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return null;

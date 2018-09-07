@@ -3,7 +3,7 @@ package io.antmedia.console.datastore;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.antmedia.rest.model.ClusterNode;
+import io.antmedia.cluster.ClusterNode;
 import io.antmedia.rest.model.User;
 
 

@@ -21,9 +21,9 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
+import io.antmedia.cluster.ClusterNode;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
-import io.antmedia.rest.model.ClusterNode;
 import io.antmedia.rest.model.Result;
 
 @Component

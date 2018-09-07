@@ -1,7 +1,6 @@
 package io.antmedia.console;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -27,12 +26,12 @@ import org.red5.server.api.scope.ScopeType;
 import org.red5.server.util.ScopeUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
+import io.antmedia.ClusterProvider;
+import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.datastore.DataStoreFactory;
-import io.antmedia.EncoderSettings;
 import io.antmedia.datastore.db.IDataStore;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.security.AcceptOnlyStreamsInDataStore;
@@ -81,6 +80,10 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			@Override
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
 				dataStoreFactory.getDataStore().registerAsNode();
+				
+				IClusterNotifier cluster = ClusterProvider.getCluster(app.getContext().getApplicationContext());
+				cluster.addMembers(dataStoreFactory.getDataStore().getClusterNodes());
+
 			}
 		});
 		

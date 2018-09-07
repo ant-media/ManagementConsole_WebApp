@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import io.antmedia.rest.model.ClusterNode;
+import io.antmedia.cluster.ClusterNode;
 import io.antmedia.rest.model.User;
 import kotlin.jvm.functions.Function1;
 

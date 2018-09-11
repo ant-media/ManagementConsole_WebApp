@@ -263,6 +263,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			appSettings.setHlsTime(String.valueOf(settingsModel.getHlsTime()));
 			appSettings.setHlsPlayListType(settingsModel.getHlsPlayListType());
 			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.isAcceptOnlyStreamsInDataStore());
+			appSettings.setTokenControlEnabled(settingsModel.isTokenControlEnabled());
 
 
 			appSettings.setAdaptiveResolutionList(settingsModel.getEncoderSettings());

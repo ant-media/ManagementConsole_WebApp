@@ -529,7 +529,8 @@ public class RestService {
 		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.isHlsMuxingEnabled()));
 		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.isAcceptOnlyStreamsInDataStore()));
 		store.put("settings.objectDetectionEnabled", String.valueOf(appsettings.isObjectDetectionEnabled()));
-
+		store.put("settings.tokenControlEnabled", String.valueOf(appsettings.isTokenControlEnabled()));
+		
 		if (appsettings.getVodFolder() == null) {
 			store.put("settings.vodFolder", "");
 		}else {
@@ -627,6 +628,7 @@ public class RestService {
 		appSettings.setPeriscopeClientSecret(store.get("periscope.clientSecret"));
 		appSettings.setAcceptOnlyStreamsInDataStore(Boolean.valueOf(store.get(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE)));
 		appSettings.setVodFolder(store.get("settings.vodFolder"));
+		appSettings.setTokenControlEnabled(Boolean.parseBoolean(store.get("settings.tokenControlEnabled")));
 
 		appSettings.setEncoderSettings(io.antmedia.AppSettings.getEncoderSettingsList(store.get("settings.encoderSettingsString")));
 

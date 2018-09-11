@@ -41,6 +41,7 @@ import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
+import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.ServerSettings;
 
 @Component
@@ -102,8 +103,8 @@ public class RestService {
 		//TODO: check that request is coming from authorized user
 		boolean result = false;
 		int errorId = -1;
-		if (user != null && !getDataStore().doesUsernameExist(user.email)) {
-			result = getDataStore().addUser(user.email, user.password, 1);
+		if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
+			result = getDataStore().addUser(user.getEmail(), user.getPassword(), UserType.ADMIN);
 		}
 		else {
 			if (user == null) {
@@ -129,7 +130,7 @@ public class RestService {
 		boolean result = false;
 		int errorId = -1;
 		if (getDataStore().getNumberOfUserRecords() == 0) {
-			result = getDataStore().addUser(user.email, user.password, 1);
+			result = getDataStore().addUser(user.getEmail(), user.getPassword(), UserType.ADMIN);
 		}
 
 		Result operationResult = new Result(result);
@@ -230,12 +231,12 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result authenticateUser(User user) {
-		boolean result = getDataStore().doesUserExist(user.email, user.password);
+		boolean result = getDataStore().doesUserExist(user.getEmail(), user.getPassword());
 		if (result) {
 			HttpSession session = servletRequest.getSession();
 			session.setAttribute(IS_AUTHENTICATED, true);
-			session.setAttribute(USER_EMAIL, user.email);
-			session.setAttribute(USER_PASSWORD, user.password);
+			session.setAttribute(USER_EMAIL, user.getEmail());
+			session.setAttribute(USER_PASSWORD, user.getPassword());
 		}
 		return new Result(result);
 	}
@@ -257,16 +258,16 @@ public class RestService {
 		boolean result = false;
 		String message = null;
 		if (userMail != null) {
-			result = getDataStore().doesUserExist(userMail, user.password);
+			result = getDataStore().doesUserExist(userMail, user.getPassword());
 			if (result) {
-				result = getDataStore().editUser(userMail, user.newPassword, 1);
+				result = getDataStore().editUser(userMail, user.getNewPassword(), UserType.ADMIN);
 
 				if (result) {
 					HttpSession session = servletRequest.getSession();
 					if (session != null) {
 						session.setAttribute(IS_AUTHENTICATED, true);
 						session.setAttribute(USER_EMAIL, userMail);
-						session.setAttribute(USER_PASSWORD, user.newPassword);
+						session.setAttribute(USER_PASSWORD, user.getNewPassword());
 					}
 				}
 			}
@@ -465,7 +466,6 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLiveClientsSize() 
 	{
-		//TODO: total connection size should be removed because it only shows rtmp clients
 		int totalConnectionSize = getApplication().getTotalConnectionSize();
 		int totalLiveStreamSize = getApplication().getTotalLiveStreamSize();
 		JsonObject jsonObject = new JsonObject();

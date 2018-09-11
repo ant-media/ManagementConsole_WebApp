@@ -67,8 +67,8 @@ public class RestServiceHttpTest {
 					.build();
 			
 			User user = new User();
-			user.email = "deneme@deneme.com";  // user email is fetched from server session context
-			user.password = "1234567";
+			user.setEmail("deneme@deneme.com");  // user email is fetched from server session context
+			user.setPassword("1234567");
 			
 			HttpUriRequest post = RequestBuilder.post()
 					.setUri(authURL)
@@ -97,9 +97,9 @@ public class RestServiceHttpTest {
 					.build();
 
 			user = new User();
-			user.email = "nope";  // user email is fetched from server session context
-			user.password = "1234567";
-			user.newPassword = "7654321";
+			user.setEmail("nope");  // user email is fetched from server session context
+			user.setPassword("1234567");
+			user.setNewPassword("7654321");
 
 
 			 post = RequestBuilder.post()
@@ -122,8 +122,8 @@ public class RestServiceHttpTest {
 			
 			
 			//change password again
-			user.password = "7654321";
-			user.newPassword = "1234567";
+			user.setPassword("7654321");
+			user.setNewPassword("1234567");
 			
 			post = RequestBuilder.post()
 					.setUri(url)

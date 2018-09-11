@@ -17,6 +17,7 @@ import io.antmedia.console.datastore.MapDBStore;
 import io.antmedia.console.rest.RestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
+import io.antmedia.rest.model.UserType;
 
 public class RestServiceTest {
 
@@ -58,23 +59,23 @@ public class RestServiceTest {
 		Integer userType = 0;
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 1000000000);
-		User user = new User(userName, password, userType);
+		User user = new User(userName, password, UserType.ADMIN);
 		Result result = restService.addUser(user);
 
 		// System.out.println("error id: " + result.errorId);
 		assertTrue(result.isSuccess());
 
-		user = new User(userName, "second pass", userType);
+		user = new User(userName, "second pass", UserType.ADMIN);
 
-		user.password = "second pass";
-		user.userType = 1;
+		user.setPassword("second pass");
+		user.setUserType(UserType.ADMIN);
 		result = restService.addUser(user);
 
 		assertFalse(result.isSuccess());
 
-		user.email = "ksks" + (int) (Math.random() * 100000);
-		user.password = "second pass";
-		user.userType = 6;
+		user.setEmail("ksks" + (int) (Math.random() * 100000));
+		user.setPassword("second pass");
+		user.setUserType(UserType.ADMIN);
 		result = restService.addUser(user);
 		// should pass because user type is not important right now
 		assertTrue(result.isSuccess());
@@ -132,35 +133,35 @@ public class RestServiceTest {
 		Integer userType = 1;
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 100000);
-		User user = new User(userName, password, userType);
+		User user = new User(userName, password, UserType.ADMIN);
 
 		Result result = restService.addInitialUser(user);
 		assertTrue(result.isSuccess());
-		assertEquals(password, dbStore.getUser(userName).password);
-		assertEquals((int) userType, dbStore.getUser(userName).userType);
+		assertEquals(password, dbStore.getUser(userName).getPassword());
+		assertEquals((int) userType, dbStore.getUser(userName).getUserType());
 
 		// TODO: open below test
 
-		user.newPassword = "password2";
+		user.setNewPassword("password2");
 		Result result2 = restService.changeUserPasswordInternal(userName, user);
 		assertTrue(result2.isSuccess());
 
-		assertEquals(user.newPassword, dbStore.getUser(userName).password);
+		assertEquals(user.getNewPassword(), dbStore.getUser(userName).getPassword());
 		// assertEquals((int)userType2, dbStore.getUser(userName).userType);
 
-		user.password = user.newPassword;
-		user.newPassword = "12345";
+		user.setPassword(user.getNewPassword());
+		user.setNewPassword("12345");
 		result2 = restService.changeUserPasswordInternal(userName, user);
 		assertTrue(result2.isSuccess());
 
-		assertEquals(user.newPassword, dbStore.getUser(userName).password);
+		assertEquals(user.getNewPassword(), dbStore.getUser(userName).getPassword());
 
-		user.password = user.newPassword;
-		user.newPassword = "12345678";
+		user.setPassword(user.getNewPassword());
+		user.setNewPassword("12345678");
 		result2 = restService.changeUserPasswordInternal(userName, user);
 		assertTrue(result2.isSuccess());
 
-		assertEquals(user.newPassword, dbStore.getUser(userName).password);
+		assertEquals(user.getNewPassword(), dbStore.getUser(userName).getPassword());
 
 		/*
 		 * result = restService.editUser("notexist", password2, userType2);
@@ -179,7 +180,7 @@ public class RestServiceTest {
 		Integer userType = 0;
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 100000);
-		User user = new User(userName, password, userType);
+		User user = new User(userName, password, UserType.ADMIN);
 		Result result = restService.addUser(user);
 		assertTrue(result.isSuccess());
 		assertNotNull(dbStore.getUser(userName));
@@ -196,7 +197,7 @@ public class RestServiceTest {
 		Integer userType = 1;
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 100000);
-		User user = new User(userName, password, userType);
+		User user = new User(userName, password, UserType.ADMIN);
 		System.out.println("username: " + userName);
 		Result result = restService.addUser(user);
 		assertTrue(result.isSuccess());

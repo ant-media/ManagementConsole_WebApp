@@ -81,8 +81,8 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			public void execute(ISchedulingService service) throws CloneNotSupportedException {
 				dataStoreFactory.getDataStore().registerAsNode();
 				
-				IClusterNotifier cluster = ClusterProvider.getCluster(app.getContext().getApplicationContext());
-				cluster.addMembers(dataStoreFactory.getDataStore().getClusterNodes());
+				//IClusterNotifier cluster = ClusterProvider.getCluster(app.getContext().getApplicationContext());
+				//cluster.addMembers(dataStoreFactory.getDataStore().getClusterNodes());
 
 			}
 		});

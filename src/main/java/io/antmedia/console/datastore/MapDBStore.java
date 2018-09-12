@@ -17,6 +17,7 @@ import com.google.gson.GsonBuilder;
 
 import io.antmedia.cluster.ClusterNode;
 import io.antmedia.rest.model.User;
+import io.antmedia.rest.model.UserType;
 import kotlin.jvm.functions.Function1;
 
 
@@ -45,10 +46,10 @@ public class MapDBStore implements IDataStore {
 	}
 
 
-	public boolean addUser(String username, String password, Integer userType) {
+	public boolean addUser(String username, String password, UserType userType) {
 
 		boolean result = false;
-		if (username != null && password != null && userType != null && (userType == 0  || userType == 1)) {
+		if (username != null && password != null && userType != null) {
 			try {
 				if (!userMap.containsKey(username)) 
 				{
@@ -69,9 +70,9 @@ public class MapDBStore implements IDataStore {
 		return result;
 	}
 
-	public boolean editUser(String username, String password, Integer userType) {
+	public boolean editUser(String username, String password, UserType userType) {
 		boolean result = false;
-		if (username != null && password != null && userType != null && (userType == 0 || userType == 1))  {
+		if (username != null && password != null && userType != null)  {
 			try {
 				if (userMap.containsKey(username)) {
 					User user = new User(username, password, userType);
@@ -116,7 +117,7 @@ public class MapDBStore implements IDataStore {
 				if (userMap.containsKey(username)) {
 					String value = userMap.get(username);
 					User user = gson.fromJson(value, User.class);
-					if (user.password.equals(password)) {
+					if (user.getPassword().equals(password)) {
 						result = true;
 					}
 				}

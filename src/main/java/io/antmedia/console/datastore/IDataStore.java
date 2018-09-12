@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.antmedia.cluster.ClusterNode;
 import io.antmedia.rest.model.User;
+import io.antmedia.rest.model.UserType;
 
 
 public interface IDataStore {
@@ -13,9 +14,9 @@ public interface IDataStore {
 	public final static String SERVER_STORAGE_MAP_NAME = "serverdb";
 	public final static String CLUSTER_STORAGE_MAP_NAME = "clusterdb";
 
-	public boolean addUser(String username, String password, Integer userType);
+	public boolean addUser(String username, String password, UserType userType);
 
-	public boolean editUser(String username, String password, Integer userType);
+	public boolean editUser(String username, String password, UserType userType);
 
 	public boolean deleteUser(String username);
 	

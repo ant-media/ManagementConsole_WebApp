@@ -22,7 +22,8 @@ import io.antmedia.cluster.ClusterNode;
 import io.antmedia.console.SystemUtils;
 import io.antmedia.datastore.DBUtils;
 import io.antmedia.datastore.db.types.Broadcast;
-import io.antmedia.rest.model.User;;
+import io.antmedia.rest.model.User;
+import io.antmedia.rest.model.UserType;;
 
 public class MongoStore implements IDataStore {
 
@@ -51,10 +52,10 @@ public class MongoStore implements IDataStore {
 	}
 
 	@Override
-	public boolean addUser(String username, String password, Integer userType) {
+	public boolean addUser(String username, String password, UserType userType) {
 		boolean result = false;
 
-		if (username != null && password != null && userType != null && (userType == 0  || userType == 1)) {
+		if (username != null && password != null && userType != null) {
 			User existingUser = datastore.find(User.class).field("email").equal(username).get();
 			if (existingUser == null) 
 			{
@@ -70,7 +71,7 @@ public class MongoStore implements IDataStore {
 	}
 
 	@Override
-	public boolean editUser(String username, String password, Integer userType) {
+	public boolean editUser(String username, String password, UserType userType) {
 		try {
 			Query<User> query = datastore.createQuery(User.class).field("email").equal(username);
 			UpdateOperations<User> ops = datastore.createUpdateOperations(User.class).set("email", username)
@@ -109,7 +110,7 @@ public class MongoStore implements IDataStore {
 		User existingUser = datastore.find(User.class).field("email").equal(username).get();
 		if(existingUser != null)
 		{
-			return existingUser.password.contentEquals(password);
+			return existingUser.getPassword().contentEquals(password);
 		}
 		return false;
 	}

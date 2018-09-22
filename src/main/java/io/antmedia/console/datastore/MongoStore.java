@@ -39,8 +39,6 @@ public class MongoStore implements IDataStore {
 		//morphia.map(io.antmedia.rest.model.ClusterNode.class);
 		//morphia.map(io.antmedia.rest.model.User.class);
 		
-		System.out.println("host:"+dbHost+" user:"+dbUser+" pass:"+dbPassword);
-
 		List<MongoCredential> credentialList = new ArrayList<MongoCredential>();
 		credentialList.add(MongoCredential.createCredential(dbUser, dbName, dbPassword.toCharArray()));
 		//datastore = morphia.createDatastore(new MongoClient(new ServerAddress(dbHost), credentialList), dbName);

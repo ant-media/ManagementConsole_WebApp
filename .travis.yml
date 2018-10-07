@@ -1,0 +1,34 @@
+language: java
+sudo: false
+before_install:
+- openssl aes-256-cbc -k "$GPG_PASSPHRASE" -in codesigning.asc.enc -out codesigning.asc -d
+- gpg --fast-import codesigning.asc
+- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server-Common.git $TRAVIS_BRANCH  |
+  wc -l) == "1" ];  then echo " $TRAVIS_BRANCH branch found";  git clone --depth=1
+  -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server-Common.git;  else
+  echo "branch not found"; git clone --depth=1 https://github.com/ant-media/Ant-Media-Server-Common.git;  fi)
+- cd Ant-Media-Server-Common
+- mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true --quiet
+- cd ..
+
+install:
+- mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true -B -V --quiet
+script: 
+cache:
+  directories:
+  - "$HOME/.m2/repository"
+deploy:
+- provider: script
+  script: mvn deploy -DskipTests --quiet --settings mvn-settings.xml
+  skip_cleanup: true
+  on:
+    tags: false
+    all_branches: true
+    condition: $(mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}'
+      --non-recursive exec:exec)  = *"SNAPSHOT"*
+- provider: script
+  script: mvn deploy -DskipTests --quiet --settings mvn-settings.xml
+  skip_cleanup: true
+  on:
+    tags: true
+    branch: master

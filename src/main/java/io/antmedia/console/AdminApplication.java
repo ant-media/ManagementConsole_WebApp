@@ -1,7 +1,6 @@
 package io.antmedia.console;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -9,7 +8,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
@@ -19,19 +17,21 @@ import org.apache.commons.io.FileUtils;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
 import org.red5.server.api.IConnection;
+import org.red5.server.api.scheduling.IScheduledJob;
+import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.ScopeType;
-import org.red5.server.api.statistics.IScopeStatistics;
 //import org.slf4j.Logger;
 import org.red5.server.util.ScopeUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
+import io.antmedia.ClusterProvider;
+import io.antmedia.cluster.IClusterNotifier;
+import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.datastore.db.IDataStore;
 import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.security.AcceptOnlyStreamsInDataStore;
@@ -52,6 +52,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 
 	public static final String APP_NAME = "ConsoleApp";
+	private DataStoreFactory dataStoreFactory;
 
 	public static class ApplicationInfo {
 		public String name;
@@ -72,6 +73,23 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	private IScope rootScope;
 	private ServerSettings serverSettings;
 
+
+	public boolean appStart(IScope app) {
+
+		String scheduledJobName = addScheduledOnceJob(0, new IScheduledJob() {
+			@Override
+			public void execute(ISchedulingService service) throws CloneNotSupportedException {
+				dataStoreFactory.getDataStore().registerAsNode();
+				
+				//IClusterNotifier cluster = ClusterProvider.getCluster(app.getContext().getApplicationContext());
+				//cluster.addMembers(dataStoreFactory.getDataStore().getClusterNodes());
+
+			}
+		});
+		
+		return super.appStart(app);
+	}
+	
 	/** {@inheritDoc} */
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
@@ -319,4 +337,11 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return null;
 	}
 
+	public DataStoreFactory getDataStoreFactory() {
+		return dataStoreFactory;
+	}
+
+	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
+		this.dataStoreFactory = dataStoreFactory;
+	}
 }

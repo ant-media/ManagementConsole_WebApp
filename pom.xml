@@ -3,15 +3,14 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.5.0</version>
-
+		<version>1.5.1-SNAPSHOT</version>
 	</parent>
 	
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.antmedia.app</groupId>
 	<artifactId>ConsoleApp</artifactId>
 	<packaging>war</packaging>
-	<version>1.5.0-SNAPSHOT</version>
+	<version>${consoleapp.version}</version>
 
 	<name>Console Maven Webapp</name>
 	<url>http://maven.apache.org</url>
@@ -203,7 +202,6 @@
 			<artifactId>gson</artifactId>
 			<version>2.8.0</version>
 		</dependency>
-		
 	</dependencies>
 	<description>Backend for the Web Management Console</description>
 	<organization>

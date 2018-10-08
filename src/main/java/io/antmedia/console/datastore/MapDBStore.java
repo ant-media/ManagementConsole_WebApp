@@ -1,11 +1,10 @@
-package io.antmedia.console;
+package io.antmedia.console.datastore;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -16,26 +15,22 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import io.antmedia.console.rest.ClusterNode;
+import io.antmedia.cluster.ClusterNode;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
 import kotlin.jvm.functions.Function1;
 
 
-public class DataStore {
+public class MapDBStore implements IDataStore {
 
-	public static final  String SERVER_STORAGE_FILE = "server.db";
-	public static final  String SERVER_STORAGE_MAP_NAME = "serverdb";
-	public static final  String CLUSTER_STORAGE_MAP_NAME = "clusterdb";
-	
 	private DB db;
 	private HTreeMap<String, String> userMap;
 	private HTreeMap<String, String> nodeMap;
 	private Gson gson;
 	
-	protected static Logger logger = LoggerFactory.getLogger(DataStore.class);
+	protected static Logger logger = LoggerFactory.getLogger(MapDBStore.class);
 
-	public DataStore() {
+	public MapDBStore() {
 		db = DBMaker.fileDB(SERVER_STORAGE_FILE).transactionEnable().make();
 		userMap = db.hashMap(SERVER_STORAGE_MAP_NAME)
 				.keySerializer(Serializer.STRING)
@@ -64,11 +59,11 @@ public class DataStore {
 					result = true;
 				}
 				else {
-					logger.warn("user with {} already exist", username);
+					logger.warn("user with " + username + " already exist");
 				}
 			}
 			catch (Exception e) {
-				logger.error(ExceptionUtils.getStackTrace(e));
+				e.printStackTrace();
 				result = false;
 			}
 		}
@@ -128,7 +123,8 @@ public class DataStore {
 				}
 			}
 			catch (Exception e) {
-				logger.error(ExceptionUtils.getStackTrace(e));
+				result = false;
+				e.printStackTrace();
 			}
 		}
 		return result;
@@ -144,7 +140,7 @@ public class DataStore {
 				}
 			}
 			catch (Exception e) {
-				logger.error(ExceptionUtils.getStackTrace(e));
+				e.printStackTrace();
 			}
 		}
 		return null;
@@ -207,6 +203,11 @@ public class DataStore {
 		}
 		
 		return false;
+	}
+
+	@Override
+	public boolean registerAsNode() {
+		return true;
 	}
 
 }

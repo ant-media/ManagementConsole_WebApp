@@ -1,14 +1,11 @@
 package io.antmedia.console.rest;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -24,7 +21,9 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
-import io.antmedia.console.DataStore;
+import io.antmedia.cluster.ClusterNode;
+import io.antmedia.console.datastore.DataStoreFactory;
+import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.rest.model.Result;
 
 @Component
@@ -42,7 +41,8 @@ public class ClusterRestService {
 
 	protected static Logger logger = LoggerFactory.getLogger(ClusterRestService.class);
 	
-	private DataStore dataStore;
+	private IDataStore dataStore;
+	private DataStoreFactory dataStoreFactory;
 	
 	@GET
 	@Path("/nodes")
@@ -114,11 +114,23 @@ public class ClusterRestService {
 		return scope;
 	}
 
-	public DataStore getDataStore() {
+	public IDataStore getDataStore() {
 		if (dataStore == null) {
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			dataStore = (DataStore)ctxt.getBean("dataStore");
+			dataStore = getDataStoreFactory().getDataStore();
 		}
 		return dataStore;
+	}
+	
+	public DataStoreFactory getDataStoreFactory() {
+		if(dataStoreFactory == null)
+		{
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+		}
+		return dataStoreFactory;
+	}
+
+	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
+		this.dataStoreFactory = dataStoreFactory;
 	}
 }

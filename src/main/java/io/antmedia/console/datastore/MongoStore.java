@@ -18,8 +18,8 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteResult;
 
+import io.antmedia.SystemUtils;
 import io.antmedia.cluster.ClusterNode;
-import io.antmedia.console.SystemUtils;
 import io.antmedia.datastore.DBUtils;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.rest.model.User;

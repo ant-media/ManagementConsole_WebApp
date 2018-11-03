@@ -70,7 +70,7 @@ import java.lang.reflect.Method;
  */
 public final class SystemUtils {
 
-	//private static Logger log = Red5LoggerFactory.getLogger(SystemUtils.class, "SystemUtils");
+	//private static final Logger log = Red5LoggerFactory.getLogger(SystemUtils.class, "SystemUtils");
 
 	/**
 	 * Current SystemUtils version.

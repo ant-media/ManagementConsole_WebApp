@@ -1,5 +1,6 @@
 language: java
-sudo: false
+node_js: "8.10.0"
+sudo: required
 before_install:
 - openssl aes-256-cbc -k "$GPG_PASSPHRASE" -in codesigning.asc.enc -out codesigning.asc -d
 - gpg --fast-import codesigning.asc
@@ -10,6 +11,14 @@ before_install:
 - cd Ant-Media-Server-Common
 - mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true --quiet
 - cd ..
+- npm install -g @angular/cli@6.0.5
+- sudo git clone --depth=1 https://github.com/ant-media/ManagementConsole_AngularApp.git
+- sudo chown -R `whoami` ./ManagementConsole_AngularApp
+- cd ManagementConsole_AngularApp
+- npm install
+- ng build --prod
+- cd ..
+- sudo cp -a ./ManagementConsole_AngularApp/dist/. ./src/main/server/webapp/
 
 install:
 - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true -B -V --quiet

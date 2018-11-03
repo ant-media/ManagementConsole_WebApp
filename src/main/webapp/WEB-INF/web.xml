@@ -6,7 +6,7 @@
 
 	<!-- The display-name element contains a short name that is intended to be 
 		displayed by tools. The display name need not be unique. -->
-	<display-name>ConsoleApp</display-name>
+	<display-name>root</display-name>
 
 	<!-- The context-param element contains the declaration of a web application's 
 		servlet context initialization parameters. -->

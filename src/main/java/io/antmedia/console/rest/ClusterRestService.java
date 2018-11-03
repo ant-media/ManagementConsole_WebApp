@@ -40,7 +40,7 @@ public class ClusterRestService {
 
 	private AntMediaApplicationAdapter appInstance;
 
-	protected static Logger logger = LoggerFactory.getLogger(ClusterRestService.class);
+	protected static final Logger logger = LoggerFactory.getLogger(ClusterRestService.class);
 	
 	private DataStore dataStore;
 	

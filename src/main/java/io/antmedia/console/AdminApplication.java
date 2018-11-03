@@ -48,7 +48,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	private ServletContext servletContext;
 	private ApplicationContext appCtx;
 
-	//private static Logger log = Red5LoggerFactory.getLogger(Application.class);
+	//private static final Logger log = Red5LoggerFactory.getLogger(Application.class);
 
 
 	public static final String APP_NAME = "ConsoleApp";

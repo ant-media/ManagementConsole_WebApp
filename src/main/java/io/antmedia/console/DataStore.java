@@ -33,7 +33,7 @@ public class DataStore {
 	private HTreeMap<String, String> nodeMap;
 	private Gson gson;
 	
-	protected static Logger logger = LoggerFactory.getLogger(DataStore.class);
+	protected static final Logger logger = LoggerFactory.getLogger(DataStore.class);
 
 	public DataStore() {
 		db = DBMaker.fileDB(SERVER_STORAGE_FILE).transactionEnable().make();

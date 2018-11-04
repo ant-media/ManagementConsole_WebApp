@@ -13,7 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.antmedia.console.DataStore;
+import io.antmedia.console.datastore.MapDBStore;
 import io.antmedia.console.rest.RestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
@@ -22,7 +22,7 @@ import io.antmedia.rest.model.UserType;
 public class RestServiceTest {
 
 	private RestService restService;
-	private DataStore dbStore;
+	private MapDBStore dbStore;
 
 	@Before
 	public void before() {
@@ -35,7 +35,7 @@ public class RestServiceTest {
 			}
 		}
 		restService = new RestService();
-		dbStore = new DataStore();
+		dbStore = new MapDBStore();
 		restService.setDataStore(dbStore);
 	}
 

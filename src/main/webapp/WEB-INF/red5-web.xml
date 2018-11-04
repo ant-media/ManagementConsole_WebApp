@@ -33,17 +33,24 @@ xsi:schemaLocation="http://www.springframework.org/schema/beans
 		<property name="contextPath" value="${webapp.contextPath}" />
 		<property name="virtualHosts" value="${webapp.virtualHosts}" />
 	</bean>
+	
+	<bean id="dataStoreFactory" class="io.antmedia.console.datastore.DataStoreFactory">
+		<property name="appName" value="${db.app.name}" />
+		<property name="dbName" value="${db.name}" />
+		<property name="dbType" value="${db.type}" />
+		<property name="dbHost" value="${db.host}" />
+		<property name="dbUser" value="${db.user}" />
+		<property name="dbPassword" value="${db.password}" />
+	</bean>
 
 	<!--
 	Defines the web handler which acts as an applications endpoint
 	-->
-	<bean id="web.handler" class="io.antmedia.console.AdminApplication" />
+	<bean id="web.handler" class="io.antmedia.console.AdminApplication" >
+		<property name="dataStoreFactory" ref="dataStoreFactory" />
+	</bean>
 	
 		
 	<context:component-scan base-package="io.antmedia.console.rest" />
-	
-	<bean id="dataStore" class="io.antmedia.console.DataStore"/>
-	
-	
  
 </beans>

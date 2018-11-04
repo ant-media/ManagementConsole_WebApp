@@ -24,7 +24,7 @@ import org.junit.Test;
 import com.google.gson.Gson;
 
 import io.antmedia.api.periscope.UserEndpoints;
-import io.antmedia.console.DataStore;
+import io.antmedia.console.datastore.MapDBStore;
 import io.antmedia.console.rest.RestService;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.rest.model.Result;

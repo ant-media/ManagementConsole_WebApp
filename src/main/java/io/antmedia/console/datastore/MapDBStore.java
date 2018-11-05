@@ -25,7 +25,6 @@ public class MapDBStore implements IDataStore {
 
 	private DB db;
 	private HTreeMap<String, String> userMap;
-	private HTreeMap<String, String> nodeMap;
 	private Gson gson;
 	
 	protected static Logger logger = LoggerFactory.getLogger(MapDBStore.class);
@@ -33,11 +32,6 @@ public class MapDBStore implements IDataStore {
 	public MapDBStore() {
 		db = DBMaker.fileDB(SERVER_STORAGE_FILE).transactionEnable().make();
 		userMap = db.hashMap(SERVER_STORAGE_MAP_NAME)
-				.keySerializer(Serializer.STRING)
-				.valueSerializer(Serializer.STRING)
-				.counterEnable()
-				.createOrOpen();
-		nodeMap = db.hashMap(CLUSTER_STORAGE_MAP_NAME)
 				.keySerializer(Serializer.STRING)
 				.valueSerializer(Serializer.STRING)
 				.counterEnable()
@@ -159,55 +153,4 @@ public class MapDBStore implements IDataStore {
 	public int getNumberOfUserRecords() {
 		return userMap.size();
 	}
-
-
-	public List<ClusterNode> getClusterNodes() {
-		ArrayList<ClusterNode> list = new ArrayList<>();
-		nodeMap.forEach((k,v)->list.add(gson.fromJson(v, ClusterNode.class)));
-		return list;
-	}
-
-
-	public ClusterNode getClusterNode(String nodeId) {
-		ClusterNode node = null;
-		if (nodeMap.containsKey(nodeId)) {
-			node = gson.fromJson(nodeMap.get(nodeId), ClusterNode.class);
-		}
-		return node;
-	}
-
-
-	public boolean addNode(ClusterNode node) {
-		nodeMap.put(node.getId(), gson.toJson(node));
-		db.commit();
-		return true;
-	}
-
-
-	public boolean updateNode(String nodeId, ClusterNode node) {
-		if (nodeMap.containsKey(nodeId)) {
-			nodeMap.put(nodeId, gson.toJson(node));
-			db.commit();
-			return true;
-		}
-		
-		return false;
-	}
-
-
-	public boolean deleteNode(String nodeId) {
-		if (nodeMap.containsKey(nodeId)) {
-			nodeMap.remove(nodeId);
-			db.commit();
-			return true;
-		}
-		
-		return false;
-	}
-
-	@Override
-	public boolean registerAsNode() {
-		return true;
-	}
-
 }

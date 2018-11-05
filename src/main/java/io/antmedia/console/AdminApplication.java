@@ -17,20 +17,15 @@ import org.apache.commons.io.FileUtils;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
 import org.red5.server.api.IConnection;
-import org.red5.server.api.scheduling.IScheduledJob;
-import org.red5.server.api.scheduling.ISchedulingService;
 import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.ScopeType;
-//import org.slf4j.Logger;
 import org.red5.server.util.ScopeUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.ClusterProvider;
-import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.datastore.db.IDataStore;
 import io.antmedia.rest.model.AppSettingsModel;
@@ -75,18 +70,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 
 	public boolean appStart(IScope app) {
-
-		String scheduledJobName = addScheduledOnceJob(0, new IScheduledJob() {
-			@Override
-			public void execute(ISchedulingService service) throws CloneNotSupportedException {
-				dataStoreFactory.getDataStore().registerAsNode();
-				
-				//IClusterNotifier cluster = ClusterProvider.getCluster(app.getContext().getApplicationContext());
-				//cluster.addMembers(dataStoreFactory.getDataStore().getClusterNodes());
-
-			}
-		});
-		
 		return super.appStart(app);
 	}
 	

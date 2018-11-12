@@ -18,8 +18,8 @@ import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteResult;
 
+import io.antmedia.SystemUtils;
 import io.antmedia.cluster.ClusterNode;
-import io.antmedia.console.SystemUtils;
 import io.antmedia.datastore.DBUtils;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.rest.model.User;
@@ -28,7 +28,7 @@ import io.antmedia.rest.model.UserType;;
 public class MongoStore implements IDataStore {
 
 	private Morphia morphia;
-	private Datastore datastore, clusterDatastore;
+	private Datastore datastore;
 
 	protected static Logger logger = LoggerFactory.getLogger(MongoStore.class);
 
@@ -36,17 +36,13 @@ public class MongoStore implements IDataStore {
 		String dbName = SERVER_STORAGE_MAP_NAME;
 
 		morphia = new Morphia();
-		//morphia.map(io.antmedia.rest.model.ClusterNode.class);
 		//morphia.map(io.antmedia.rest.model.User.class);
 		
 		List<MongoCredential> credentialList = new ArrayList<MongoCredential>();
 		credentialList.add(MongoCredential.createCredential(dbUser, dbName, dbPassword.toCharArray()));
 		//datastore = morphia.createDatastore(new MongoClient(new ServerAddress(dbHost), credentialList), dbName);
-		//clusterDatastore = morphia.createDatastore(new MongoClient(new ServerAddress(dbHost), credentialList), CLUSTER_STORAGE_MAP_NAME);
 		datastore = morphia.createDatastore(new MongoClient(dbHost), dbName);
-		clusterDatastore = morphia.createDatastore(new MongoClient(dbHost), CLUSTER_STORAGE_MAP_NAME);
 		datastore.ensureIndexes();
-		clusterDatastore.ensureIndexes();
 	}
 
 	@Override
@@ -132,58 +128,4 @@ public class MongoStore implements IDataStore {
 	public int getNumberOfUserRecords() {
 		return (int) datastore.getCount(User.class);
 	}
-
-	@Override
-	public List<ClusterNode> getClusterNodes() {
-		return clusterDatastore.find(ClusterNode.class).asList();
-	}
-
-	@Override
-	public ClusterNode getClusterNode(String nodeId) {
-		return clusterDatastore.find(ClusterNode.class).field("id").equal(nodeId).get();
-	}
-
-	@Override
-	public boolean addNode(ClusterNode node) {
-		clusterDatastore.save(node);
-		return true;
-	}
-
-	@Override
-	public boolean updateNode(String nodeId, ClusterNode node) {
-		try {
-			Query<ClusterNode> query = clusterDatastore.createQuery(ClusterNode.class).field("id").equal(nodeId);
-			UpdateOperations<ClusterNode> ops = clusterDatastore.createUpdateOperations(ClusterNode.class).set("status", "alive");
-			UpdateResults update = clusterDatastore.update(query, ops);
-			return update.getUpdatedCount() == 1;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;	
-	}
-
-	@Override
-	public boolean deleteNode(String nodeId) {
-		try {
-			Query<ClusterNode> query = clusterDatastore.createQuery(ClusterNode.class).field("id").equal(nodeId);
-			WriteResult delete = clusterDatastore.delete(query);
-			return delete.getN() == 1;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
-
-	@Override
-	public boolean registerAsNode() {
-		ClusterNode node = new ClusterNode(DBUtils.getHostAddress());
-		ClusterNode existingNode = clusterDatastore.find(ClusterNode.class).field("id").equal(node.getId()).get();
-		if(existingNode != null) {
-			return updateNode(node.getId(), node);
-		}		
-		else {
-			return addNode(node);
-		}
-	}
-
 }

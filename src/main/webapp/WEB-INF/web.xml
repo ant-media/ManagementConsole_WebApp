@@ -118,5 +118,5 @@
 		</web-resource-collection>
 		<auth-constraint />
 	</security-constraint>
-
+	<distributable/>
 </web-app>

@@ -15,10 +15,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -27,15 +25,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import io.antmedia.EncoderSettings;
 import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
-import io.antmedia.console.datastore.MapDBStore;
-import io.antmedia.console.datastore.MongoStore;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.AppSettingsModel;

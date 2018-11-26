@@ -14,7 +14,6 @@ import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
 import org.apache.commons.io.FileUtils;
-import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
 import org.red5.server.api.IConnection;

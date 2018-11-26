@@ -179,7 +179,7 @@
 		<dependency>
 			<groupId>io.antmedia</groupId>
 			<artifactId>ant-media-server-common</artifactId>
-			<version>1.5.2-SNAPSHOT</version>
+			<version>${ant-media-server-common.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

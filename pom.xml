@@ -8,7 +8,7 @@
 	
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.antmedia.app</groupId>
-	<artifactId>ConsoleApp</artifactId>
+	<artifactId>root</artifactId>
 	<packaging>war</packaging>
 	<version>${consoleapp.version}</version>
 

@@ -24,10 +24,10 @@ public class AuthenticationFilter implements Filter {
 			throws IOException, ServletException {
 		
 		String path = ((HttpServletRequest) request).getRequestURI();
-		if (path.equals("/ConsoleApp/rest/isAuthenticated") ||
-			path.equals("/ConsoleApp/rest/authenticateUser") || 
-			path.equals("/ConsoleApp/rest/addInitialUser") ||
-			path.equals("/ConsoleApp/rest/isFirstLogin") ||
+		if (path.equals("/rest/isAuthenticated") ||
+			path.equals("/rest/authenticateUser") || 
+			path.equals("/rest/addInitialUser") ||
+			path.equals("/rest/isFirstLogin") ||
 			RestService.isAuthenticated(((HttpServletRequest)request).getSession())) 
 		{
 			chain.doFilter(request, response);

@@ -14,6 +14,7 @@ import javax.servlet.ServletContext;
 import javax.ws.rs.core.Context;
 
 import org.apache.commons.io.FileUtils;
+import org.red5.logging.Red5LoggerFactory;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
 import org.red5.server.api.IConnection;
@@ -21,6 +22,8 @@ import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.ScopeType;
 import org.red5.server.util.ScopeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -43,7 +46,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	private ServletContext servletContext;
 	private ApplicationContext appCtx;
 
-	//private static final Logger log = Red5LoggerFactory.getLogger(Application.class);
+	private static final Logger log = LoggerFactory.getLogger(AdminApplication.class);
 
 
 	public static final String APP_NAME = "ConsoleApp";

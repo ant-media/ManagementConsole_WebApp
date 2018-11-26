@@ -177,12 +177,6 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>io.antmedia</groupId>
-			<artifactId>ant-media-server-common</artifactId>
-			<version>1.5.2-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 		    <groupId>org.mitre.dsmiley.httpproxy</groupId>
 		    <artifactId>smiley-http-proxy-servlet</artifactId>
 		    <version>1.10</version>

@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>io.antmedia</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.5.2-SNAPSHOT</version>
+		<version>1.6.0-SNAPSHOT</version>
 	</parent>
 	
 	<modelVersion>4.0.0</modelVersion>
@@ -39,7 +39,7 @@
 		</license>
 	</licenses>
 	<build>
-		<finalName>ConsoleApp</finalName>
+		<finalName>root</finalName>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -144,8 +144,23 @@
 	</build>
 	<repositories>
 		<repository>
-			<id>repo1.maven.org</id>
-			<url>http://repo1.maven.org/maven2</url>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>http://repo.maven.apache.org/maven2</url>
+			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>sonatype-snapshots</id>
+			<name>Sonatype Snapshots</name>
+			<url>http://oss.sonatype.org/content/repositories/snapshots</url>
+		</repository>
+		<repository>
+			<id>sonatype-releases</id>
+			<name>Sonatype Releases</name>
+			<url>http://oss.sonatype.org/content/repositories/releases</url>
 		</repository>
 	</repositories>
 	<dependencies>
@@ -160,6 +175,12 @@
 					<artifactId>jackson-databind</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>io.antmedia</groupId>
+			<artifactId>ant-media-server-common</artifactId>
+			<version>1.5.2-SNAPSHOT</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 		    <groupId>org.mitre.dsmiley.httpproxy</groupId>

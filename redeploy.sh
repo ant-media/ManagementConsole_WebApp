@@ -2,12 +2,12 @@
 
 mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true
 
-SRC=target/ConsoleApp.war
+SRC=target/root.war
 
 DEST=~/softwares/ant-media-server/webapps/
 
 
-rm -rf $DEST/ConsoleApp
+rm -rf $DEST/ConsoleApp $DEST/root
 cp  $SRC  $DEST
 
 

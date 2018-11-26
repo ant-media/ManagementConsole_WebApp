@@ -61,7 +61,7 @@ public class RestService {
 
 	private IDataStore dataStore;
 
-	protected static Logger logger = LoggerFactory.getLogger(RestService.class);
+	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
 
 
 	@Context 

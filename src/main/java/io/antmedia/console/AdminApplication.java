@@ -27,11 +27,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 
 import io.antmedia.AntMediaApplicationAdapter;
-import io.antmedia.AppSettings;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.datastore.db.IDataStore;
-import io.antmedia.rest.model.AppSettingsModel;
-import io.antmedia.security.AcceptOnlyStreamsInDataStore;
 import io.antmedia.settings.ServerSettings;
 
 
@@ -235,42 +232,8 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return connections;
 	}
 
-	public void updateAppSettings(String scopeName, AppSettingsModel settingsModel) {
-		ApplicationContext applicationContext = getScope(scopeName).getContext().getApplicationContext();
-		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) {
-			AppSettings appSettings = (AppSettings) applicationContext.getBean(AppSettings.BEAN_NAME);
-
-			appSettings.setMp4MuxingEnabled(settingsModel.isMp4MuxingEnabled());
-			appSettings.setAddDateTimeToMp4FileName(settingsModel.isAddDateTimeToMp4FileName());
-			appSettings.setHlsMuxingEnabled(settingsModel.isHlsMuxingEnabled());
-			appSettings.setObjectDetectionEnabled(settingsModel.isObjectDetectionEnabled());
-			appSettings.setHlsListSize(String.valueOf(settingsModel.getHlsListSize()));
-			appSettings.setHlsTime(String.valueOf(settingsModel.getHlsTime()));
-			appSettings.setHlsPlayListType(settingsModel.getHlsPlayListType());
-			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.isAcceptOnlyStreamsInDataStore());
-			appSettings.setTokenControlEnabled(settingsModel.isTokenControlEnabled());
-
-
-			appSettings.setAdaptiveResolutionList(settingsModel.getEncoderSettings());
-
-			String oldVodFolder = appSettings.getVodFolder();
-
-			appSettings.setVodFolder(settingsModel.getVodFolder());
-			appSettings.setPreviewOverwrite(settingsModel.isPreviewOverwrite());
-
-			AntMediaApplicationAdapter bean = (AntMediaApplicationAdapter) applicationContext.getBean("web.handler");
-
-			bean.synchUserVoDFolder(oldVodFolder, settingsModel.getVodFolder());
-
-			log.warn("app settings updated");	
-		}
-		else {
-			log.warn("App has no app.settings bean");
-		}
-		if (applicationContext.containsBean(AcceptOnlyStreamsInDataStore.BEAN_NAME)) {
-			AcceptOnlyStreamsInDataStore securityHandler = (AcceptOnlyStreamsInDataStore) applicationContext.getBean(AcceptOnlyStreamsInDataStore.BEAN_NAME);
-			securityHandler.setEnabled(settingsModel.isAcceptOnlyStreamsInDataStore());
-		}
+	public ApplicationContext getApplicationContext(String scopeName) {
+		return getScope(scopeName).getContext().getApplicationContext();
 	}
 
 

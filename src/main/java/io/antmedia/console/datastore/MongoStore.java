@@ -40,8 +40,14 @@ public class MongoStore implements IDataStore {
 		
 		List<MongoCredential> credentialList = new ArrayList<MongoCredential>();
 		credentialList.add(MongoCredential.createCredential(dbUser, dbName, dbPassword.toCharArray()));
-		//datastore = morphia.createDatastore(new MongoClient(new ServerAddress(dbHost), credentialList), dbName);
-		datastore = morphia.createDatastore(new MongoClient(dbHost), dbName);
+
+		if (dbUser != null && !dbUser.isEmpty()) {
+			datastore = morphia.createDatastore(new MongoClient(new ServerAddress(dbHost), credentialList), dbName);
+		}
+		else {
+			datastore = morphia.createDatastore(new MongoClient(dbHost), dbName);
+		}
+		
 		datastore.ensureIndexes();
 	}
 

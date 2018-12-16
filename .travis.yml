@@ -7,7 +7,7 @@ before_install:
 # Check Ant Media Server from git, in order to fix dependency issue
 - (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server.git $TRAVIS_BRANCH  | wc -l) == "1" ];
     then
-       echo "This build is tag with $TRAVIS_BRANCH. Check Ant Media Server $TRAVIS_TAG";
+       echo "This build is tag with $TRAVIS_BRANCH. Check Ant Media Server $TRAVIS_BRANCH";
        git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server.git; 
        cd Ant-Media-Server;
        mvn clean install -DskipTests -Dgpg.skip=true --quiet;

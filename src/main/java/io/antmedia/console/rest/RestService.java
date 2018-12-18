@@ -503,11 +503,6 @@ public class RestService {
 		return gson.toJson(appLiveStreams);
 	}
 
-<<<<<<< HEAD
-
-=======
->>>>>>> refs/remotes/origin/master
-
 
 	/**
 	 * Refactor remove this function and use ProxyServlet to get this info
@@ -529,69 +524,10 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings){
-<<<<<<< HEAD
 
-
-		PreferenceStore store = new PreferenceStore("red5-web.properties");
-		store.setFullPath("webapps/"+appname+"/WEB-INF/red5-web.properties");
-
-		store.put("settings.mp4MuxingEnabled", String.valueOf(appsettings.isMp4MuxingEnabled()));
-		store.put("settings.addDateTimeToMp4FileName", String.valueOf(appsettings.isAddDateTimeToMp4FileName()));
-		store.put("settings.hlsMuxingEnabled", String.valueOf(appsettings.isHlsMuxingEnabled()));
-		store.put(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE, String.valueOf(appsettings.isAcceptOnlyStreamsInDataStore()));
-		store.put("settings.objectDetectionEnabled", String.valueOf(appsettings.isObjectDetectionEnabled()));
-
-		if (appsettings.getVodFolder() == null) {
-			store.put("settings.vodFolder", "");
-		}else {
-			store.put("settings.vodFolder", appsettings.getVodFolder());
-		}
-
-
-		if (appsettings.getHlsListSize() < 5) {
-			store.put("settings.hlsListSize", "5");
-		}
-		else {
-			store.put("settings.hlsListSize", String.valueOf(appsettings.getHlsListSize()));
-		}
-
-		if (appsettings.getHlsTime() < 2) {
-			store.put("settings.hlsTime", "2");
-		}
-		else {
-			store.put("settings.hlsTime", String.valueOf(appsettings.getHlsTime()));
-		}
-
-		if (appsettings.getHlsPlayListType() == null) {
-			store.put("settings.hlsPlayListType", "");
-		}
-		else {
-			store.put("settings.hlsPlayListType", appsettings.getHlsPlayListType());
-		}
-
-		if (appsettings.getFacebookClientId() == null){
-			store.put("facebook.clientId", "");
-		}
-		else {
-			store.put("facebook.clientId", appsettings.getFacebookClientId());
-		}
-
-		if (appsettings.getEncoderSettings() == null) {
-			store.put("settings.encoderSettingsString", "");
-		}
-		else {
-			store.put("settings.encoderSettingsString", io.antmedia.AppSettings.getEncoderSettingsString(appsettings.getEncoderSettings()));
-		}
-
-		store.put("settings.previewOverwrite", String.valueOf(appsettings.isPreviewOverwrite()));
-
-		getApplication().updateAppSettings(appname, appsettings);
-
-		return gson.toJson(new Result(store.save()));
-=======
 		ApplicationContext context = getApplication().getApplicationContext(appname);
 		return gson.toJson(new Result(AppSettingsManager.updateAppSettings(context, appsettings, true)));
->>>>>>> refs/remotes/origin/master
+
 	}
 
 
@@ -640,59 +576,14 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
 	{
-<<<<<<< HEAD
 
-		//TODO: Get bean from app context not read file
-
-		PreferenceStore store = new PreferenceStore("red5-web.properties");
-		store.setFullPath("webapps/"+appname+"/WEB-INF/red5-web.properties");
-		AppSettingsModel appSettings = new AppSettingsModel();
-
-		if (store.get("settings.mp4MuxingEnabled") != null) {
-			appSettings.setMp4MuxingEnabled(Boolean.parseBoolean(store.get("settings.mp4MuxingEnabled")));
-		}
-		if (store.get("settings.addDateTimeToMp4FileName") != null) {
-			appSettings.setAddDateTimeToMp4FileName(Boolean.parseBoolean(store.get("settings.addDateTimeToMp4FileName")));
-		}
-		if (store.get("settings.hlsMuxingEnabled") != null) {
-			appSettings.setHlsMuxingEnabled(Boolean.parseBoolean(store.get("settings.hlsMuxingEnabled")));
-		}
-		if (store.get("settings.objectDetectionEnabled") != null) {
-			appSettings.setObjectDetectionEnabled(Boolean.parseBoolean(store.get("settings.objectDetectionEnabled")));
-		}
-
-		if (store.get("settings.hlsListSize") != null) {
-			appSettings.setHlsListSize(Integer.valueOf(store.get("settings.hlsListSize")));
-		}
-
-		if (store.get("settings.hlsTime") != null) {
-			appSettings.setHlsTime(Integer.valueOf(store.get("settings.hlsTime")));
-		}
-		appSettings.setHlsPlayListType(store.get("settings.hlsPlayListType"));
-		appSettings.setFacebookClientId(store.get("facebook.clientId"));
-		appSettings.setFacebookClientSecret(store.get("facebook.clientSecret"));
-		appSettings.setYoutubeClientId(store.get("youtube.clientId"));
-		appSettings.setYoutubeClientSecret(store.get("youtube.clientSecret"));
-		appSettings.setPeriscopeClientId(store.get("periscope.clientId"));
-		appSettings.setPeriscopeClientSecret(store.get("periscope.clientSecret"));
-		appSettings.setAcceptOnlyStreamsInDataStore(Boolean.valueOf(store.get(SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE)));
-		appSettings.setVodFolder(store.get("settings.vodFolder"));
-
-		appSettings.setEncoderSettings(io.antmedia.AppSettings.getEncoderSettingsList(store.get("settings.encoderSettingsString")));
-
-		if (store.get("settings.previewOverwrite") != null) {
-			appSettings.setPreviewOverwrite(Boolean.parseBoolean(store.get("settings.previewOverwrite")));
-		}
-
-		return appSettings;
-=======
 		return AppSettingsManager.getAppSettings(appname);
->>>>>>> refs/remotes/origin/master
+
 	}
 
 	public void setDataStore(IDataStore dataStore) {
 
-<<<<<<< HEAD
+
 	@GET
 	@Path("/getServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -728,8 +619,6 @@ public class RestService {
 
 
 	public void setDataStore(DataStore dataStore) {
-=======
->>>>>>> refs/remotes/origin/master
 		this.dataStore = dataStore;
 	}
 

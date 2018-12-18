@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.console.datastore.DataStoreFactory;
@@ -163,26 +164,15 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 					}
 				}
 			}
-<<<<<<< HEAD
 
-
-=======
->>>>>>> refs/remotes/origin/master
 		}
-<<<<<<< HEAD
 
-=======
->>>>>>> refs/remotes/origin/master
 		return size;
 	}
 
 
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> refs/remotes/origin/master
 	public List<BroadcastInfo> getAppLiveStreams(String name) {
 		IScope root = getRootScope();
 		IScope appScope = root.getScope(name);

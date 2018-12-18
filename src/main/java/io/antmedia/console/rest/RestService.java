@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import com.google.api.client.util.store.DataStore;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -31,16 +32,10 @@ import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
-<<<<<<< HEAD
-import io.antmedia.console.DataStore;
-import io.antmedia.console.SystemUtils;
-import io.antmedia.datastore.db.types.Broadcast;
-import io.antmedia.datastore.db.types.Licence;
-=======
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.AppSettingsManager;
->>>>>>> refs/remotes/origin/master
+import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.LicenceService;
 import io.antmedia.rest.BroadcastRestService;
@@ -581,7 +576,6 @@ public class RestService {
 
 	}
 
-	public void setDataStore(IDataStore dataStore) {
 
 
 	@GET
@@ -616,12 +610,9 @@ public class RestService {
 	}
 
 
-
-
-	public void setDataStore(DataStore dataStore) {
+	public void setDataStore(IDataStore dataStore) {
 		this.dataStore = dataStore;
 	}
-
 
 	public IDataStore getDataStore() {
 		if (dataStore == null) {

@@ -1,0 +1,59 @@
+language: java
+node_js: "8.10.0"
+sudo: required
+before_install:
+- openssl aes-256-cbc -k "$GPG_PASSPHRASE" -in codesigning.asc.enc -out codesigning.asc -d
+- gpg --fast-import codesigning.asc
+#Checkout Ant Media Server Common
+- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server-Common.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
+   then 
+     echo " $TRAVIS_BRANCH branch found";  
+     git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server-Common.git;  
+   else
+     echo "branch not found"; 
+     git clone --depth=1 https://github.com/ant-media/Ant-Media-Server-Common.git;  
+  fi)
+- cd Ant-Media-Server-Common
+- mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true --quiet
+- cd ..
+# Checkout Ant Media Server from git, in order to fix dependency issue
+- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server.git $TRAVIS_BRANCH  | wc -l) == "1" ];
+    then
+       echo "This build is tag with $TRAVIS_BRANCH. Check Ant Media Server $TRAVIS_BRANCH";
+       git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server.git; 
+       cd Ant-Media-Server;
+       mvn clean install -DskipTests -Dgpg.skip=true --quiet;
+       cd ..;
+    else 
+       echo "There is no branch. Use the version in maven repo";
+  fi)
+- npm install -g @angular/cli@6.0.5
+- sudo git clone --depth=1 https://github.com/ant-media/ManagementConsole_AngularApp.git
+- sudo chown -R `whoami` ./ManagementConsole_AngularApp
+- cd ManagementConsole_AngularApp
+- npm install
+- ng build --prod
+- cd ..
+- sudo cp -a ./ManagementConsole_AngularApp/dist/. ./src/main/webapp/
+
+install:
+- mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true -B -V --quiet
+script: 
+cache:
+  directories:
+  - "$HOME/.m2/repository"
+deploy:
+- provider: script
+  script: mvn deploy -DskipTests --quiet --settings mvn-settings.xml
+  skip_cleanup: true
+  on:
+    tags: false
+    all_branches: true
+    condition: $(mvn -q -Dexec.executable="echo" -Dexec.args='${project.version}'
+      --non-recursive exec:exec)  = *"SNAPSHOT"*
+- provider: script
+  script: mvn deploy -DskipTests --quiet --settings mvn-settings.xml
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: $TRAVIS_TAG =~ ^release

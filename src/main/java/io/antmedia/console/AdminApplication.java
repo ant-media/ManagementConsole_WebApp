@@ -1,7 +1,6 @@
 package io.antmedia.console;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -9,7 +8,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletContext;
@@ -22,19 +20,15 @@ import org.red5.server.api.IConnection;
 import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.ScopeType;
-import org.red5.server.api.statistics.IScopeStatistics;
-//import org.slf4j.Logger;
 import org.red5.server.util.ScopeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
-import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
+import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.datastore.db.IDataStore;
-import io.antmedia.rest.model.AppSettingsModel;
-import io.antmedia.security.AcceptOnlyStreamsInDataStore;
 import io.antmedia.settings.ServerSettings;
 
 
@@ -48,10 +42,11 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	private ServletContext servletContext;
 	private ApplicationContext appCtx;
 
-	//private static Logger log = Red5LoggerFactory.getLogger(Application.class);
+	private static final Logger log = LoggerFactory.getLogger(AdminApplication.class);
 
 
 	public static final String APP_NAME = "ConsoleApp";
+	private DataStoreFactory dataStoreFactory;
 
 	public static class ApplicationInfo {
 		public String name;
@@ -72,6 +67,11 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	private IScope rootScope;
 	private ServerSettings serverSettings;
 
+
+	public boolean appStart(IScope app) {
+		return super.appStart(app);
+	}
+	
 	/** {@inheritDoc} */
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
@@ -102,7 +102,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		for (String name : names) {
 			IScope scope = root.getScope(name);
 			if (scope != null) {
-				//logger.info("name of the scope: " + );
 				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
 				if (adapter instanceof AntMediaApplicationAdapter) 
 				{
@@ -119,15 +118,17 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	public List<ApplicationInfo> getApplicationInfo() {
 		List<String> appNames = getApplications();
 		List<ApplicationInfo> appsInfo = new ArrayList<>();
-		IScope root = getRootScope();
 		for (String name : appNames) {
 			if (name.equals(APP_NAME)) {
 				continue;
 			}
 			ApplicationInfo info = new ApplicationInfo();
 			info.name = name;
+			//TODO: get live stream count from database
 			info.liveStreamCount = getRootScope().getScope(name).getBasicScopeNames(ScopeType.BROADCAST).size();
+			//TODO: should return vod in database
 			info.vodCount = getVoDCount(name);
+			
 			info.storage = getStorage(name);
 			appsInfo.add(info);
 		}
@@ -162,17 +163,26 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 					}
 				}
 			}
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> refs/remotes/origin/master
 		}
+<<<<<<< HEAD
 
+=======
+>>>>>>> refs/remotes/origin/master
 		return size;
 	}
 
 
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> refs/remotes/origin/master
 	public List<BroadcastInfo> getAppLiveStreams(String name) {
 		IScope root = getRootScope();
 		IScope appScope = root.getScope(name);
@@ -235,41 +245,8 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return connections;
 	}
 
-	public void updateAppSettings(String scopeName, AppSettingsModel settingsModel) {
-		ApplicationContext applicationContext = getScope(scopeName).getContext().getApplicationContext();
-		if (applicationContext.containsBean(AppSettings.BEAN_NAME)) {
-			AppSettings appSettings = (AppSettings) applicationContext.getBean(AppSettings.BEAN_NAME);
-
-			appSettings.setMp4MuxingEnabled(settingsModel.isMp4MuxingEnabled());
-			appSettings.setAddDateTimeToMp4FileName(settingsModel.isAddDateTimeToMp4FileName());
-			appSettings.setHlsMuxingEnabled(settingsModel.isHlsMuxingEnabled());
-			appSettings.setObjectDetectionEnabled(settingsModel.isObjectDetectionEnabled());
-			appSettings.setHlsListSize(String.valueOf(settingsModel.getHlsListSize()));
-			appSettings.setHlsTime(String.valueOf(settingsModel.getHlsTime()));
-			appSettings.setHlsPlayListType(settingsModel.getHlsPlayListType());
-			appSettings.setAcceptOnlyStreamsInDataStore(settingsModel.isAcceptOnlyStreamsInDataStore());
-
-
-			appSettings.setAdaptiveResolutionList(settingsModel.getEncoderSettings());
-
-			String oldVodFolder = appSettings.getVodFolder();
-
-			appSettings.setVodFolder(settingsModel.getVodFolder());
-			appSettings.setPreviewOverwrite(settingsModel.isPreviewOverwrite());
-
-			AntMediaApplicationAdapter bean = (AntMediaApplicationAdapter) applicationContext.getBean("web.handler");
-
-			bean.synchUserVoDFolder(oldVodFolder, settingsModel.getVodFolder());
-
-			log.warn("app settings updated");	
-		}
-		else {
-			log.warn("App has no app.settings bean");
-		}
-		if (applicationContext.containsBean(AcceptOnlyStreamsInDataStore.BEAN_NAME)) {
-			AcceptOnlyStreamsInDataStore securityHandler = (AcceptOnlyStreamsInDataStore) applicationContext.getBean(AcceptOnlyStreamsInDataStore.BEAN_NAME);
-			securityHandler.setEnabled(settingsModel.isAcceptOnlyStreamsInDataStore());
-		}
+	public ApplicationContext getApplicationContext(String scopeName) {
+		return getScope(scopeName).getContext().getApplicationContext();
 	}
 
 
@@ -340,4 +317,11 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return null;
 	}
 
+	public DataStoreFactory getDataStoreFactory() {
+		return dataStoreFactory;
+	}
+
+	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
+		this.dataStoreFactory = dataStoreFactory;
+	}
 }

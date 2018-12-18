@@ -27,6 +27,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+<<<<<<< HEAD
 	<classpathentry kind="var" path="M2_REPO/io/antmedia/ipcamera/onvif/ONVIF/1.0.0-SNAPSHOT/ONVIF-1.0.0-SNAPSHOT.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-codec/commons-codec/1.11/commons-codec-1.11.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-servlet-api/8.5.11/tomcat-servlet-api-8.5.11.jar"/>
@@ -140,6 +141,9 @@
 	<classpathentry kind="var" path="M2_REPO/org/mapdb/elsa/3.0.0-M5/elsa-3.0.0-M5.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/mitre/dsmiley/httpproxy/smiley-http-proxy-servlet/1.10/smiley-http-proxy-servlet-1.10.jar"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+=======
+		<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+>>>>>>> refs/remotes/origin/master
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
 			<attribute name="org.eclipse.jst.component.dependency" value="/WEB-INF/lib"/>

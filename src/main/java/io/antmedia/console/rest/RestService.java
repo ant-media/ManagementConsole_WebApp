@@ -15,10 +15,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -27,28 +26,33 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import io.antmedia.EncoderSettings;
+import io.antmedia.AppSettingsModel;
+import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
+<<<<<<< HEAD
 import io.antmedia.console.DataStore;
 import io.antmedia.console.SystemUtils;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Licence;
+=======
+import io.antmedia.console.datastore.DataStoreFactory;
+import io.antmedia.console.datastore.IDataStore;
+import io.antmedia.datastore.AppSettingsManager;
+>>>>>>> refs/remotes/origin/master
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.LicenceService;
 import io.antmedia.rest.BroadcastRestService;
-import io.antmedia.rest.model.AppSettingsModel;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
+import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.ServerSettings;
 
 @Component
 @Path("/")
 public class RestService {
 
-
-	private static final String SETTINGS_ACCEPT_ONLY_STREAMS_IN_DATA_STORE = "settings.acceptOnlyStreamsInDataStore";
 
 	private static final String USER_PASSWORD = "user.password";
 
@@ -59,9 +63,9 @@ public class RestService {
 	Gson gson = new Gson();
 	Gson gson2 = new Gson();
 
-	private DataStore dataStore;
+	private IDataStore dataStore;
 
-	protected static Logger logger = LoggerFactory.getLogger(RestService.class);
+	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
 
 
 	@Context 
@@ -70,6 +74,7 @@ public class RestService {
 	@Context
 	private HttpServletRequest servletRequest;
 
+	private DataStoreFactory dataStoreFactory;
 	private ServerSettings serverSettings;
 
 	private LicenceService licenceService;
@@ -104,8 +109,8 @@ public class RestService {
 		//TODO: check that request is coming from authorized user
 		boolean result = false;
 		int errorId = -1;
-		if (user != null && !getDataStore().doesUsernameExist(user.email)) {
-			result = getDataStore().addUser(user.email, user.password, 1);
+		if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
+			result = getDataStore().addUser(user.getEmail(), user.getPassword(), UserType.ADMIN);
 		}
 		else {
 			if (user == null) {
@@ -131,7 +136,7 @@ public class RestService {
 		boolean result = false;
 		int errorId = -1;
 		if (getDataStore().getNumberOfUserRecords() == 0) {
-			result = getDataStore().addUser(user.email, user.password, 1);
+			result = getDataStore().addUser(user.getEmail(), user.getPassword(), UserType.ADMIN);
 		}
 
 		Result operationResult = new Result(result);
@@ -232,14 +237,12 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result authenticateUser(User user) {
-		//TODO: check that request is coming from authorized user
-		boolean result = getDataStore().doesUserExist(user.email, user.password);
-		//boolean result = true;
+		boolean result = getDataStore().doesUserExist(user.getEmail(), user.getPassword());
 		if (result) {
 			HttpSession session = servletRequest.getSession();
 			session.setAttribute(IS_AUTHENTICATED, true);
-			session.setAttribute(USER_EMAIL, user.email);
-			session.setAttribute(USER_PASSWORD, user.password);
+			session.setAttribute(USER_EMAIL, user.getEmail());
+			session.setAttribute(USER_PASSWORD, user.getPassword());
 		}
 		return new Result(result);
 	}
@@ -250,8 +253,6 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
-		//TODO: check that request is coming from authorized user
-
 
 		String userMail = (String)servletRequest.getSession().getAttribute(USER_EMAIL);
 
@@ -263,17 +264,16 @@ public class RestService {
 		boolean result = false;
 		String message = null;
 		if (userMail != null) {
-			result = getDataStore().doesUserExist(userMail, user.password);
-			//boolean result = true;
+			result = getDataStore().doesUserExist(userMail, user.getPassword());
 			if (result) {
-				result = getDataStore().editUser(userMail, user.newPassword, 1);
+				result = getDataStore().editUser(userMail, user.getNewPassword(), UserType.ADMIN);
 
 				if (result) {
 					HttpSession session = servletRequest.getSession();
 					if (session != null) {
 						session.setAttribute(IS_AUTHENTICATED, true);
 						session.setAttribute(USER_EMAIL, userMail);
-						session.setAttribute(USER_PASSWORD, user.newPassword);
+						session.setAttribute(USER_PASSWORD, user.getNewPassword());
 					}
 				}
 			}
@@ -285,7 +285,6 @@ public class RestService {
 			message = "User name does not exist in context";
 		}
 
-		//System.out.println("user name: " + user.email + " pass:" + user.password + " user newpass:" + user.getNewPassword());
 		return new Result(result, message);
 	}
 
@@ -463,6 +462,11 @@ public class RestService {
 		return gson.toJson(jsonObject);
 	}
 
+	/**
+	 * Refactor name getTotalLiveStreamSize
+	 * only return totalLiveStreamSize
+	 * @return
+	 */
 	@GET
 	@Path("/getLiveClientsSize")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -485,6 +489,12 @@ public class RestService {
 		return gson.toJson(info);
 	}
 
+	/**
+	 * Refactor remove this function and use ProxyServlet to get this info
+	 * Before deleting check web panel does not use it
+	 * @param name
+	 * @return
+	 */
 	@GET
 	@Path("/getAppLiveStreams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -493,8 +503,18 @@ public class RestService {
 		return gson.toJson(appLiveStreams);
 	}
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> refs/remotes/origin/master
 
 
+	/**
+	 * Refactor remove this function and use ProxyServlet to get this info
+	 * Before deleting check web panel does not use it
+	 * @param name
+	 * @return
+	 */
 	@POST
 	@Path("/deleteVoDStream/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -504,13 +524,12 @@ public class RestService {
 	}
 
 
-
-
 	@POST
 	@Path("/changeSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings){
+<<<<<<< HEAD
 
 
 		PreferenceStore store = new PreferenceStore("red5-web.properties");
@@ -569,6 +588,10 @@ public class RestService {
 		getApplication().updateAppSettings(appname, appsettings);
 
 		return gson.toJson(new Result(store.save()));
+=======
+		ApplicationContext context = getApplication().getApplicationContext(appname);
+		return gson.toJson(new Result(AppSettingsManager.updateAppSettings(context, appsettings, true)));
+>>>>>>> refs/remotes/origin/master
 	}
 
 
@@ -617,6 +640,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
 	{
+<<<<<<< HEAD
 
 		//TODO: Get bean from app context not read file
 
@@ -661,9 +685,14 @@ public class RestService {
 		}
 
 		return appSettings;
+=======
+		return AppSettingsManager.getAppSettings(appname);
+>>>>>>> refs/remotes/origin/master
 	}
 
+	public void setDataStore(IDataStore dataStore) {
 
+<<<<<<< HEAD
 	@GET
 	@Path("/getServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -699,14 +728,15 @@ public class RestService {
 
 
 	public void setDataStore(DataStore dataStore) {
+=======
+>>>>>>> refs/remotes/origin/master
 		this.dataStore = dataStore;
 	}
 
 
-	public DataStore getDataStore() {
+	public IDataStore getDataStore() {
 		if (dataStore == null) {
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			dataStore = (DataStore)ctxt.getBean("dataStore");
+			dataStore = getDataStoreFactory().getDataStore();
 		}
 		return dataStore;
 	}
@@ -732,5 +762,28 @@ public class RestService {
 	public AdminApplication getApplication() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		return (AdminApplication)ctxt.getBean("web.handler");
+	}
+	
+	public DataStoreFactory getDataStoreFactory() {
+		if(dataStoreFactory == null)
+		{
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+		}
+		return dataStoreFactory;
+	}
+
+	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
+		this.dataStoreFactory = dataStoreFactory;
+	}
+	
+	@GET
+	@Path("/isInClusterMode")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Result isInClusterMode(){
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+		//TODO move BEAN name from TCPCluster to IClusterNotifier then use it
+		boolean isCluster = ctxt.containsBean("tomcat.cluster");
+		return new Result(isCluster, "");
 	}
 }

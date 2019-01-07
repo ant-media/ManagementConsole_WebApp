@@ -96,21 +96,11 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 	public int getTotalLiveStreamSize() 
 	{
-		IScope root = getRootScope();
-		java.util.Set<String> names = root.getScopeNames();
+		List<String> appNames = getApplications();
 		int size = 0;
-		for (String name : names) {
-			IScope scope = root.getScope(name);
-			if (scope != null) {
-				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
-				if (adapter instanceof AntMediaApplicationAdapter) 
-				{
-					IDataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
-					if (dataStore != null) {
-						size +=  dataStore.getActiveBroadcastCount();
-					}
-				}
-			}
+		for (String name : appNames) {
+			IScope scope = getRootScope().getScope(name);
+			size += getAppLiveStreamCount(scope);
 		}
 		return size;
 	}
@@ -124,9 +114,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			}
 			ApplicationInfo info = new ApplicationInfo();
 			info.name = name;
-			//TODO: get live stream count from database
-			info.liveStreamCount = getRootScope().getScope(name).getBasicScopeNames(ScopeType.BROADCAST).size();
-			//TODO: should return vod in database
+			info.liveStreamCount = getAppLiveStreamCount(getRootScope().getScope(name));
 			info.vodCount = getVoDCount(name);
 			
 			info.storage = getStorage(name);
@@ -291,5 +279,20 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
 		this.dataStoreFactory = dataStoreFactory;
+	}
+	
+	private int getAppLiveStreamCount(IScope appScope) {
+		int size = 0;
+		if (appScope != null) {
+			Object adapter = appScope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
+			if (adapter instanceof AntMediaApplicationAdapter) 
+			{
+				IDataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
+				if (dataStore != null) {
+					size =  (int) dataStore.getActiveBroadcastCount();
+				}
+			}
+		}
+		return size;
 	}
 }

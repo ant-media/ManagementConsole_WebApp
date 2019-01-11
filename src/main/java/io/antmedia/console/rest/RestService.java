@@ -22,7 +22,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import com.google.api.client.util.store.DataStore;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -37,7 +36,7 @@ import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.AppSettingsManager;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
-import io.antmedia.licence.LicenceService;
+import io.antmedia.licence.ILicenceService;
 import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
@@ -72,7 +71,7 @@ public class RestService {
 	private DataStoreFactory dataStoreFactory;
 	private ServerSettings serverSettings;
 
-	private LicenceService licenceService;
+	private ILicenceService licenceService;
 
 
 	/**
@@ -588,25 +587,14 @@ public class RestService {
 	}
 
 
-	@GET
-	@Path("/requestLicence")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Result resuestLicence(String key) 
-	{
-		Result result = new Result(false);
-
-		getLicenceServiceInstance().checkLicence(key);
-		result.setSuccess(true);
-
-		return result;
-	}
 
 	@GET
-	@Path("/getLicenceStatus")
+	@Path("/getLicenceStatus/{key}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Licence getLicenceStatus() 
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Licence getLicenceStatus(@PathParam("key") String key) 
 	{
-		return getLicenceServiceInstance().getLicenceStatusResponse();
+		return getLicenceServiceInstance().checkLicence(key);
 	}
 
 
@@ -631,9 +619,9 @@ public class RestService {
 
 
 
-	public LicenceService getLicenceServiceInstance () {
+	public ILicenceService getLicenceServiceInstance () {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		licenceService = (LicenceService)ctxt.getBean("ant.media.licence.service");
+		licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
 
 		return licenceService;
 	}

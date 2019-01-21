@@ -53,6 +53,11 @@ public class RestService {
 	private static final String USER_EMAIL = "user.email";
 
 	public static final String IS_AUTHENTICATED = "isAuthenticated";
+	
+	public static final String SERVER_NAME = "ant.media.server.name";
+
+	public static final String LICENSE_KEY = "licence.key";
+	
 
 	Gson gson = new Gson();
 	Gson gson2 = new Gson();
@@ -536,23 +541,21 @@ public class RestService {
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
 
-		if(serverSettings.getServerName() == null) {
-			store.put("ant.media.server.name", "");
-			getServerSettings().setServerName("");
+		String serverName = "";
+		String licenceKey = "";
+		if(serverSettings.getServerName() != null) {
+		   serverName = serverSettings.getServerName();
+		}
+		
+		store.put(SERVER_NAME, serverName);
+		fetchServerSettings().setServerName(serverName);
 
-		}else {
-			store.put("ant.media.server.name", serverSettings.getServerName());
-			getServerSettings().setServerName(serverSettings.getServerName());
+		if (serverSettings.getLicenceKey() != null) {
+			licenceKey = serverSettings.getLicenceKey();
 		}
 
-		if (serverSettings.getLicenceKey() == null) {
-			store.put("licence.key","");
-			getServerSettings().setLicenceKey("");
-		}else {
-			store.put("licence.key", serverSettings.getLicenceKey());
-			getServerSettings().setLicenceKey(serverSettings.getLicenceKey());
-		}
-
+		store.put(LICENSE_KEY, licenceKey);
+		fetchServerSettings().setLicenceKey(licenceKey);
 
 		return gson.toJson(new Result(store.save()));
 	}

@@ -1,12 +1,7 @@
 package io.antmedia.console.datastore;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.Morphia;
-import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.mongodb.morphia.query.UpdateResults;
@@ -14,14 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
+import com.mongodb.MongoClientURI;
 import com.mongodb.WriteResult;
 
-import io.antmedia.SystemUtils;
-import io.antmedia.cluster.ClusterNode;
 import io.antmedia.datastore.DBUtils;
-import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;;
 
@@ -35,19 +26,14 @@ public class MongoStore implements IDataStore {
 	public MongoStore(String dbHost, String dbUser, String dbPassword) {
 		String dbName = SERVER_STORAGE_MAP_NAME;
 
-		morphia = new Morphia();
-		//morphia.map(io.antmedia.rest.model.User.class);
-		
-		List<MongoCredential> credentialList = new ArrayList<MongoCredential>();
-		credentialList.add(MongoCredential.createCredential(dbUser, dbName, dbPassword.toCharArray()));
+		String uri = DBUtils.getUri(dbHost, dbUser, dbPassword);
 
-		if (dbUser != null && !dbUser.isEmpty()) {
-			datastore = morphia.createDatastore(new MongoClient(new ServerAddress(dbHost), credentialList), dbName);
-		}
-		else {
-			datastore = morphia.createDatastore(new MongoClient(dbHost), dbName);
-		}
+		MongoClientURI mongoUri = new MongoClientURI(uri);
+		MongoClient client = new MongoClient(mongoUri);
 		
+		morphia = new Morphia();
+  		
+		datastore = morphia.createDatastore(client, dbName);
 		datastore.ensureIndexes();
 	}
 

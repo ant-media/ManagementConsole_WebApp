@@ -88,9 +88,9 @@ public class RestService {
 	private static final String TOTAL_LIVE_STREAMS = "totalLiveStreamSize";
 
 	private static final String GPU_MEMORY_TOTAL = "memoryTotal";
-	
+
 	private static final String GPU_MEMORY_FREE = "memoryFree";
-	
+
 	private static final String GPU_MEMORY_USED = "memoryUsed";
 
 	private static final String GPU_DEVICE_NAME = "deviceName";
@@ -524,28 +524,28 @@ public class RestService {
 		{
 			IScope scope = application.getRootScope().getScope(name);
 			totalLiveStreams += application.getAppLiveStreamCount(scope);
-			
+
 			localHlsViewers += getHLSViewers(scope);
-			
-			IWebRTCAdaptor webrtcAdaptor = (IWebRTCAdaptor) scope.getContext().getApplicationContext().getBean(IWebRTCAdaptor.BEAN_NAME);
-			if (webrtcAdaptor != null) {
+
+			if( scope.getContext().getApplicationContext().containsBean(IWebRTCAdaptor.BEAN_NAME)) {
+				IWebRTCAdaptor webrtcAdaptor = (IWebRTCAdaptor)scope.getContext().getApplicationContext().getBean(IWebRTCAdaptor.BEAN_NAME);
 				localWebRTCViewers += webrtcAdaptor.getNumberOfTotalViewers();
 				localWebRTCStreams += webrtcAdaptor.getNumberOfLiveStreams();
 			}
-			
+
 		}
-		
+
 		jsonObject.addProperty(TOTAL_LIVE_STREAMS, totalLiveStreams);
 		//add local webrtc viewer size
 		jsonObject.addProperty(LOCAL_WEBRTC_LIVE_STREAMS, localWebRTCStreams);
 		jsonObject.addProperty(LOCAL_WEBRTC_VIEWERS, localWebRTCViewers);
 		jsonObject.addProperty(LOCAL_HLS_VIEWERS, localHlsViewers);
-		
-		
+
+
 
 		return gson.toJson(jsonObject);
 	}
-	
+
 	private int getHLSViewers(IScope scope) {
 		HlsViewerStats hlsViewerStats = (HlsViewerStats) scope.getContext().getApplicationContext().getBean(HlsViewerStats.BEAN_NAME);
 		if (hlsViewerStats != null) {
@@ -574,7 +574,7 @@ public class RestService {
 		}
 		return jsonArray;
 	}
-	
+
 
 	private String getGPUInfo(int deviceIndex) {
 		JsonObject jsonObject = new JsonObject();
@@ -586,7 +586,7 @@ public class RestService {
 		jsonObject.addProperty(GPU_MEMORY_FREE, memoryStatus.getMemoryFree());
 		jsonObject.addProperty(GPU_MEMORY_USED, memoryStatus.getMemoryUsed());
 		jsonObject.addProperty(GPU_DEVICE_NAME, GPUUtils.getInstance().getDeviceName(deviceIndex));
-		
+
 		return gson.toJson(jsonObject);
 	}
 

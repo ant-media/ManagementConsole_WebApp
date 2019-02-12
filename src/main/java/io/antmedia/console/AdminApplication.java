@@ -87,7 +87,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		super.disconnect(conn, scope);
 	}
 
-	private IScope getRootScope() {
+	public IScope getRootScope() {
 		if (rootScope == null) {
 			rootScope = ScopeUtils.findRoot(scope);
 		}
@@ -141,7 +141,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			IScope scope = root.getScope(name);
 
 			if (scope != null && appName.equals(scope.getName())){
-				//logger.info("name of the scope:{} ", scope.getName() );
 
 				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
 				if (adapter instanceof AntMediaApplicationAdapter) 
@@ -303,7 +302,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		this.dataStoreFactory = dataStoreFactory;
 	}
 	
-	private int getAppLiveStreamCount(IScope appScope) {
+	public int getAppLiveStreamCount(IScope appScope) {
 		int size = 0;
 		if (appScope != null) {
 			Object adapter = appScope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);

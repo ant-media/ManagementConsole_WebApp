@@ -15,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
+import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -24,8 +25,10 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettingsModel;
 import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
@@ -34,12 +37,16 @@ import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.AppSettingsManager;
-import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
+import io.antmedia.rest.model.Version;
 import io.antmedia.settings.ServerSettings;
+import io.antmedia.statistic.GPUUtils;
+import io.antmedia.statistic.GPUUtils.MemoryStatus;
+import io.antmedia.statistic.HlsViewerStats;
+import io.antmedia.webrtc.api.IWebRTCAdaptor;
 
 @Component
 @Path("/")
@@ -58,6 +65,41 @@ public class RestService {
 
 	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
 
+	private static final String CPU_USAGE = "cpuUsage";
+
+	private static final String JVM_MEMORY_USAGE = "jvmMemoryUsage";
+
+	private static final String SYSTEM_INFO = "systemInfo";
+
+	private static final String SYSTEM_MEMORY_INFO = "systemMemoryInfo";
+
+	private static final String FILE_SYSTEM_INFO = "fileSystemInfo";
+
+	private static final String SOFTWARE_VERSION = "softwareVersion";
+
+	private static final String GPU_UTILIZATION = "gpuUtilization";
+
+	private static final String GPU_DEVICE_INDEX = "index";
+
+	private static final String GPU_MEMORY_UTILIZATION = "memoryUtilization";
+
+	private static final String GPU_USAGE_INFO = "gpuUsageInfo";
+
+	private static final String TOTAL_LIVE_STREAMS = "totalLiveStreamSize";
+
+	private static final String GPU_MEMORY_TOTAL = "memoryTotal";
+
+	private static final String GPU_MEMORY_FREE = "memoryFree";
+
+	private static final String GPU_MEMORY_USED = "memoryUsed";
+
+	private static final String GPU_DEVICE_NAME = "deviceName";
+
+	private static final String LOCAL_WEBRTC_LIVE_STREAMS = "localWebRTCLiveStreams";
+
+	private static final String LOCAL_WEBRTC_VIEWERS = "localWebRTCViewers";
+
+	private static final String LOCAL_HLS_VIEWERS = "localHLSViewers";
 
 	@Context 
 	private ServletContext servletContext;
@@ -67,6 +109,8 @@ public class RestService {
 
 	private DataStoreFactory dataStoreFactory;
 	private ServerSettings serverSettings;
+
+
 
 
 	/**
@@ -336,12 +380,17 @@ public class RestService {
 	@Path("/getSystemInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemInfo() {
+		return gson.toJson(getSystemInfoJSObject());
+	}
+
+
+	public JsonObject getSystemInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("osName", SystemUtils.osName);
 		jsonObject.addProperty("osArch", SystemUtils.osArch);
 		jsonObject.addProperty("javaVersion", SystemUtils.jvmVersion);
 		jsonObject.addProperty("processorCount", SystemUtils.osProcessorX);
-		return gson.toJson(jsonObject);
+		return jsonObject;
 	}
 
 	/*
@@ -357,14 +406,18 @@ public class RestService {
 	@Path("/getJVMMemoryInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getJVMMemoryInfo() {
+		return gson.toJson(getJVMMemoryInfoJSObject());
+	}
+
+
+	public JsonObject getJVMMemoryInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
 
 		jsonObject.addProperty("maxMemory", SystemUtils.jvmMaxMemory("B", false));
 		jsonObject.addProperty("totalMemory", SystemUtils.jvmTotalMemory("B", false));
 		jsonObject.addProperty("freeMemory", SystemUtils.jvmFreeMemory("B", false));
 		jsonObject.addProperty("inUseMemory", SystemUtils.jvmInUseMemory("B", false));
-
-		return gson.toJson(jsonObject);
+		return jsonObject;
 	}
 
 
@@ -382,6 +435,11 @@ public class RestService {
 	@Path("/getSystemMemoryInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemMemoryInfo() {
+		return gson.toJson(getSysteMemoryInfoJSObject());
+	}
+
+
+	public JsonObject getSysteMemoryInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
 
 		jsonObject.addProperty("virtualMemory", SystemUtils.osCommittedVirtualMemory("B", false));
@@ -391,8 +449,7 @@ public class RestService {
 		jsonObject.addProperty("totalSwapSpace", SystemUtils.osTotalSwapSpace("B", false));
 		jsonObject.addProperty("freeSwapSpace", SystemUtils.osFreeSwapSpace("B", false));
 		jsonObject.addProperty("inUseSwapSpace", SystemUtils.osInUseSwapSpace("B", false));
-
-		return gson.toJson(jsonObject);
+		return jsonObject;
 	}
 	/*
 	 *  File						(Actual Harddrive Info: Supported for JRE 1.6)
@@ -406,13 +463,17 @@ public class RestService {
 	@Path("/getFileSystemInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getFileSystemInfo() {
+		return gson.toJson(getFileSystemInfoJSObject());
+	}
+
+
+	public JsonObject getFileSystemInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("usableSpace", SystemUtils.osHDUsableSpace(null,"B", false));
 		jsonObject.addProperty("totalSpace", SystemUtils.osHDTotalSpace(null, "B", false));
 		jsonObject.addProperty("freeSpace", SystemUtils.osHDFreeSpace(null,  "B", false));
 		jsonObject.addProperty("inUseSpace", SystemUtils.osHDInUseSpace(null, "B", false));
-
-		return gson.toJson(jsonObject);
+		return jsonObject;
 	}
 
 	/**
@@ -427,12 +488,119 @@ public class RestService {
 	@Path("/getCPUInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getCPUInfo() {
+		return gson.toJson(getCPUInfoJSObject());
+	}
+
+	public JsonObject getCPUInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("processCPUTime", SystemUtils.getProcessCpuTime());
 		jsonObject.addProperty("systemCPULoad", SystemUtils.getSystemCpuLoad());
-		jsonObject.addProperty("processCPULoad", SystemUtils.getProcessCpuLoad());			
+		jsonObject.addProperty("processCPULoad", SystemUtils.getProcessCpuLoad());
+		return jsonObject;
+	}
+
+	@GET
+	@Path("/getSystemResourcesInfo")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getSystemResourcesInfo() {
+		JsonObject jsonObject = new JsonObject();
+		jsonObject.add(CPU_USAGE, getCPUInfoJSObject());
+		jsonObject.add(JVM_MEMORY_USAGE, getJVMMemoryInfoJSObject());
+		jsonObject.add(SYSTEM_INFO, getSystemInfoJSObject());
+		jsonObject.add(SYSTEM_MEMORY_INFO, getSysteMemoryInfoJSObject());
+		jsonObject.add(FILE_SYSTEM_INFO, getFileSystemInfoJSObject());
+
+		//add gpu info 
+		jsonObject.add(GPU_USAGE_INFO, getGPUInfoJSObject());
+
+		//add live stream size
+		int totalLiveStreams = 0;
+		int localHlsViewers = 0;
+		int localWebRTCViewers = 0;
+		int localWebRTCStreams = 0;
+		AdminApplication application = getApplication();
+		List<String> appNames = application.getApplications();
+		for (String name : appNames) 
+		{
+			IScope scope = application.getRootScope().getScope(name);
+			totalLiveStreams += application.getAppLiveStreamCount(scope);
+
+			localHlsViewers += getHLSViewers(scope);
+
+			if( scope.getContext().getApplicationContext().containsBean(IWebRTCAdaptor.BEAN_NAME)) {
+				IWebRTCAdaptor webrtcAdaptor = (IWebRTCAdaptor)scope.getContext().getApplicationContext().getBean(IWebRTCAdaptor.BEAN_NAME);
+				localWebRTCViewers += webrtcAdaptor.getNumberOfTotalViewers();
+				localWebRTCStreams += webrtcAdaptor.getNumberOfLiveStreams();
+			}
+
+		}
+
+		jsonObject.addProperty(TOTAL_LIVE_STREAMS, totalLiveStreams);
+		//add local webrtc viewer size
+		jsonObject.addProperty(LOCAL_WEBRTC_LIVE_STREAMS, localWebRTCStreams);
+		jsonObject.addProperty(LOCAL_WEBRTC_VIEWERS, localWebRTCViewers);
+		jsonObject.addProperty(LOCAL_HLS_VIEWERS, localHlsViewers);
+
+
+
 		return gson.toJson(jsonObject);
 	}
+
+	private int getHLSViewers(IScope scope) {
+		if (scope.getContext().getApplicationContext().containsBean(HlsViewerStats.BEAN_NAME)) {
+			HlsViewerStats hlsViewerStats = (HlsViewerStats) scope.getContext().getApplicationContext().getBean(HlsViewerStats.BEAN_NAME);
+			if (hlsViewerStats != null) {
+				return hlsViewerStats.getTotalViewerCount();
+			}
+		}
+		return 0;
+	}
+
+
+	@GET
+	@Path("/getGPUInfo")
+	@Produces(MediaType.APPLICATION_JSON) 
+	public String getGPUInfo() 
+	{
+		return gson.toJson(getGPUInfoJSObject());
+	}
+
+
+	public JsonArray getGPUInfoJSObject() {
+		int deviceCount = GPUUtils.getInstance().getDeviceCount();
+		JsonArray jsonArray = new JsonArray();
+		if (deviceCount > 0) {
+			for (int i=0; i < deviceCount; i++) {
+				jsonArray.add(getGPUInfo(i));
+			}
+		}
+		return jsonArray;
+	}
+
+
+	private String getGPUInfo(int deviceIndex) {
+		JsonObject jsonObject = new JsonObject();
+		jsonObject.addProperty(GPU_DEVICE_INDEX, deviceIndex);
+		jsonObject.addProperty(GPU_UTILIZATION, GPUUtils.getInstance().getGPUUtilization(deviceIndex));
+		jsonObject.addProperty(GPU_MEMORY_UTILIZATION, GPUUtils.getInstance().getMemoryUtilization(deviceIndex));
+		MemoryStatus memoryStatus = GPUUtils.getInstance().getMemoryStatus(deviceIndex);
+		jsonObject.addProperty(GPU_MEMORY_TOTAL, memoryStatus.getMemoryTotal());
+		jsonObject.addProperty(GPU_MEMORY_FREE, memoryStatus.getMemoryFree());
+		jsonObject.addProperty(GPU_MEMORY_USED, memoryStatus.getMemoryUsed());
+		jsonObject.addProperty(GPU_DEVICE_NAME, GPUUtils.getInstance().getDeviceName(deviceIndex));
+
+		return gson.toJson(jsonObject);
+	}
+
+
+
+	@GET
+	@Path("/getVersion")
+	@Produces(MediaType.APPLICATION_JSON) 
+	public String getVersion() {
+		return gson.toJson(BroadcastRestService.getSoftwareVersion());
+	}
+
 
 	@GET
 	@Path("/getApplications")
@@ -465,7 +633,7 @@ public class RestService {
 		int totalLiveStreamSize = getApplication().getTotalLiveStreamSize();
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("totalConnectionSize", totalConnectionSize);
-		jsonObject.addProperty("totalLiveStreamSize", totalLiveStreamSize);
+		jsonObject.addProperty(TOTAL_LIVE_STREAMS, totalLiveStreamSize);
 
 		return gson.toJson(jsonObject);
 	}
@@ -517,7 +685,7 @@ public class RestService {
 		ApplicationContext context = getApplication().getApplicationContext(appname);
 		return gson.toJson(new Result(AppSettingsManager.updateAppSettings(context, appsettings, true)));
 	}
-	
+
 
 
 	@GET
@@ -550,12 +718,12 @@ public class RestService {
 	}
 
 
-	
+
 	public AdminApplication getApplication() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 		return (AdminApplication)ctxt.getBean("web.handler");
 	}
-	
+
 	public DataStoreFactory getDataStoreFactory() {
 		if(dataStoreFactory == null)
 		{
@@ -568,7 +736,7 @@ public class RestService {
 	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
 		this.dataStoreFactory = dataStoreFactory;
 	}
-	
+
 	@GET
 	@Path("/isInClusterMode")
 	@Produces(MediaType.APPLICATION_JSON)

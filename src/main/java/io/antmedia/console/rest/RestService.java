@@ -547,9 +547,11 @@ public class RestService {
 	}
 
 	private int getHLSViewers(IScope scope) {
-		HlsViewerStats hlsViewerStats = (HlsViewerStats) scope.getContext().getApplicationContext().getBean(HlsViewerStats.BEAN_NAME);
-		if (hlsViewerStats != null) {
-			return hlsViewerStats.getTotalViewerCount();
+		if (scope.getContext().getApplicationContext().containsBean(HlsViewerStats.BEAN_NAME)) {
+			HlsViewerStats hlsViewerStats = (HlsViewerStats) scope.getContext().getApplicationContext().getBean(HlsViewerStats.BEAN_NAME);
+			if (hlsViewerStats != null) {
+				return hlsViewerStats.getTotalViewerCount();
+			}
 		}
 		return 0;
 	}

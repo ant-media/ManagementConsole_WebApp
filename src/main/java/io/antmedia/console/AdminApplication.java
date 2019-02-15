@@ -28,7 +28,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.console.datastore.DataStoreFactory;
-import io.antmedia.datastore.db.IDataStore;
+import io.antmedia.datastore.db.DataStore;
 import io.antmedia.settings.ServerSettings;
 
 
@@ -144,7 +144,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
 				if (adapter instanceof AntMediaApplicationAdapter) 
 				{
-					IDataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
+					DataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
 					if (dataStore != null) {
 						size =  (int) dataStore.getTotalVodNumber();
 					}
@@ -286,7 +286,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			Object adapter = appScope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
 			if (adapter instanceof AntMediaApplicationAdapter) 
 			{
-				IDataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
+				DataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
 				if (dataStore != null) {
 					size =  (int) dataStore.getActiveBroadcastCount();
 				}

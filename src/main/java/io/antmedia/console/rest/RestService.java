@@ -61,11 +61,13 @@ public class RestService {
 	private static final String USER_EMAIL = "user.email";
 
 	public static final String IS_AUTHENTICATED = "isAuthenticated";
-	
-	public static final String SERVER_NAME = "ant.media.server.name";
 
-	public static final String LICENSE_KEY = "licence.key";
-	
+	public static final String SERVER_NAME = "server.name";
+
+	public static final String LICENSE_KEY = "server.licence_key";
+
+	public static final String MARKET_BUILD = "server.market_build";
+
 
 	Gson gson = new Gson();
 	Gson gson2 = new Gson();
@@ -714,9 +716,9 @@ public class RestService {
 		String serverName = "";
 		String licenceKey = "";
 		if(serverSettings.getServerName() != null) {
-		   serverName = serverSettings.getServerName();
+			serverName = serverSettings.getServerName();
 		}
-		
+
 		store.put(SERVER_NAME, serverName);
 		fetchServerSettings().setServerName(serverName);
 
@@ -726,6 +728,10 @@ public class RestService {
 
 		store.put(LICENSE_KEY, licenceKey);
 		fetchServerSettings().setLicenceKey(licenceKey);
+
+		store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
+		fetchServerSettings().setBuildForMarket(serverSettings.isBuildForMarket());
+
 
 		return gson.toJson(new Result(store.save()));
 	}
@@ -747,8 +753,6 @@ public class RestService {
 		return AppSettingsManager.getAppSettings(appname);
 
 	}
-
-
 
 	@GET
 	@Path("/getServerSettings")
@@ -784,19 +788,22 @@ public class RestService {
 
 	public ServerSettings fetchServerSettings() {
 
+		if(serverSettings == null) {
 
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+		}
 		return serverSettings;
 	}
 
 
 
 	public ILicenceService getLicenceServiceInstance () {
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
-
+		if(licenceService == null) {
+			
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
+		}
 		return licenceService;
 	}
 

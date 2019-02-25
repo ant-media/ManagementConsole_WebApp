@@ -25,10 +25,8 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettingsModel;
 import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
@@ -44,7 +42,6 @@ import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
-import io.antmedia.rest.model.Version;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.GPUUtils;
 import io.antmedia.statistic.GPUUtils.MemoryStatus;
@@ -584,14 +581,14 @@ public class RestService {
 		JsonArray jsonArray = new JsonArray();
 		if (deviceCount > 0) {
 			for (int i=0; i < deviceCount; i++) {
-				jsonArray.add(getGPUInfo(i));
+				jsonArray.add(getGPUInfoJSObject(i));
 			}
 		}
 		return jsonArray;
 	}
 
 
-	private String getGPUInfo(int deviceIndex) {
+	private JsonObject getGPUInfoJSObject(int deviceIndex) {
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty(GPU_DEVICE_INDEX, deviceIndex);
 		jsonObject.addProperty(GPU_UTILIZATION, GPUUtils.getInstance().getGPUUtilization(deviceIndex));
@@ -602,7 +599,7 @@ public class RestService {
 		jsonObject.addProperty(GPU_MEMORY_USED, memoryStatus.getMemoryUsed());
 		jsonObject.addProperty(GPU_DEVICE_NAME, GPUUtils.getInstance().getDeviceName(deviceIndex));
 
-		return gson.toJson(jsonObject);
+		return jsonObject;
 	}
 
 

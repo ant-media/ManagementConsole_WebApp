@@ -99,6 +99,16 @@
 	  <servlet-name>RequestDispatherFilter</servlet-name>
 	  <url-pattern>/rest/request/*</url-pattern>
 	</servlet-mapping>
+	
+	<filter>
+    		<filter-name>CorsHeaderFilter</filter-name>
+   		<filter-class>io.antmedia.console.servlet.CorsHeaderFilter</filter-class>
+  	</filter>
+  	
+  	<filter-mapping>
+  		<filter-name>CorsHeaderFilter</filter-name>
+		<url-pattern>/rest/request/*</url-pattern>
+  	</filter-mapping>
 
 	<!-- The security-constraint element is used to associate security constraints 
 		with one or more web resource collections -->

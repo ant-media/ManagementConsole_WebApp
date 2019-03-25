@@ -45,8 +45,8 @@ import io.antmedia.statistic.GPUUtils;
 import io.antmedia.statistic.GPUUtils.MemoryStatus;
 import io.antmedia.statistic.HlsViewerStats;
 import io.antmedia.webrtc.api.IWebRTCAdaptor;
-import io.antmedia.settings.*;
-import io.antmedia.rest.model.*;
+import io.antmedia.settings.LogSettings;
+import io.antmedia.rest.model.LogLevelSettingsModel;
 
 @Component
 @Path("/")
@@ -763,9 +763,6 @@ public class RestService {
 		if (store.get("logLevel") != null) {
 			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
 		}
-		if (store.get("logFileSize") != null) {
-			logSettings.setLogFileSize(String.valueOf(store.get("logFileSize")));
-		}
 
 		return logSettings;
 	}
@@ -780,13 +777,11 @@ public class RestService {
 		store.setFullPath("conf/red5.properties");
 
 		store.put("logLevel", String.valueOf(logSettingsModel.getLogLevel()));
-		store.put("logFileSize", String.valueOf(logSettingsModel.getLogFileSize()));
-		
-			if (applicationContext.containsBean("logSettings")) {
+
+		if (applicationContext.containsBean("logSettings")) {
 			LogLevelSettingsModel logSettings = (LogLevelSettingsModel) applicationContext.getBean("logSettings");
 			
 			logSettings.setLogLevel(logSettingsModel.getLogLevel());
-			logSettings.setLogFileSize(logSettingsModel.getLogFileSize());
 			
 			logger.warn("log settings updated");	
 		}

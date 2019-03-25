@@ -35,6 +35,7 @@ import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.AppSettingsManager;
+import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
@@ -44,6 +45,8 @@ import io.antmedia.statistic.GPUUtils;
 import io.antmedia.statistic.GPUUtils.MemoryStatus;
 import io.antmedia.statistic.HlsViewerStats;
 import io.antmedia.webrtc.api.IWebRTCAdaptor;
+import io.antmedia.settings.*;
+import io.antmedia.rest.model.*;
 
 @Component
 @Path("/")
@@ -97,6 +100,8 @@ public class RestService {
 	private static final String LOCAL_WEBRTC_VIEWERS = "localWebRTCViewers";
 
 	private static final String LOCAL_HLS_VIEWERS = "localHLSViewers";
+	
+	private static ApplicationContext applicationContext;
 
 	@Context 
 	private ServletContext servletContext;
@@ -743,4 +748,55 @@ public class RestService {
 		boolean isCluster = ctxt.containsBean("tomcat.cluster");
 		return new Result(isCluster, "");
 	}
+	
+	@GET
+	@Path("/getLogSettings")
+	@Produces(MediaType.APPLICATION_JSON)
+	public LogLevelSettingsModel getLogSettings() 
+	{
+
+		PreferenceStore store = new PreferenceStore("red5.properties");
+		store.setFullPath("conf/red5.properties");
+		
+		LogLevelSettingsModel logSettings = new LogLevelSettingsModel();
+		
+		if (store.get("logLevel") != null) {
+			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
+		}
+		if (store.get("logFileSize") != null) {
+			logSettings.setLogFileSize(String.valueOf(store.get("logFileSize")));
+		}
+
+		return logSettings;
+	}
+	
+	@POST
+	@Path("/changeLogSettings")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String changeLogSettings(LogLevelSettingsModel logSettingsModel){
+		
+		PreferenceStore store = new PreferenceStore("red5.properties");
+		store.setFullPath("conf/red5.properties");
+
+		store.put("logLevel", String.valueOf(logSettingsModel.getLogLevel()));
+		store.put("logFileSize", String.valueOf(logSettingsModel.getLogFileSize()));
+		
+			if (applicationContext.containsBean("logSettings")) {
+			LogLevelSettingsModel logSettings = (LogLevelSettingsModel) applicationContext.getBean("logSettings");
+			
+			logSettings.setLogLevel(logSettingsModel.getLogLevel());
+			logSettings.setLogFileSize(logSettingsModel.getLogFileSize());
+			
+			logger.warn("log settings updated");	
+		}
+		else {
+			logger.warn("Log has no settings bean");
+		}
+	
+		return gson.toJson(new Result(store.save()));
+	}
+
+	
+	
 }

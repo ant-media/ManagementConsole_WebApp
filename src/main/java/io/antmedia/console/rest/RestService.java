@@ -27,6 +27,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import ch.qos.logback.classic.Level;
 import io.antmedia.AppSettingsModel;
 import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
@@ -51,8 +52,11 @@ import io.antmedia.rest.model.LogLevelSettingsModel;
 @Component
 @Path("/")
 public class RestService {
+	
+	
 
-
+	public Level currentLevel;
+	
 	private static final String USER_PASSWORD = "user.password";
 
 	private static final String USER_EMAIL = "user.email";
@@ -101,7 +105,9 @@ public class RestService {
 
 	private static final String LOCAL_HLS_VIEWERS = "localHLSViewers";
 	
-	private static ApplicationContext applicationContext;
+	protected ApplicationContext applicationContext;
+	
+	public LogLevelSettingsModel logSettingsModel;
 
 	@Context 
 	private ServletContext servletContext;
@@ -754,7 +760,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogLevelSettingsModel getLogSettings() 
 	{
-
+		
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
 		
@@ -767,30 +773,56 @@ public class RestService {
 		return logSettings;
 	}
 	
-	@POST
-	@Path("/changeLogSettings")
+	@GET
+	@Path("/changeLogSettings/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public String changeLogSettings(LogLevelSettingsModel logSettingsModel){
+	public String changeLogSettings(@PathParam("level") String logLevel){
 		
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
-
-		store.put("logLevel", String.valueOf(logSettingsModel.getLogLevel()));
-
-		if (applicationContext.containsBean("logSettings")) {
-			LogLevelSettingsModel logSettings = (LogLevelSettingsModel) applicationContext.getBean("logSettings");
-			
-			logSettings.setLogLevel(logSettingsModel.getLogLevel());
-			
-			logger.warn("log settings updated");	
+		
+		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
+		|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
+		|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
+		|| logLevel.equals("OFF")) {
+		
+		store.put("logLevel", logLevel);
+		
+		ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+		
+		rootLogger.setLevel(currentLevelDetect(logLevel));
+		
 		}
-		else {
-			logger.warn("Log has no settings bean");
-		}
-	
+		
 		return gson.toJson(new Result(store.save()));
 	}
+	
+	public Level currentLevelDetect(String logLevel) {
+		
+		if( logLevel.equals("OFF")) {
+			return currentLevel = Level.OFF;
+		}
+		else if( logLevel.equals("WARN")) {
+			return currentLevel = Level.WARN;
+		}
+		else if( logLevel.equals("DEBUG")) {
+			return currentLevel = Level.DEBUG;
+		}
+		else if( logLevel.equals("TRACE")) {
+			return currentLevel = Level.TRACE;
+		}
+		else if( logLevel.equals("ALL")) {
+			return currentLevel = Level.ALL;
+		}
+		else if( logLevel.equals("ERROR")) {
+			return currentLevel = Level.ERROR;
+		}
+		else {
+			return currentLevel = Level.INFO;
+		}
+
+	}
+	
 
 	
 	

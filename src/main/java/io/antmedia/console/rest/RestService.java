@@ -53,9 +53,13 @@ import io.antmedia.rest.model.LogLevelSettingsModel;
 @Path("/")
 public class RestService {
 	
+	//public static final ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 	
-
+	public ch.qos.logback.classic.Logger rootLogger;
+	
 	public Level currentLevel;
+	
+	public LogLevelSettingsModel logSettings;
 	
 	private static final String USER_PASSWORD = "user.password";
 
@@ -764,7 +768,7 @@ public class RestService {
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
 		
-		LogLevelSettingsModel logSettings = new LogLevelSettingsModel();
+		logSettings = new LogLevelSettingsModel();
 		
 		if (store.get("logLevel") != null) {
 			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
@@ -779,16 +783,20 @@ public class RestService {
 	public String changeLogSettings(@PathParam("level") String logLevel){
 		
 		PreferenceStore store = new PreferenceStore("red5.properties");
-		store.setFullPath("conf/red5.properties");
+		store.setFullPath("conf/red5.properties");	
 		
 		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
 		|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
 		|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
 		|| logLevel.equals("OFF")) {
 		
+		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+			
 		store.put("logLevel", logLevel);
 		
-		ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+		logSettings = new LogLevelSettingsModel();
+			
+		logSettings.setLogLevel(String.valueOf(logLevel));
 		
 		rootLogger.setLevel(currentLevelDetect(logLevel));
 		
@@ -800,25 +808,32 @@ public class RestService {
 	public Level currentLevelDetect(String logLevel) {
 		
 		if( logLevel.equals("OFF")) {
-			return currentLevel = Level.OFF;
+			currentLevel = Level.OFF;
+			return currentLevel;
 		}
 		else if( logLevel.equals("WARN")) {
-			return currentLevel = Level.WARN;
+			currentLevel = Level.WARN;
+			return currentLevel;
 		}
 		else if( logLevel.equals("DEBUG")) {
-			return currentLevel = Level.DEBUG;
+			currentLevel = Level.DEBUG;
+			return currentLevel;
 		}
 		else if( logLevel.equals("TRACE")) {
-			return currentLevel = Level.TRACE;
+			currentLevel = Level.TRACE;
+			return currentLevel;
 		}
 		else if( logLevel.equals("ALL")) {
-			return currentLevel = Level.ALL;
+			currentLevel = Level.ALL;
+			return currentLevel;
 		}
 		else if( logLevel.equals("ERROR")) {
-			return currentLevel = Level.ERROR;
+			currentLevel = Level.ERROR;
+			return currentLevel;
 		}
 		else {
-			return currentLevel = Level.INFO;
+			currentLevel = Level.INFO;
+			return currentLevel;
 		}
 
 	}

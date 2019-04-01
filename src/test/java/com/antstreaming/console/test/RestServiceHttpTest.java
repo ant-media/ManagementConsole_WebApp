@@ -40,6 +40,8 @@ public class RestServiceHttpTest {
 	
 	private static final String ERROR_URL = "http://localhost:5080/rest/changeLogLevel/ERROR";
 	
+	private static final String WRONG_URL = "http://localhost:5080/rest/changeLogLevel/WRONGLEVEL";
+	
 	private static final String GET_LEVEL_URL = "http://localhost:5080/rest/getLogLevel/";
 	
 	LogSettings logSettings ;
@@ -264,12 +266,12 @@ public class RestServiceHttpTest {
 					.build();
 
 
-			HttpUriRequest get = RequestBuilder.get()
+			HttpUriRequest getChangeLevelRequest = RequestBuilder.get()
 					.setUri(ERROR_URL)
 					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
 					.build();
 
-			CloseableHttpResponse resultChangeLevelResponse = changeLevelClient.execute(get);
+			CloseableHttpResponse resultChangeLevelResponse = changeLevelClient.execute(getChangeLevelRequest);
 			
 			StringBuffer resultChangeLevel = readResponse(resultChangeLevelResponse);
 			
@@ -296,6 +298,47 @@ public class RestServiceHttpTest {
 			// test Log Check
 			
 			assertEquals("{\"logLevel\":\"ERROR\"}", resultGetLevel2.toString());
+			
+			
+			// input wrong Log Level
+			
+			CloseableHttpClient wrongLevelClient = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+
+
+			HttpUriRequest getWrongLevelRequest = RequestBuilder.get()
+					.setUri(WRONG_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse resultWrongLevelResponse = wrongLevelClient.execute(getWrongLevelRequest);
+			
+			StringBuffer resultWrongLevel = readResponse(resultWrongLevelResponse);
+			
+			System.out.println("resultChangeLevel string: " + resultWrongLevel.toString());
+			
+			//getLogLevel
+			
+			CloseableHttpClient getLevelClient3 = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+
+
+			HttpUriRequest getLogLevelRequest3 = RequestBuilder.get()
+					.setUri(GET_LEVEL_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse getLevelCloseResponse3 = getLevelClient3.execute(getLogLevelRequest3);
+			
+			StringBuffer resultGetLevel3 = readResponse(getLevelCloseResponse3);
+			
+			System.out.println("resultGetLevel string: " + resultGetLevel3.toString());
+			
+			// test Log Check
+			
+			assertEquals("{\"logLevel\":\"ERROR\"}", resultGetLevel3.toString());
 			
 
 		}

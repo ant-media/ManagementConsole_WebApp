@@ -44,13 +44,11 @@ public class RestServiceHttpTest {
 	
 	private static final String GET_LEVEL_URL = "http://localhost:5080/rest/getLogLevel/";
 	
-	LogSettings logSettings ;
+	public LogSettings logSettings ;
 
 	Gson gson = new Gson();
 	
 	RestService restService = new RestService();
-	
-	private MapDBStore dbStore = new MapDBStore();
 	
 	//before class
 	//clear datastore

@@ -29,13 +29,26 @@ import io.antmedia.console.rest.RestService;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
+import io.antmedia.settings.LogSettings;
 
 
 public class RestServiceHttpTest {
 
-	private static final String ROOT_URL = "http://localhost:5080/ConsoleApp/rest";
+	private static final String ROOT_URL = "http://localhost:5080/rest";
+	
+	private static final String RESET_URL = "http://localhost:5080/rest/changeLogLevel/ALL";
+	
+	private static final String ERROR_URL = "http://localhost:5080/rest/changeLogLevel/ERROR";
+	
+	private static final String GET_LEVEL_URL = "http://localhost:5080/rest/getLogLevel/";
+	
+	LogSettings logSettings ;
 
 	Gson gson = new Gson();
+	
+	RestService restService = new RestService();
+	
+	private MapDBStore dbStore = new MapDBStore();
 	
 	//before class
 	//clear datastore
@@ -197,6 +210,100 @@ public class RestServiceHttpTest {
 			e.printStackTrace();
 			fail(e.getMessage());
 		}
+	}
+	
+	@Test
+	public void testLogLevel() {
+		
+		
+		try {
+			
+			// Reset Log Level 
+			
+			CloseableHttpClient resetLogLevelClient = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+
+
+			HttpUriRequest resetLevelRequest = RequestBuilder.get()
+					.setUri(RESET_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse resetLevelResponse = resetLogLevelClient.execute(resetLevelRequest);
+			
+			StringBuffer resultResetLevel = readResponse(resetLevelResponse);
+			
+			System.out.println("resultGetLevel string: " + resultResetLevel.toString());
+			
+			// Check Reset Log Level 
+			
+			CloseableHttpClient getLevelClient = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+
+
+			HttpUriRequest getLogLevelRequest = RequestBuilder.get()
+					.setUri(GET_LEVEL_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse getLevelCloseResponse = getLevelClient.execute(getLogLevelRequest);
+			
+			StringBuffer resultGetLevel = readResponse(getLevelCloseResponse);
+			
+			System.out.println("resultGetLevel string: " + resultGetLevel.toString());
+			
+			assertEquals("{\"logLevel\":\"ALL\"}", resultGetLevel.toString());
+			
+			
+			// changeLogLevel ALL -> ERROR
+			
+			CloseableHttpClient changeLevelClient = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+
+
+			HttpUriRequest get = RequestBuilder.get()
+					.setUri(ERROR_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse resultChangeLevelResponse = changeLevelClient.execute(get);
+			
+			StringBuffer resultChangeLevel = readResponse(resultChangeLevelResponse);
+			
+			System.out.println("resultChangeLevel string: " + resultChangeLevel.toString());
+			
+			//getLogLevel
+			
+			CloseableHttpClient getLevelClient2 = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+
+
+			HttpUriRequest getLogLevelRequest2 = RequestBuilder.get()
+					.setUri(GET_LEVEL_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse getLevelCloseResponse2 = getLevelClient2.execute(getLogLevelRequest2);
+			
+			StringBuffer resultGetLevel2 = readResponse(getLevelCloseResponse2);
+			
+			System.out.println("resultGetLevel string: " + resultGetLevel2.toString());
+			
+			// test Log Check
+			
+			assertEquals("{\"logLevel\":\"ERROR\"}", resultGetLevel2.toString());
+			
+
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		
 	}
 
 	protected StringBuffer readResponse(HttpResponse response) throws IOException {

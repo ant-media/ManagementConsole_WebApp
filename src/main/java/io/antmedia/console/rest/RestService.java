@@ -47,19 +47,16 @@ import io.antmedia.statistic.GPUUtils.MemoryStatus;
 import io.antmedia.statistic.HlsViewerStats;
 import io.antmedia.webrtc.api.IWebRTCAdaptor;
 import io.antmedia.settings.LogSettings;
-import io.antmedia.rest.model.LogLevelSettingsModel;
 
 @Component
 @Path("/")
 public class RestService {
 	
-	//public static final ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-	
 	public ch.qos.logback.classic.Logger rootLogger;
 	
 	public Level currentLevel;
 	
-	public LogLevelSettingsModel logSettings;
+	public LogSettings logSettings;
 	
 	private static final String USER_PASSWORD = "user.password";
 
@@ -111,7 +108,7 @@ public class RestService {
 	
 	protected ApplicationContext applicationContext;
 	
-	public LogLevelSettingsModel logSettingsModel;
+	public LogSettings logSettingsModel;
 
 	@Context 
 	private ServletContext servletContext;
@@ -760,15 +757,15 @@ public class RestService {
 	}
 	
 	@GET
-	@Path("/getLogSettings")
+	@Path("/getLogLevel")
 	@Produces(MediaType.APPLICATION_JSON)
-	public LogLevelSettingsModel getLogSettings() 
+	public LogSettings getLogSettings() 
 	{
 		
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
 		
-		logSettings = new LogLevelSettingsModel();
+		logSettings = new LogSettings();
 		
 		if (store.get("logLevel") != null) {
 			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
@@ -778,9 +775,11 @@ public class RestService {
 	}
 	
 	@GET
-	@Path("/changeLogSettings/{level}")
+	@Path("/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
+		
+		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 		
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");	
@@ -789,15 +788,13 @@ public class RestService {
 		|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
 		|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
 		|| logLevel.equals("OFF")) {
-		
-		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-			
+
 		store.put("logLevel", logLevel);
 		
-		logSettings = new LogLevelSettingsModel();
+		logSettings = new LogSettings();
 			
-		logSettings.setLogLevel(String.valueOf(logLevel));
-		
+		logSettings.setLogLevel(logLevel);
+
 		rootLogger.setLevel(currentLevelDetect(logLevel));
 		
 		}
@@ -811,23 +808,23 @@ public class RestService {
 			currentLevel = Level.OFF;
 			return currentLevel;
 		}
-		else if( logLevel.equals("WARN")) {
+		if( logLevel.equals("WARN")) {
 			currentLevel = Level.WARN;
 			return currentLevel;
 		}
-		else if( logLevel.equals("DEBUG")) {
+		if( logLevel.equals("DEBUG")) {
 			currentLevel = Level.DEBUG;
 			return currentLevel;
 		}
-		else if( logLevel.equals("TRACE")) {
+		if( logLevel.equals("TRACE")) {
 			currentLevel = Level.TRACE;
 			return currentLevel;
 		}
-		else if( logLevel.equals("ALL")) {
+		if( logLevel.equals("ALL")) {
 			currentLevel = Level.ALL;
 			return currentLevel;
 		}
-		else if( logLevel.equals("ERROR")) {
+		if( logLevel.equals("ERROR")) {
 			currentLevel = Level.ERROR;
 			return currentLevel;
 		}

@@ -258,6 +258,12 @@ public class RestServiceHttpTest {
 
 			CloseableHttpResponse resultChangeLevelResponse = testClient.execute(getChangeLevelRequest);
 			
+			//Test Client 2 Created
+			
+			CloseableHttpClient testClient2 = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+			
 			//getLogLevel
 
 			HttpUriRequest getLogLevelRequest2 = RequestBuilder.get()
@@ -265,7 +271,7 @@ public class RestServiceHttpTest {
 					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
 					.build();
 
-			CloseableHttpResponse getLevelCloseResponse2 = testClient.execute(getLogLevelRequest2);
+			CloseableHttpResponse getLevelCloseResponse2 = testClient2.execute(getLogLevelRequest2);
 			
 			StringBuffer resultGetLevel2 = readResponse(getLevelCloseResponse2);
 			
@@ -282,7 +288,7 @@ public class RestServiceHttpTest {
 					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
 					.build();
 
-			CloseableHttpResponse resultWrongLevelResponse = testClient.execute(getWrongLevelRequest);
+			CloseableHttpResponse resultWrongLevelResponse = testClient2.execute(getWrongLevelRequest);
 			
 			//getLogLevel
 
@@ -291,7 +297,7 @@ public class RestServiceHttpTest {
 					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
 					.build();
 
-			CloseableHttpResponse getLevelCloseResponse3 = testClient.execute(getLogLevelRequest3);
+			CloseableHttpResponse getLevelCloseResponse3 = testClient2.execute(getLogLevelRequest3);
 			
 			StringBuffer resultGetLevel3 = readResponse(getLevelCloseResponse3);
 			

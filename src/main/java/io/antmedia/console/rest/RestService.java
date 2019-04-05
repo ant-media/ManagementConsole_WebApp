@@ -1,6 +1,16 @@
 package io.antmedia.console.rest;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.util.List;
+import java.util.Scanner;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -834,6 +844,66 @@ public class RestService {
 		}
 
 	}
+	
+	@GET
+	@Path("/getLogFile/{lineCount}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getLogFile(@PathParam("lineCount") int lineCount) throws IOException 
+	{
+		
+		File antMediaLogFile = new File("log/ant-media-server.log");
+		
+		String logs = getLogLines(antMediaLogFile,lineCount);
+	
+		return logs;
+	}
+	
+	
+	public String getLogLines( File file, int lines) {
+	    java.io.RandomAccessFile fileHandler = null;
+	    try {
+	        fileHandler = new java.io.RandomAccessFile( file, "r" );
+	        long fileLength = fileHandler.length() - 1;
+	        StringBuilder sb = new StringBuilder();
+	        int line = 0;
+
+	        for(long filePointer = fileLength; filePointer != -1; filePointer--){
+	            fileHandler.seek( filePointer );
+	            int readByte = fileHandler.readByte();
+
+	             if( readByte == 0xA ) {
+	                if (filePointer < fileLength) {
+	                    line = line + 1;
+	                }
+	            } else if( readByte == 0xD ) {
+	                if (filePointer < fileLength-1) {
+	                    line = line + 1;
+	                }
+	            }
+	            if (line >= lines) {
+	                break;
+	            }
+	            sb.append( ( char ) readByte );
+	        }
+
+	        String lastLine = sb.reverse().toString();
+	        return lastLine;
+	    } catch( java.io.FileNotFoundException e ) {
+	        e.printStackTrace();
+	        return null;
+	    } catch( java.io.IOException e ) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	    finally {
+	        if (fileHandler != null )
+	            try {
+	                fileHandler.close();
+	            } catch (IOException e) {
+	            }
+	    }
+	}
+	
 	
 
 	

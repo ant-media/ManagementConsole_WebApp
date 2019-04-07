@@ -9,6 +9,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
+import java.io.StringReader;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 
@@ -25,6 +28,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
+import org.apache.commons.io.FileUtils;
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,18 +60,19 @@ import io.antmedia.statistic.GPUUtils;
 import io.antmedia.statistic.GPUUtils.MemoryStatus;
 import io.antmedia.statistic.HlsViewerStats;
 import io.antmedia.webrtc.api.IWebRTCAdaptor;
+import io.swagger.jaxrs.Reader;
 import io.antmedia.settings.LogSettings;
 
 @Component
 @Path("/")
 public class RestService {
-	
+
 	public ch.qos.logback.classic.Logger rootLogger;
-	
+
 	public Level currentLevel;
-	
+
 	public LogSettings logSettings;
-	
+
 	private static final String USER_PASSWORD = "user.password";
 
 	private static final String USER_EMAIL = "user.email";
@@ -115,9 +120,9 @@ public class RestService {
 	private static final String LOCAL_WEBRTC_VIEWERS = "localWebRTCViewers";
 
 	private static final String LOCAL_HLS_VIEWERS = "localHLSViewers";
-	
+
 	protected ApplicationContext applicationContext;
-	
+
 	public LogSettings logSettingsModel;
 
 	@Context 
@@ -765,55 +770,55 @@ public class RestService {
 		boolean isCluster = ctxt.containsBean("tomcat.cluster");
 		return new Result(isCluster, "");
 	}
-	
+
 	@GET
 	@Path("/getLogLevel")
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
-		
+
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
-		
+
 		logSettings = new LogSettings();
-		
+
 		if (store.get("logLevel") != null) {
 			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
 		}
 
 		return logSettings;
 	}
-	
+
 	@GET
 	@Path("/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
-		
+
 		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-		
+
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");	
-		
+
 		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
-		|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
-		|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
-		|| logLevel.equals("OFF")) {
+				|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
+				|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
+				|| logLevel.equals("OFF")) {
 
-		store.put("logLevel", logLevel);
-		
-		logSettings = new LogSettings();
-			
-		logSettings.setLogLevel(logLevel);
+			rootLogger.setLevel(currentLevelDetect(logLevel));
 
-		rootLogger.setLevel(currentLevelDetect(logLevel));
-		
+			store.put("logLevel", logLevel);
+
+			logSettings = new LogSettings();
+
+			logSettings.setLogLevel(logLevel);
+
 		}
-		
+
 		return gson.toJson(new Result(store.save()));
 	}
-	
+
 	public Level currentLevelDetect(String logLevel) {
-		
+
 		if( logLevel.equals("OFF")) {
 			currentLevel = Level.OFF;
 			return currentLevel;
@@ -844,68 +849,108 @@ public class RestService {
 		}
 
 	}
-	
+
 	@GET
-	@Path("/getLogFile/{lineCount}")
+	@Path("/getErrorLogFile/{lineCount}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getLogFile(@PathParam("lineCount") int lineCount) throws IOException 
+	public String getErrorLogFile(@PathParam("lineCount") int lineCount) throws IOException 
 	{
-		
-		File antMediaLogFile = new File("log/ant-media-server.log");
-		
+
+		File antMediaLogFile = new File("log/antmedia-error.log");
+
+		if (!antMediaLogFile.isFile()) {  
+			return gson.toJson("There are no registered logs yet");
+		}
+
 		String logs = getLogLines(antMediaLogFile,lineCount);
-	
-		return logs;
+
+		return gson.toJson(logs);
 	}
-	
-	
+
+	@GET
+	@Path("/getConsoleLogFile/{lineCount}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getConsoleLogFile(@PathParam("lineCount") int lineCount) throws IOException 
+	{
+
+		StringBuilder result = new StringBuilder();
+
+		try {
+
+			FileReader fileReader = new FileReader("log/ant-media-server.log");
+
+			File file = new File("log/ant-media-server.log");
+
+			BufferedReader reader = new BufferedReader(fileReader);
+
+			reader.skip(file.length()-10000);
+
+			char[] chars = new char[1000];
+
+			while ((reader.read(chars)) != -1 ) {
+				result.append(chars);
+			}
+
+			reader.close();
+
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
+		return result.toString();
+	}
+
+
+
 	public String getLogLines( File file, int lines) {
-	    java.io.RandomAccessFile fileHandler = null;
-	    try {
-	        fileHandler = new java.io.RandomAccessFile( file, "r" );
-	        long fileLength = fileHandler.length() - 1;
-	        StringBuilder sb = new StringBuilder();
-	        int line = 0;
+		java.io.RandomAccessFile fileHandler = null;
+		try {
+			fileHandler = new java.io.RandomAccessFile( file, "r" );
+			long fileLength = fileHandler.length() - 1;
+			StringBuilder sb = new StringBuilder();
+			int line = 0;
 
-	        for(long filePointer = fileLength; filePointer != -1; filePointer--){
-	            fileHandler.seek( filePointer );
-	            int readByte = fileHandler.readByte();
+			for(long filePointer = fileLength; filePointer != -1; filePointer--){
+				fileHandler.seek( filePointer );
+				int readByte = fileHandler.readByte();
 
-	             if( readByte == 0xA ) {
-	                if (filePointer < fileLength) {
-	                    line = line + 1;
-	                }
-	            } else if( readByte == 0xD ) {
-	                if (filePointer < fileLength-1) {
-	                    line = line + 1;
-	                }
-	            }
-	            if (line >= lines) {
-	                break;
-	            }
-	            sb.append( ( char ) readByte );
-	        }
+				if( readByte == 0xA ) {
+					if (filePointer < fileLength) {
+						line = line + 1;
+					}
+				} else if( readByte == 0xD ) {
+					if (filePointer < fileLength-1) {
+						line = line + 1;
+					}
+				}
+				if (line >= lines) {
+					break;
+				}
+				sb.append( ( char ) readByte );
+			}
 
-	        String lastLine = sb.reverse().toString();
-	        return lastLine;
-	    } catch( java.io.FileNotFoundException e ) {
-	        e.printStackTrace();
-	        return null;
-	    } catch( java.io.IOException e ) {
-	        e.printStackTrace();
-	        return null;
-	    }
-	    finally {
-	        if (fileHandler != null )
-	            try {
-	                fileHandler.close();
-	            } catch (IOException e) {
-	            }
-	    }
+			String lastLine = sb.reverse().toString();
+			return lastLine;
+		} catch( java.io.FileNotFoundException e ) {
+			e.printStackTrace();
+			return null;
+		} catch( java.io.IOException e ) {
+			e.printStackTrace();
+			return null;
+		}
+		finally {
+			if (fileHandler != null )
+				try {
+					fileHandler.close();
+				} catch (IOException e) {
+				}
+		}
 	}
-	
-	
 
-	
-	
+
+
+
+
 }

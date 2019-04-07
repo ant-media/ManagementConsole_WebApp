@@ -67,6 +67,12 @@ public class RestService {
 	Gson gson = new Gson();
 
 	private IDataStore dataStore;
+	
+	private static final String LOG_LEVEL = "logLevel";
+	
+	private static final String RED5_PROPERTIES = "red5.properties";
+	
+	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
 
 	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
 
@@ -762,13 +768,13 @@ public class RestService {
 	public LogSettings getLogSettings() 
 	{
 		
-		PreferenceStore store = new PreferenceStore("red5.properties");
-		store.setFullPath("conf/red5.properties");
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
+		store.setFullPath(RED5_PROPERTIES_PATH);
 		
 		logSettings = new LogSettings();
 		
-		if (store.get("logLevel") != null) {
-			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
+		if (store.get(LOG_LEVEL) != null) {
+			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
 		}
 
 		return logSettings;
@@ -781,19 +787,19 @@ public class RestService {
 		
 		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 		
-		PreferenceStore store = new PreferenceStore("red5.properties");
-		store.setFullPath("conf/red5.properties");	
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
+		store.setFullPath(RED5_PROPERTIES_PATH);	
 		
 		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
 		|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
 		|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
 		|| logLevel.equals("OFF")) {
 
-		store.put("logLevel", logLevel);
+		store.put(LOG_LEVEL, logLevel);
 		
 		logSettings = new LogSettings();
 			
-		logSettings.setLogLevel(logLevel);
+		logSettings.setLogLevel(String.valueOf(logLevel));
 
 		rootLogger.setLevel(currentLevelDetect(logLevel));
 		

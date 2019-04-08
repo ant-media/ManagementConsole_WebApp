@@ -29,13 +29,26 @@ import io.antmedia.console.rest.RestService;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
+import io.antmedia.settings.LogSettings;
 
 
 public class RestServiceHttpTest {
 
-	private static final String ROOT_URL = "http://localhost:5080/ConsoleApp/rest";
+	private static final String ROOT_URL = "http://localhost:5080/rest";
+	
+	private static final String RESET_URL = "http://localhost:5080/rest/changeLogLevel/ALL";
+	
+	private static final String ERROR_URL = "http://localhost:5080/rest/changeLogLevel/ERROR";
+	
+	private static final String WRONG_URL = "http://localhost:5080/rest/changeLogLevel/WRONGLEVEL";
+	
+	private static final String GET_LEVEL_URL = "http://localhost:5080/rest/getLogLevel/";
+	
+	public LogSettings logSettings ;
 
 	Gson gson = new Gson();
+	
+	RestService restService = new RestService();
 	
 	//before class
 	//clear datastore
@@ -197,6 +210,108 @@ public class RestServiceHttpTest {
 			e.printStackTrace();
 			fail(e.getMessage());
 		}
+	}
+	
+	@Test
+	public void testLogLevel() {
+		
+		
+		try {
+			
+			//Test Client Created
+			
+			CloseableHttpClient testClient = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+			
+			// Reset Log Level 
+
+			HttpUriRequest resetLevelRequest = RequestBuilder.get()
+					.setUri(RESET_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse resetLevelResponse = testClient.execute(resetLevelRequest);
+			
+			// Check Reset Log Level 
+
+			HttpUriRequest getLogLevelRequest = RequestBuilder.get()
+					.setUri(GET_LEVEL_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse getLevelCloseResponse = testClient.execute(getLogLevelRequest);
+			
+			StringBuffer resultGetLevel = readResponse(getLevelCloseResponse);
+			
+			// test Log Check
+			
+			assertEquals("{\"logLevel\":\"ALL\"}", resultGetLevel.toString());
+			
+			
+			// changeLogLevel ALL -> ERROR
+
+			HttpUriRequest getChangeLevelRequest = RequestBuilder.get()
+					.setUri(ERROR_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse resultChangeLevelResponse = testClient.execute(getChangeLevelRequest);
+			
+			//Test Client 2 Created
+			
+			CloseableHttpClient testClient2 = HttpClients.custom()
+					.setRedirectStrategy(new LaxRedirectStrategy())
+					.build();
+			
+			//getLogLevel
+
+			HttpUriRequest getLogLevelRequest2 = RequestBuilder.get()
+					.setUri(GET_LEVEL_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse getLevelCloseResponse2 = testClient2.execute(getLogLevelRequest2);
+			
+			StringBuffer resultGetLevel2 = readResponse(getLevelCloseResponse2);
+			
+			// test Log Check
+			
+			assertEquals("{\"logLevel\":\"ERROR\"}", resultGetLevel2.toString());
+			
+			
+			// input wrong Log Level
+
+
+			HttpUriRequest getWrongLevelRequest = RequestBuilder.get()
+					.setUri(WRONG_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse resultWrongLevelResponse = testClient2.execute(getWrongLevelRequest);
+			
+			//getLogLevel
+
+			HttpUriRequest getLogLevelRequest3 = RequestBuilder.get()
+					.setUri(GET_LEVEL_URL)
+					.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+					.build();
+
+			CloseableHttpResponse getLevelCloseResponse3 = testClient2.execute(getLogLevelRequest3);
+			
+			StringBuffer resultGetLevel3 = readResponse(getLevelCloseResponse3);
+			
+			// test Log Check
+			
+			assertEquals("{\"logLevel\":\"ERROR\"}", resultGetLevel3.toString());
+			
+
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+		
 	}
 
 	protected StringBuffer readResponse(HttpResponse response) throws IOException {

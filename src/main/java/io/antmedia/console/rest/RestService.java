@@ -27,6 +27,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import ch.qos.logback.classic.Level;
 import io.antmedia.AppSettingsModel;
 import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
@@ -42,6 +43,7 @@ import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
+import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.GPUUtils;
 import io.antmedia.statistic.GPUUtils.MemoryStatus;
@@ -51,8 +53,13 @@ import io.antmedia.webrtc.api.IWebRTCAdaptor;
 @Component
 @Path("/")
 public class RestService {
-
-
+	
+	public ch.qos.logback.classic.Logger rootLogger;
+	
+	public Level currentLevel;
+	
+	public LogSettings logSettings;
+	
 	private static final String USER_PASSWORD = "user.password";
 
 	private static final String USER_EMAIL = "user.email";
@@ -70,6 +77,12 @@ public class RestService {
 	Gson gson2 = new Gson();
 
 	private IDataStore dataStore;
+	
+	private static final String LOG_LEVEL = "logLevel";
+	
+	private static final String RED5_PROPERTIES = "red5.properties";
+	
+	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
 
 	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
 
@@ -108,6 +121,10 @@ public class RestService {
 	private static final String LOCAL_WEBRTC_VIEWERS = "localWebRTCViewers";
 
 	private static final String LOCAL_HLS_VIEWERS = "localHLSViewers";
+	
+	protected ApplicationContext applicationContext;
+	
+	public LogSettings logSettingsModel;
 
 	@Context 
 	private ServletContext servletContext;
@@ -832,4 +849,87 @@ public class RestService {
 		boolean isCluster = ctxt.containsBean("tomcat.cluster");
 		return new Result(isCluster, "");
 	}
+	
+	@GET
+	@Path("/getLogLevel")
+	@Produces(MediaType.APPLICATION_JSON)
+	public LogSettings getLogSettings() 
+	{
+		
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
+		store.setFullPath(RED5_PROPERTIES_PATH);
+		
+		logSettings = new LogSettings();
+		
+		if (store.get(LOG_LEVEL) != null) {
+			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
+		}
+
+		return logSettings;
+	}
+	
+	@GET
+	@Path("/changeLogLevel/{level}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String changeLogSettings(@PathParam("level") String logLevel){
+		
+		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+		
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
+		store.setFullPath(RED5_PROPERTIES_PATH);	
+		
+		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
+		|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
+		|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
+		|| logLevel.equals("OFF")) {
+
+		store.put(LOG_LEVEL, logLevel);
+		
+		logSettings = new LogSettings();
+			
+		logSettings.setLogLevel(String.valueOf(logLevel));
+
+		rootLogger.setLevel(currentLevelDetect(logLevel));
+		
+		}
+		
+		return gson.toJson(new Result(store.save()));
+	}
+	
+	public Level currentLevelDetect(String logLevel) {
+		
+		if( logLevel.equals("OFF")) {
+			currentLevel = Level.OFF;
+			return currentLevel;
+		}
+		if( logLevel.equals("WARN")) {
+			currentLevel = Level.WARN;
+			return currentLevel;
+		}
+		if( logLevel.equals("DEBUG")) {
+			currentLevel = Level.DEBUG;
+			return currentLevel;
+		}
+		if( logLevel.equals("TRACE")) {
+			currentLevel = Level.TRACE;
+			return currentLevel;
+		}
+		if( logLevel.equals("ALL")) {
+			currentLevel = Level.ALL;
+			return currentLevel;
+		}
+		if( logLevel.equals("ERROR")) {
+			currentLevel = Level.ERROR;
+			return currentLevel;
+		}
+		else {
+			currentLevel = Level.INFO;
+			return currentLevel;
+		}
+
+	}
+	
+
+	
+	
 }

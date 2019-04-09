@@ -72,9 +72,7 @@ public class RestService {
 
 	public static final String MARKET_BUILD = "server.market_build";
 
-
 	Gson gson = new Gson();
-	Gson gson2 = new Gson();
 
 	private IDataStore dataStore;
 	
@@ -724,8 +722,7 @@ public class RestService {
 	public String changeServerSettings(ServerSettings serverSettings){
 
 
-		PreferenceStore store = new PreferenceStore("red5.properties");
-		store.setFullPath("conf/red5.properties");
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH, true);
 
 		String serverName = "";
 		String licenceKey = "";
@@ -734,17 +731,17 @@ public class RestService {
 		}
 
 		store.put(SERVER_NAME, serverName);
-		fetchServerSettings().setServerName(serverName);
+		getServerSettingsInternal().setServerName(serverName);
 
 		if (serverSettings.getLicenceKey() != null) {
 			licenceKey = serverSettings.getLicenceKey();
 		}
 
 		store.put(LICENSE_KEY, licenceKey);
-		fetchServerSettings().setLicenceKey(licenceKey);
+		getServerSettingsInternal().setLicenceKey(licenceKey);
 
 		store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
-		fetchServerSettings().setBuildForMarket(serverSettings.isBuildForMarket());
+		getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
 
 
 		return gson.toJson(new Result(store.save()));
@@ -774,7 +771,7 @@ public class RestService {
 	public ServerSettings getServerSettings() 
 	{
 
-		return fetchServerSettings();
+		return getServerSettingsInternal();
 	}
 
 
@@ -800,7 +797,7 @@ public class RestService {
 		return dataStore;
 	}
 
-	public ServerSettings fetchServerSettings() {
+	private ServerSettings getServerSettingsInternal() {
 
 		if(serverSettings == null) {
 

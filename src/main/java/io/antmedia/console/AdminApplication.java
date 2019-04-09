@@ -72,7 +72,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	public boolean appStart(IScope app) {
 		return super.appStart(app);
 	}
-	
+
 	/** {@inheritDoc} */
 	@Override
 	public boolean connect(IConnection conn, IScope scope, Object[] params) {
@@ -83,7 +83,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	/** {@inheritDoc} */
 	@Override
 	public void disconnect(IConnection conn, IScope scope) {
-		//log.info("disconnect");
+
 		super.disconnect(conn, scope);
 	}
 
@@ -93,7 +93,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		}
 		return rootScope;
 	}
-
 
 	public int getTotalLiveStreamSize() 
 	{
@@ -117,7 +116,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			info.name = name;
 			info.liveStreamCount = getAppLiveStreamCount(getRootScope().getScope(name));
 			info.vodCount = getVoDCount(name);
-			
+
 			info.storage = getStorage(name);
 			appsInfo.add(info);
 		}
@@ -156,8 +155,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 		return size;
 	}
-
-
 
 
 	public List<BroadcastInfo> getAppLiveStreams(String name) {
@@ -229,14 +226,9 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 	public void updateServerSettings( ServerSettings settings) {
 		serverSettings = getServerSettings();
-
-		//	serverSettings.setServerName(settings.getServerName());
 		serverSettings.setLicenceKey(settings.getLicenceKey());
-
-		log.warn(" settings updated");	
-
+		log.info(" Server License Key Updated");	
 	}
-
 
 	private IScope getScope(String scopeName) {
 		IScope root = ScopeUtils.findRoot(scope);
@@ -262,7 +254,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	}
 
 
-
 	/**
 	 * Search through all the scopes in the given scope to a scope with the
 	 * given name
@@ -272,7 +263,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	 * @return IScope the requested scope
 	 */
 	private IScope getScopes(IScope root, String scopeName) {
-		// log.info("Found scope "+root.getName());
 		if (root.getName().equals(scopeName)) {
 			return root;
 		} else {
@@ -301,7 +291,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
 		this.dataStoreFactory = dataStoreFactory;
 	}
-	
+
 	public int getAppLiveStreamCount(IScope appScope) {
 		int size = 0;
 		if (appScope != null) {

@@ -50,18 +50,24 @@ import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.AppSettingsManager;
+import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
+import io.antmedia.licence.ILicenceService;
 import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
+import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.GPUUtils;
 import io.antmedia.statistic.GPUUtils.MemoryStatus;
 import io.antmedia.statistic.HlsViewerStats;
 import io.antmedia.webrtc.api.IWebRTCAdaptor;
+<<<<<<< HEAD
 import io.swagger.jaxrs.Reader;
 import io.antmedia.settings.LogSettings;
+=======
+>>>>>>> refs/remotes/origin/master
 
 @Component
 @Path("/")
@@ -79,9 +85,21 @@ public class RestService {
 
 	public static final String IS_AUTHENTICATED = "isAuthenticated";
 
+	public static final String SERVER_NAME = "server.name";
+
+	public static final String LICENSE_KEY = "server.licence_key";
+
+	public static final String MARKET_BUILD = "server.market_build";
+
 	Gson gson = new Gson();
 
 	private IDataStore dataStore;
+	
+	private static final String LOG_LEVEL = "logLevel";
+	
+	private static final String RED5_PROPERTIES = "red5.properties";
+	
+	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
 
 	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
 
@@ -133,6 +151,8 @@ public class RestService {
 
 	private DataStoreFactory dataStoreFactory;
 	private ServerSettings serverSettings;
+
+	private ILicenceService licenceService;
 
 
 
@@ -685,7 +705,6 @@ public class RestService {
 	}
 
 
-
 	/**
 	 * Refactor remove this function and use ProxyServlet to get this info
 	 * Before deleting check web panel does not use it
@@ -706,11 +725,46 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings){
+
 		ApplicationContext context = getApplication().getApplicationContext(appname);
 		return gson.toJson(new Result(AppSettingsManager.updateAppSettings(context, appsettings, true)));
+
+
 	}
 
 
+
+	@POST
+	@Path("/changeServerSettings")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public String changeServerSettings(ServerSettings serverSettings){
+
+
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH, true);
+
+		String serverName = "";
+		String licenceKey = "";
+		if(serverSettings.getServerName() != null) {
+			serverName = serverSettings.getServerName();
+		}
+
+		store.put(SERVER_NAME, serverName);
+		getServerSettingsInternal().setServerName(serverName);
+
+		if (serverSettings.getLicenceKey() != null) {
+			licenceKey = serverSettings.getLicenceKey();
+		}
+
+		store.put(LICENSE_KEY, licenceKey);
+		getServerSettingsInternal().setLicenceKey(licenceKey);
+
+		store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
+		getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
+
+
+		return gson.toJson(new Result(store.save()));
+	}
 
 	@GET
 	@Path("/isEnterpriseEdition")
@@ -725,14 +779,35 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
 	{
+
 		return AppSettingsManager.getAppSettings(appname);
+
 	}
+
+	@GET
+	@Path("/getServerSettings")
+	@Produces(MediaType.APPLICATION_JSON)
+	public ServerSettings getServerSettings() 
+	{
+
+		return getServerSettingsInternal();
+	}
+
+
+
+	@GET
+	@Path("/getLicenceStatus/{key}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Licence getLicenceStatus(@PathParam("key") String key) 
+	{
+		return getLicenceServiceInstance().checkLicence(key);
+	}
+
 
 	public void setDataStore(IDataStore dataStore) {
-
 		this.dataStore = dataStore;
 	}
-
 
 	public IDataStore getDataStore() {
 		if (dataStore == null) {
@@ -741,6 +816,26 @@ public class RestService {
 		return dataStore;
 	}
 
+	private ServerSettings getServerSettingsInternal() {
+
+		if(serverSettings == null) {
+
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+		}
+		return serverSettings;
+	}
+
+
+
+	public ILicenceService getLicenceServiceInstance () {
+		if(licenceService == null) {
+			
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+			licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
+		}
+		return licenceService;
+	}
 
 
 	public AdminApplication getApplication() {
@@ -776,14 +871,27 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
+<<<<<<< HEAD
 
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");
 
+=======
+		
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
+		store.setFullPath(RED5_PROPERTIES_PATH);
+		
+>>>>>>> refs/remotes/origin/master
 		logSettings = new LogSettings();
+<<<<<<< HEAD
 
 		if (store.get("logLevel") != null) {
 			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
+=======
+		
+		if (store.get(LOG_LEVEL) != null) {
+			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
+>>>>>>> refs/remotes/origin/master
 		}
 
 		return logSettings;
@@ -795,16 +903,31 @@ public class RestService {
 	public String changeLogSettings(@PathParam("level") String logLevel){
 
 		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+<<<<<<< HEAD
 
 		PreferenceStore store = new PreferenceStore("red5.properties");
 		store.setFullPath("conf/red5.properties");	
 
+=======
+		
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
+		store.setFullPath(RED5_PROPERTIES_PATH);	
+		
+>>>>>>> refs/remotes/origin/master
 		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
 				|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
 				|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
 				|| logLevel.equals("OFF")) {
 
+<<<<<<< HEAD
 			rootLogger.setLevel(currentLevelDetect(logLevel));
+=======
+		store.put(LOG_LEVEL, logLevel);
+		
+		logSettings = new LogSettings();
+			
+		logSettings.setLogLevel(String.valueOf(logLevel));
+>>>>>>> refs/remotes/origin/master
 
 			store.put("logLevel", logLevel);
 

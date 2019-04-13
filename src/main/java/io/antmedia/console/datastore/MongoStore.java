@@ -26,7 +26,7 @@ public class MongoStore implements IDataStore {
 	public MongoStore(String dbHost, String dbUser, String dbPassword) {
 		String dbName = SERVER_STORAGE_MAP_NAME;
 
-		String uri = DBUtils.getUri(dbHost, dbUser, dbPassword);
+		String uri = DBUtils.getMongoConnectionUri(dbHost, dbUser, dbPassword);
 
 		MongoClientURI mongoUri = new MongoClientURI(uri);
 		MongoClient client = new MongoClient(mongoUri);

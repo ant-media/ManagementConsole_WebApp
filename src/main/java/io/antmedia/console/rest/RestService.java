@@ -63,11 +63,6 @@ import io.antmedia.statistic.GPUUtils;
 import io.antmedia.statistic.GPUUtils.MemoryStatus;
 import io.antmedia.statistic.HlsViewerStats;
 import io.antmedia.webrtc.api.IWebRTCAdaptor;
-<<<<<<< HEAD
-import io.swagger.jaxrs.Reader;
-import io.antmedia.settings.LogSettings;
-=======
->>>>>>> refs/remotes/origin/master
 
 @Component
 @Path("/")
@@ -78,6 +73,20 @@ public class RestService {
 	public Level currentLevel;
 
 	public LogSettings logSettings;
+	
+	private static final String LOG_LEVEL_ALL = "ALL";
+	
+	private static final String LOG_LEVEL_TRACE = "TRACE";
+	
+	private static final String LOG_LEVEL_DEBUG = "DEBUG";
+	
+	private static final String LOG_LEVEL_INFO = "INFO";
+	
+	private static final String LOG_LEVEL_WARN = "WARN";
+	
+	private static final String LOG_LEVEL_ERROR = "ERROR";
+	
+	private static final String LOG_LEVEL_OFF = "OFF";
 
 	private static final String USER_PASSWORD = "user.password";
 
@@ -871,27 +880,15 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
-<<<<<<< HEAD
-
-		PreferenceStore store = new PreferenceStore("red5.properties");
-		store.setFullPath("conf/red5.properties");
-
-=======
 		
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);
 		
->>>>>>> refs/remotes/origin/master
 		logSettings = new LogSettings();
-<<<<<<< HEAD
 
-		if (store.get("logLevel") != null) {
-			logSettings.setLogLevel(String.valueOf(store.get("logLevel")));
-=======
 		
 		if (store.get(LOG_LEVEL) != null) {
 			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
->>>>>>> refs/remotes/origin/master
 		}
 
 		return logSettings;
@@ -903,37 +900,22 @@ public class RestService {
 	public String changeLogSettings(@PathParam("level") String logLevel){
 
 		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-<<<<<<< HEAD
-
-		PreferenceStore store = new PreferenceStore("red5.properties");
-		store.setFullPath("conf/red5.properties");	
-
-=======
 		
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);	
 		
->>>>>>> refs/remotes/origin/master
-		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
-				|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
-				|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
-				|| logLevel.equals("OFF")) {
+		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
+				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
+				|| logLevel.equals(LOG_LEVEL_WARN)  || logLevel.equals(LOG_LEVEL_ERROR)
+				|| logLevel.equals(LOG_LEVEL_OFF)) {
 
-<<<<<<< HEAD
-			rootLogger.setLevel(currentLevelDetect(logLevel));
-=======
+		rootLogger.setLevel(currentLevelDetect(logLevel));
+
 		store.put(LOG_LEVEL, logLevel);
 		
 		logSettings = new LogSettings();
 			
 		logSettings.setLogLevel(String.valueOf(logLevel));
->>>>>>> refs/remotes/origin/master
-
-			store.put("logLevel", logLevel);
-
-			logSettings = new LogSettings();
-
-			logSettings.setLogLevel(logLevel);
 
 		}
 
@@ -942,28 +924,28 @@ public class RestService {
 
 	public Level currentLevelDetect(String logLevel) {
 
-		if( logLevel.equals("OFF")) {
+		if( logLevel.equals(LOG_LEVEL_OFF)) {
 			currentLevel = Level.OFF;
 			return currentLevel;
 		}
-		if( logLevel.equals("WARN")) {
+		if( logLevel.equals(LOG_LEVEL_ERROR)) {
+			currentLevel = Level.ERROR;
+			return currentLevel;
+		}
+		if( logLevel.equals(LOG_LEVEL_WARN)) {
 			currentLevel = Level.WARN;
 			return currentLevel;
 		}
-		if( logLevel.equals("DEBUG")) {
+		if( logLevel.equals(LOG_LEVEL_DEBUG)) {
 			currentLevel = Level.DEBUG;
 			return currentLevel;
 		}
-		if( logLevel.equals("TRACE")) {
-			currentLevel = Level.TRACE;
-			return currentLevel;
-		}
-		if( logLevel.equals("ALL")) {
+		if( logLevel.equals(LOG_LEVEL_TRACE)) {
 			currentLevel = Level.ALL;
 			return currentLevel;
 		}
-		if( logLevel.equals("ERROR")) {
-			currentLevel = Level.ERROR;
+		if( logLevel.equals(LOG_LEVEL_ALL)) {
+			currentLevel = Level.ALL;
 			return currentLevel;
 		}
 		else {

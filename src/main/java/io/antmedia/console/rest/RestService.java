@@ -1,19 +1,11 @@
 package io.antmedia.console.rest;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.RandomAccessFile;
-import java.io.StringReader;
-import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Scanner;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +20,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-import org.apache.commons.io.FileUtils;
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,19 +64,19 @@ public class RestService {
 	public Level currentLevel;
 
 	public LogSettings logSettings;
-	
+
 	private static final String LOG_LEVEL_ALL = "ALL";
-	
+
 	private static final String LOG_LEVEL_TRACE = "TRACE";
-	
+
 	private static final String LOG_LEVEL_DEBUG = "DEBUG";
-	
+
 	private static final String LOG_LEVEL_INFO = "INFO";
-	
+
 	private static final String LOG_LEVEL_WARN = "WARN";
-	
+
 	private static final String LOG_LEVEL_ERROR = "ERROR";
-	
+
 	private static final String LOG_LEVEL_OFF = "OFF";
 
 	private static final String USER_PASSWORD = "user.password";
@@ -103,11 +94,11 @@ public class RestService {
 	Gson gson = new Gson();
 
 	private IDataStore dataStore;
-	
+
 	private static final String LOG_LEVEL = "logLevel";
-	
+
 	private static final String RED5_PROPERTIES = "red5.properties";
-	
+
 	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
 
 	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
@@ -839,7 +830,7 @@ public class RestService {
 
 	public ILicenceService getLicenceServiceInstance () {
 		if(licenceService == null) {
-			
+
 			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 			licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
 		}
@@ -880,13 +871,13 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
-		
+
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);
-		
+
 		logSettings = new LogSettings();
 
-		
+
 		if (store.get(LOG_LEVEL) != null) {
 			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
 		}
@@ -900,22 +891,22 @@ public class RestService {
 	public String changeLogSettings(@PathParam("level") String logLevel){
 
 		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-		
+
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);	
-		
+
 		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
 				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
 				|| logLevel.equals(LOG_LEVEL_WARN)  || logLevel.equals(LOG_LEVEL_ERROR)
 				|| logLevel.equals(LOG_LEVEL_OFF)) {
 
-		rootLogger.setLevel(currentLevelDetect(logLevel));
+			rootLogger.setLevel(currentLevelDetect(logLevel));
 
-		store.put(LOG_LEVEL, logLevel);
-		
-		logSettings = new LogSettings();
-			
-		logSettings.setLogLevel(String.valueOf(logLevel));
+			store.put(LOG_LEVEL, logLevel);
+
+			logSettings = new LogSettings();
+
+			logSettings.setLogLevel(String.valueOf(logLevel));
 
 		}
 
@@ -956,105 +947,110 @@ public class RestService {
 	}
 
 	@GET
-	@Path("/getErrorLogFile/{lineCount}")
+	@Path("/getErrorLogFile/{charCount}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getErrorLogFile(@PathParam("lineCount") int lineCount) throws IOException 
+	public String getErrorLogFile(@PathParam("charCount") int charCount) throws IOException 
 	{
+		File file = new File("log/antmedia-error.log");
 
-		File antMediaLogFile = new File("log/antmedia-error.log");
-
-		if (!antMediaLogFile.isFile()) {  
+		if (!file.isFile()) {  
 			return gson.toJson("There are no registered logs yet");
+		}        
+
+		else if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
+			return gson.toJson("JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount );
 		}
 
-		String logs = getLogLines(antMediaLogFile,lineCount);
+		else if (file.length()<charCount) {  
+			return gson.toJson("File Char Size: "+ file.length()+ " There are no many Chars.");
+		}
 
-		return gson.toJson(logs);
+
+		ByteArrayOutputStream ous = null;
+		InputStream ios = null;
+		try {
+			byte[] buffer = new byte[1024];
+			ous = new ByteArrayOutputStream();
+			ios = new FileInputStream(file);
+
+			ios.skip(file.length()-charCount);
+
+			int read = 0;
+			while ((read = ios.read(buffer)) != -1) {
+				ous.write(buffer, 0, read);
+			}
+		}finally {
+			try {
+				if (ous != null)
+					ous.close();
+			} catch (IOException e) {
+			}
+
+			try {
+				if (ios != null)
+					ios.close();
+			} catch (IOException e) {
+			}
+		}
+
+		return ous.toString();
 	}
+
+
+
+
 
 	@GET
-	@Path("/getConsoleLogFile/{lineCount}")
+	@Path("/getConsoleLogFile/{charCount}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getConsoleLogFile(@PathParam("lineCount") int lineCount) throws IOException 
+	public String getConsoleLogFile3(@PathParam("charCount") int charCount) throws IOException 
 	{
 
-		StringBuilder result = new StringBuilder();
+		File file = new File("log/ant-media-server.log");
 
+		if (!file.isFile()) {  
+			return gson.toJson("There are no registered logs yet");
+		}        
+
+		else if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
+			return gson.toJson("JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount );
+		}
+
+		else if (file.length()<charCount) {  
+			return gson.toJson("File Char Size: "+ file.length()+ " There are no many chars.");
+		}
+
+
+		ByteArrayOutputStream ous = null;
+		InputStream ios = null;
 		try {
+			byte[] buffer = new byte[1024];
+			ous = new ByteArrayOutputStream();
+			ios = new FileInputStream(file);
 
-			FileReader fileReader = new FileReader("log/ant-media-server.log");
+			ios.skip(file.length()-charCount);
 
-			File file = new File("log/ant-media-server.log");
-
-			BufferedReader reader = new BufferedReader(fileReader);
-
-			reader.skip(file.length()-10000);
-
-			char[] chars = new char[1000];
-
-			while ((reader.read(chars)) != -1 ) {
-				result.append(chars);
+			int read = 0;
+			while ((read = ios.read(buffer)) != -1) {
+				ous.write(buffer, 0, read);
+			}
+		}finally {
+			try {
+				if (ous != null)
+					ous.close();
+			} catch (IOException e) {
 			}
 
-			reader.close();
-
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-
-		return result.toString();
-	}
-
-
-
-	public String getLogLines( File file, int lines) {
-		java.io.RandomAccessFile fileHandler = null;
-		try {
-			fileHandler = new java.io.RandomAccessFile( file, "r" );
-			long fileLength = fileHandler.length() - 1;
-			StringBuilder sb = new StringBuilder();
-			int line = 0;
-
-			for(long filePointer = fileLength; filePointer != -1; filePointer--){
-				fileHandler.seek( filePointer );
-				int readByte = fileHandler.readByte();
-
-				if( readByte == 0xA ) {
-					if (filePointer < fileLength) {
-						line = line + 1;
-					}
-				} else if( readByte == 0xD ) {
-					if (filePointer < fileLength-1) {
-						line = line + 1;
-					}
-				}
-				if (line >= lines) {
-					break;
-				}
-				sb.append( ( char ) readByte );
+			try {
+				if (ios != null)
+					ios.close();
+			} catch (IOException e) {
 			}
+		}
 
-			String lastLine = sb.reverse().toString();
-			return lastLine;
-		} catch( java.io.FileNotFoundException e ) {
-			e.printStackTrace();
-			return null;
-		} catch( java.io.IOException e ) {
-			e.printStackTrace();
-			return null;
-		}
-		finally {
-			if (fileHandler != null )
-				try {
-					fileHandler.close();
-				} catch (IOException e) {
-				}
-		}
+		return ous.toString();
+
 	}
-
-
 
 
 

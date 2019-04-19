@@ -17,6 +17,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
@@ -949,20 +950,26 @@ public class RestService {
 	@GET
 	@Path("/getErrorLogFile/{charCount}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getErrorLogFile(@PathParam("charCount") int charCount) throws IOException 
+	public String getErrorLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
 	{
-		File file = new File("log/antmedia-error.log");
-
+		
+		if(logLocation == null)
+		{
+			logLocation = "log/antmedia-error.log";
+		}
+		
+		File file = new File(logLocation);
+		
 		if (!file.isFile()) {  
 			return gson.toJson("There are no registered logs yet");
 		}        
 
-		else if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
+		if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
 			return gson.toJson("JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount );
 		}
 
 		else if (file.length()<charCount) {  
-			return gson.toJson("File Char Size: "+ file.length()+ " There are no many Chars.");
+			return gson.toJson("There are no many Chars");
 		}
 
 
@@ -993,7 +1000,7 @@ public class RestService {
 			}
 		}
 
-		return ous.toString();
+		return gson.toJson(ous.toString());
 	}
 
 
@@ -1003,10 +1010,15 @@ public class RestService {
 	@GET
 	@Path("/getConsoleLogFile/{charCount}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getConsoleLogFile3(@PathParam("charCount") int charCount) throws IOException 
+	public String getConsoleLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
 	{
 
-		File file = new File("log/ant-media-server.log");
+		if(logLocation == null)
+		{
+			logLocation = "log/ant-media-server.log";
+		}
+		
+		File file = new File(logLocation);
 
 		if (!file.isFile()) {  
 			return gson.toJson("There are no registered logs yet");
@@ -1017,7 +1029,7 @@ public class RestService {
 		}
 
 		else if (file.length()<charCount) {  
-			return gson.toJson("File Char Size: "+ file.length()+ " There are no many chars.");
+			return gson.toJson("There are no many chars.");
 		}
 
 
@@ -1047,8 +1059,10 @@ public class RestService {
 			} catch (IOException e) {
 			}
 		}
+		
+		return  gson.toJson(ous.toString());
+		
 
-		return ous.toString();
 
 	}
 

@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -25,12 +24,12 @@ public class RestServiceTest {
 
 	private RestService restService;
 	private MapDBStore dbStore;
-	
+
 	private static final String fileNonExistError = "\"There are no registered logs yet\"";
 	private static final String manyCharError = "\"There are no many Chars in File\"";
 	private static final String defaultLogLocation = "target/test-classes/test.log";
 	private static final String fileText = "Test Log File String Values Lorem Ipsum Dolor Sit Amet";
-    
+
 	@Before
 	public void before() {
 		File f = new File("server.db");
@@ -221,63 +220,63 @@ public class RestServiceTest {
 		 * assertFalse(result.isSuccess());
 		 */
 	}
-	
+
 
 	@Test
 	public void testLogFiles() throws IOException {
-		
+
 		//Create Log Files
-		
-        writeUsingFiles(fileText);
-        
-        //Check Log File Create
-        
-        File checkFile = new File(defaultLogLocation);
-        
-        assertTrue(checkFile.isFile());
-		
+
+		writeUsingFiles(fileText);
+
+		//Check Log File Create
+
+		File checkFile = new File(defaultLogLocation);
+
+		assertTrue(checkFile.isFile());
+
 		//Tests Non-Exist File Parameter values in Log Services
-		
+
 		String getNonFileLog = restService.getLogFile(100, "");
-		
+
 		assertEquals(getNonFileLog, fileNonExistError);
-		
+
 		//Test Too Many Char Read log files with logLocation Parameters
-		
+
 		String getManyCharLog = restService.getLogFile(1000, defaultLogLocation);
-		
+
 		assertEquals(getManyCharLog, manyCharError);
-		
+
 		//Test char bytes check log files with logLocation Parameters
-		
+
 		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation);
-		
+
 		assertEquals(getByteCheckLog.getBytes().length, 22 );
-		
+
 		//Test check log file texts with logLocation Parameters
-		
+
 		String getFileTextLog = restService.getLogFile(54, defaultLogLocation);
-		
+
 		assertEquals(getFileTextLog.toString(), "\""+fileText+"\"");
-		
+
 		//Remove Log File
-		
+
 		File filePath = new File(defaultLogLocation);
-		
+
 		filePath.delete();
-		
+
 		//Check File is Deleted
-		
+
 		assertFalse(checkFile.isFile());
-	
+
 	}
-	
-    private static void writeUsingFiles(String data) {
-        try {
-            Files.write(Paths.get(defaultLogLocation), data.getBytes());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+
+	private static void writeUsingFiles(String data) {
+		try {
+			Files.write(Paths.get(defaultLogLocation), data.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 }

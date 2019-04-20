@@ -952,14 +952,14 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
 	{
-		
+
 		if(logLocation == null)
 		{
 			logLocation = "log/ant-media-server.log";
 		}
-		
+
 		File file = new File(logLocation);
-		
+
 		if (!file.isFile()) {  
 			return gson.toJson("There are no registered logs yet");
 		}        

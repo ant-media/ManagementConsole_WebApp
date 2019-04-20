@@ -948,14 +948,14 @@ public class RestService {
 	}
 
 	@GET
-	@Path("/getErrorLogFile/{charCount}")
+	@Path("/getLogFile/{charCount}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getErrorLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
+	public String getLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
 	{
 		
 		if(logLocation == null)
 		{
-			logLocation = "log/antmedia-error.log";
+			logLocation = "log/ant-media-server.log";
 		}
 		
 		File file = new File(logLocation);
@@ -969,7 +969,7 @@ public class RestService {
 		}
 
 		else if (file.length()<charCount) {  
-			return gson.toJson("There are no many Chars");
+			return gson.toJson("There are no many Chars in File");
 		}
 
 
@@ -1002,70 +1002,6 @@ public class RestService {
 
 		return gson.toJson(ous.toString());
 	}
-
-
-
-
-
-	@GET
-	@Path("/getConsoleLogFile/{charCount}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getConsoleLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
-	{
-
-		if(logLocation == null)
-		{
-			logLocation = "log/ant-media-server.log";
-		}
-		
-		File file = new File(logLocation);
-
-		if (!file.isFile()) {  
-			return gson.toJson("There are no registered logs yet");
-		}        
-
-		else if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
-			return gson.toJson("JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount );
-		}
-
-		else if (file.length()<charCount) {  
-			return gson.toJson("There are no many chars.");
-		}
-
-
-		ByteArrayOutputStream ous = null;
-		InputStream ios = null;
-		try {
-			byte[] buffer = new byte[1024];
-			ous = new ByteArrayOutputStream();
-			ios = new FileInputStream(file);
-
-			ios.skip(file.length()-charCount);
-
-			int read = 0;
-			while ((read = ios.read(buffer)) != -1) {
-				ous.write(buffer, 0, read);
-			}
-		}finally {
-			try {
-				if (ous != null)
-					ous.close();
-			} catch (IOException e) {
-			}
-
-			try {
-				if (ios != null)
-					ios.close();
-			} catch (IOException e) {
-			}
-		}
-		
-		return  gson.toJson(ous.toString());
-		
-
-
-	}
-
 
 
 }

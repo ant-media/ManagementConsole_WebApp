@@ -972,7 +972,7 @@ public class RestService {
 			return gson.toJson("There are no many Chars in File");
 		}
 
-
+		String result = ""; 
 		ByteArrayOutputStream ous = null;
 		InputStream ios = null;
 		try {
@@ -999,8 +999,13 @@ public class RestService {
 			} catch (IOException e) {
 			}
 		}
+		result =  ous.toString("UTF-8");
+		
+		JsonObject jsonObject = new JsonObject();
 
-		return gson.toJson(ous.toString());
+		jsonObject.addProperty("logs", result);
+
+		return jsonObject.toString();
 	}
 
 

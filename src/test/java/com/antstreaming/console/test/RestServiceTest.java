@@ -28,8 +28,10 @@ public class RestServiceTest {
 	private static final String fileNonExistError = "\"There are no registered logs yet\"";
 	private static final String manyCharError = "\"There are no many Chars in File\"";
 	private static final String defaultLogLocation = "target/test-classes/test.log";
-	private static final String fileText = "Test Log File String Values Lorem Ipsum Dolor Sit Amet";
+	private static final String writeFileText = "Test Log File String Values Lorem Ipsum Dolor Sit Amet";
+	private static final String fileText = "{\"logs\":\""+"Test Log File String Values Lorem Ipsum Dolor Sit Amet\"}";
 
+	
 	@Before
 	public void before() {
 		File f = new File("server.db");
@@ -227,7 +229,7 @@ public class RestServiceTest {
 
 		//Create Log Files
 
-		writeUsingFiles(fileText);
+		writeUsingFiles(writeFileText);
 
 		//Check Log File Create
 
@@ -251,14 +253,14 @@ public class RestServiceTest {
 
 		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation);
 
-		assertEquals(getByteCheckLog.getBytes().length, 22 );
+		assertEquals(getByteCheckLog.getBytes().length, 31 );
 
 		//Test check log file texts with logLocation Parameters
 
 		String getFileTextLog = restService.getLogFile(54, defaultLogLocation);
 
-		assertEquals(getFileTextLog.toString(), "\""+fileText+"\"");
-
+		//assertEquals(getFileTextLog.toString(), "\""+fileText+"\"");
+		assertEquals(getFileTextLog.toString(), fileText);
 		//Remove Log File
 
 		File filePath = new File(defaultLogLocation);

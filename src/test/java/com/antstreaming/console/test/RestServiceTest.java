@@ -242,31 +242,31 @@ public class RestServiceTest {
 
 		String getNonFileLog = restService.getLogFile(100, "");
 
-		assertEquals(getNonFileLog, fileNonExistError);
+		assertEquals(fileNonExistError, getNonFileLog);
 
 		//Test Too Many Char Read log files with logLocation Parameters
 
 		String getManyCharLog = restService.getLogFile(1000, defaultLogLocation);
 
-		assertEquals(getManyCharLog, manyCharError);
+		assertEquals(manyCharError, getManyCharLog);
 
 		//Test char bytes check log files with logLocation Parameters
 
 		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation);
 
-		assertEquals(getByteCheckLog.getBytes().length, 20+logHeaderSize );
+		assertEquals(20+logHeaderSize, getByteCheckLog.getBytes().length);
 		
 		//Test char different bytes check log files with logLocation Parameters
 
 		String getByteCheckLog2 = restService.getLogFile(30, defaultLogLocation);
 
-		assertEquals(getByteCheckLog2.getBytes().length, 30+logHeaderSize );
+		assertEquals(30+logHeaderSize, getByteCheckLog2.getBytes().length);
 
 		//Test check log file texts with logLocation Parameters
 
 		String getFileTextLog = restService.getLogFile(54, defaultLogLocation);
 
-		assertEquals(getFileTextLog.toString(), fileText);
+		assertEquals(fileText, getFileTextLog.toString());
 		
 		//Remove Log File
 

@@ -1,5 +1,10 @@
 package io.antmedia.console.rest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import javax.servlet.ServletContext;
@@ -12,6 +17,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
@@ -53,13 +59,27 @@ import io.antmedia.webrtc.api.IWebRTCAdaptor;
 @Component
 @Path("/")
 public class RestService {
-	
+
 	public ch.qos.logback.classic.Logger rootLogger;
-	
+
 	public Level currentLevel;
-	
+
 	public LogSettings logSettings;
-	
+
+	private static final String LOG_LEVEL_ALL = "ALL";
+
+	private static final String LOG_LEVEL_TRACE = "TRACE";
+
+	private static final String LOG_LEVEL_DEBUG = "DEBUG";
+
+	private static final String LOG_LEVEL_INFO = "INFO";
+
+	private static final String LOG_LEVEL_WARN = "WARN";
+
+	private static final String LOG_LEVEL_ERROR = "ERROR";
+
+	private static final String LOG_LEVEL_OFF = "OFF";
+
 	private static final String USER_PASSWORD = "user.password";
 
 	private static final String USER_EMAIL = "user.email";
@@ -75,11 +95,11 @@ public class RestService {
 	Gson gson = new Gson();
 
 	private IDataStore dataStore;
-	
+
 	private static final String LOG_LEVEL = "logLevel";
-	
+
 	private static final String RED5_PROPERTIES = "red5.properties";
-	
+
 	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
 
 	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
@@ -119,9 +139,9 @@ public class RestService {
 	private static final String LOCAL_WEBRTC_VIEWERS = "localWebRTCViewers";
 
 	private static final String LOCAL_HLS_VIEWERS = "localHLSViewers";
-	
+
 	protected ApplicationContext applicationContext;
-	
+
 	public LogSettings logSettingsModel;
 
 	@Context 
@@ -811,7 +831,7 @@ public class RestService {
 
 	public ILicenceService getLicenceServiceInstance () {
 		if(licenceService == null) {
-			
+
 			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
 			licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
 		}
@@ -846,77 +866,78 @@ public class RestService {
 		boolean isCluster = ctxt.containsBean("tomcat.cluster");
 		return new Result(isCluster, "");
 	}
-	
+
 	@GET
 	@Path("/getLogLevel")
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
-		
+
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);
-		
+
 		logSettings = new LogSettings();
-		
+
+
 		if (store.get(LOG_LEVEL) != null) {
 			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
 		}
 
 		return logSettings;
 	}
-	
+
 	@GET
 	@Path("/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
-		
+
 		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-		
+
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);	
-		
-		if(logLevel.equals("INFO") || logLevel.equals("WARN") 
-		|| logLevel.equals("DEBUG") || logLevel.equals("TRACE") 
-		|| logLevel.equals("ALL")  || logLevel.equals("ERROR")
-		|| logLevel.equals("OFF")) {
 
-		store.put(LOG_LEVEL, logLevel);
-		
-		logSettings = new LogSettings();
-			
-		logSettings.setLogLevel(String.valueOf(logLevel));
+		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
+				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
+				|| logLevel.equals(LOG_LEVEL_WARN)  || logLevel.equals(LOG_LEVEL_ERROR)
+				|| logLevel.equals(LOG_LEVEL_OFF)) {
 
-		rootLogger.setLevel(currentLevelDetect(logLevel));
-		
+			rootLogger.setLevel(currentLevelDetect(logLevel));
+
+			store.put(LOG_LEVEL, logLevel);
+
+			logSettings = new LogSettings();
+
+			logSettings.setLogLevel(String.valueOf(logLevel));
+
 		}
-		
+
 		return gson.toJson(new Result(store.save()));
 	}
-	
+
 	public Level currentLevelDetect(String logLevel) {
-		
-		if( logLevel.equals("OFF")) {
+
+		if( logLevel.equals(LOG_LEVEL_OFF)) {
 			currentLevel = Level.OFF;
 			return currentLevel;
 		}
-		if( logLevel.equals("WARN")) {
+		if( logLevel.equals(LOG_LEVEL_ERROR)) {
+			currentLevel = Level.ERROR;
+			return currentLevel;
+		}
+		if( logLevel.equals(LOG_LEVEL_WARN)) {
 			currentLevel = Level.WARN;
 			return currentLevel;
 		}
-		if( logLevel.equals("DEBUG")) {
+		if( logLevel.equals(LOG_LEVEL_DEBUG)) {
 			currentLevel = Level.DEBUG;
 			return currentLevel;
 		}
-		if( logLevel.equals("TRACE")) {
-			currentLevel = Level.TRACE;
-			return currentLevel;
-		}
-		if( logLevel.equals("ALL")) {
+		if( logLevel.equals(LOG_LEVEL_TRACE)) {
 			currentLevel = Level.ALL;
 			return currentLevel;
 		}
-		if( logLevel.equals("ERROR")) {
-			currentLevel = Level.ERROR;
+		if( logLevel.equals(LOG_LEVEL_ALL)) {
+			currentLevel = Level.ALL;
 			return currentLevel;
 		}
 		else {
@@ -925,8 +946,67 @@ public class RestService {
 		}
 
 	}
-	
 
-	
-	
+	@GET
+	@Path("/getLogFile/{charCount}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
+	{
+
+		if(logLocation == null)
+		{
+			logLocation = "log/ant-media-server.log";
+		}
+
+		File file = new File(logLocation);
+
+		if (!file.isFile()) {  
+			return gson.toJson("There are no registered logs yet");
+		}        
+
+		if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
+			return gson.toJson("JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount );
+		}
+
+		else if (file.length()<charCount) {  
+			return gson.toJson("There are no many Chars in File");
+		}
+
+		String result = ""; 
+		ByteArrayOutputStream ous = null;
+		InputStream ios = null;
+		try {
+			byte[] buffer = new byte[1024];
+			ous = new ByteArrayOutputStream();
+			ios = new FileInputStream(file);
+
+			ios.skip(file.length()-charCount);
+
+			int read = 0;
+			while ((read = ios.read(buffer)) != -1) {
+				ous.write(buffer, 0, read);
+			}
+		}finally {
+			try {
+				if (ous != null)
+					ous.close();
+			} catch (IOException e) {
+			}
+
+			try {
+				if (ios != null)
+					ios.close();
+			} catch (IOException e) {
+			}
+		}
+		result =  ous.toString("UTF-8");
+		
+		JsonObject jsonObject = new JsonObject();
+
+		jsonObject.addProperty("logs", result);
+
+		return jsonObject.toString();
+	}
+
+
 }

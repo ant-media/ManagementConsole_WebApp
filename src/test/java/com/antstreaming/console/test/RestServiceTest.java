@@ -25,6 +25,7 @@ public class RestServiceTest {
 	private RestService restService;
 	private MapDBStore dbStore;
 
+	private static final Integer logHeaderSize = 11;
 	private static final String fileNonExistError = "\"There are no registered logs yet\"";
 	private static final String manyCharError = "\"There are no many Chars in File\"";
 	private static final String defaultLogLocation = "target/test-classes/test.log";
@@ -252,15 +253,21 @@ public class RestServiceTest {
 		//Test char bytes check log files with logLocation Parameters
 
 		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation);
-//headersize ekleyeceğim+ 20 +11 olacak
-		assertEquals(getByteCheckLog.getBytes().length, 31 );
+
+		assertEquals(getByteCheckLog.getBytes().length, 20+logHeaderSize );
+		
+		//Test char different bytes check log files with logLocation Parameters
+
+		String getByteCheckLog2 = restService.getLogFile(30, defaultLogLocation);
+
+		assertEquals(getByteCheckLog2.getBytes().length, 30+logHeaderSize );
 
 		//Test check log file texts with logLocation Parameters
 
 		String getFileTextLog = restService.getLogFile(54, defaultLogLocation);
 
-		//assertEquals(getFileTextLog.toString(), "\""+fileText+"\"");
 		assertEquals(getFileTextLog.toString(), fileText);
+		
 		//Remove Log File
 
 		File filePath = new File(defaultLogLocation);

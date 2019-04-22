@@ -252,7 +252,7 @@ public class RestServiceTest {
 		//Test char bytes check log files with logLocation Parameters
 
 		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation);
-
+//headersize ekleyeceğim+ 20 +11 olacak
 		assertEquals(getByteCheckLog.getBytes().length, 31 );
 
 		//Test check log file texts with logLocation Parameters

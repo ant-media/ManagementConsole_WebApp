@@ -952,6 +952,8 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
 	{
+		JsonObject jsonObject = new JsonObject();
+		String result = ""; 
 
 		if(logLocation == null)
 		{
@@ -961,18 +963,29 @@ public class RestService {
 		File file = new File(logLocation);
 
 		if (!file.isFile()) {  
-			return gson.toJson("There are no registered logs yet");
+			result = "There are no registered logs yet";
+
+			jsonObject.addProperty("logs", result);
+
+			return jsonObject.toString();
 		}        
 
 		if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
-			return gson.toJson("JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount );
-		}
+
+			result = "JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount;
+
+			jsonObject.addProperty("logs", result);
+
+			return jsonObject.toString();	}
 
 		else if (file.length()<charCount) {  
-			return gson.toJson("There are no many Chars in File");
-		}
 
-		String result = ""; 
+			result = "There are no many Chars in File";
+
+			jsonObject.addProperty("logs", result);
+
+			return jsonObject.toString();	}
+
 		ByteArrayOutputStream ous = null;
 		InputStream ios = null;
 		try {
@@ -1000,8 +1013,6 @@ public class RestService {
 			}
 		}
 		result =  ous.toString("UTF-8");
-		
-		JsonObject jsonObject = new JsonObject();
 
 		jsonObject.addProperty("logs", result);
 

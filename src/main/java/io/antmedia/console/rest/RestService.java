@@ -955,7 +955,7 @@ public class RestService {
 		JsonObject jsonObject = new JsonObject();
 		String result = ""; 
 
-		if(logLocation == null)
+		if(logLocation == null || logLocation.equals(""))
 		{
 			logLocation = "log/ant-media-server.log";
 		}
@@ -1004,12 +1004,14 @@ public class RestService {
 				if (ous != null)
 					ous.close();
 			} catch (IOException e) {
+				logger.warn(e.toString());
 			}
 
 			try {
 				if (ios != null)
 					ios.close();
 			} catch (IOException e) {
+				logger.warn(e.toString());
 			}
 		}
 		result =  ous.toString("UTF-8");

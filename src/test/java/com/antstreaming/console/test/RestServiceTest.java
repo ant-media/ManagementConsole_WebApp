@@ -26,8 +26,8 @@ public class RestServiceTest {
 	private MapDBStore dbStore;
 
 	private static final Integer logHeaderSize = 11;
-	private static final String fileNonExistError = "\"There are no registered logs yet\"";
-	private static final String manyCharError = "\"There are no many Chars in File\"";
+	private static final String fileNonExistError = "{\"logs\":\""+"There are no registered logs yet\"}";
+	private static final String manyCharError = "{\"logs\":\""+"There are no many Chars in File\"}";
 	private static final String defaultLogLocation = "target/test-classes/test.log";
 	private static final String writeFileText = "Test Log File String Values Lorem Ipsum Dolor Sit Amet";
 	private static final String fileText = "{\"logs\":\""+"Test Log File String Values Lorem Ipsum Dolor Sit Amet\"}";

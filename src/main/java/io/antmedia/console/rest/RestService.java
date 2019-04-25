@@ -802,6 +802,9 @@ public class RestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus(@QueryParam("key") String key) 
 	{
+		if(key == null) {
+			return null;
+		}
 		return getLicenceServiceInstance().checkLicence(key);
 	}
 

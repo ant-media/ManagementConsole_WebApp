@@ -65,8 +65,28 @@ public class RestService {
 	public Level currentLevel;
 
 	public LogSettings logSettings;
+	
+	private static final String LOG_TYPE_TEST = "test";
 
-	private static final float  MEGABYTE = 1024f * 1024f;
+	private static final String LOG_TYPE_ERROR = "error";
+
+	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
+
+	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
+
+	private static final String SERVER_LOG_LOCATION = "log/ant-media-server.log";
+	
+	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
+
+	private static final String LOG_CONTENT = "logContent";
+
+	private static final String LOG_SIZE = "logSize";
+
+	private static final String LOG_CONTENT_RANGE = "logContentRange";
+
+	private static final String MB_STRING = "%.2f MB";
+
+	private static final float MEGABYTE = 1024f * 1024f;
 
 	private static final int MAX_CHAR_SIZE = 512000;
 
@@ -148,7 +168,7 @@ public class RestService {
 
 	public LogSettings logSettingsModel;
 
-	@Context 
+	@Context
 	private ServletContext servletContext;
 
 	@Context
@@ -159,46 +179,37 @@ public class RestService {
 
 	private ILicenceService licenceService;
 
-
-
-
 	/**
-	 * Add user account on db. 
-	 * Username must be unique,
-	 * if there is a user with the same name, user will not be created
+	 * Add user account on db. Username must be unique, if there is a user with the
+	 * same name, user will not be created
 	 * 
-	 * userType = 0 means ready only account
-	 * userType = 1 means read-write account
+	 * userType = 0 means ready only account userType = 1 means read-write account
 	 * 
 	 * Post method should be used.
 	 * 
 	 * application/json
 	 * 
-	 * form parameters - case sensitive
-	 * "userName", "password", "userType
+	 * form parameters - case sensitive "userName", "password", "userType
 	 * 
 	 * @param userName
-	 * @return JSON data
-	 * if user is added success will be true
-	 * if user is not added success will be false
-	 * 	if user is not added, errorId = 1 means username already exist
+	 * @return JSON data if user is added success will be true if user is not added
+	 *         success will be false if user is not added, errorId = 1 means
+	 *         username already exist
 	 */
 	@POST
 	@Path("/addUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addUser(User user) {
-		//TODO: check that request is coming from authorized user
+		// TODO: check that request is coming from authorized user
 		boolean result = false;
 		int errorId = -1;
 		if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
 			result = getDataStore().addUser(user.getEmail(), user.getPassword(), UserType.ADMIN);
-		}
-		else {
+		} else {
 			if (user == null) {
 				logger.info("user variable null");
-			}
-			else {
+			} else {
 				logger.info("user already exist in db");
 			}
 
@@ -208,7 +219,6 @@ public class RestService {
 		operationResult.setErrorId(errorId);
 		return operationResult;
 	}
-
 
 	@POST
 	@Path("/addInitialUser")
@@ -230,8 +240,7 @@ public class RestService {
 	@Path("/isFirstLogin")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Result isFirstLogin() 
-	{
+	public Result isFirstLogin() {
 		boolean result = false;
 		if (getDataStore().getNumberOfUserRecords() == 0) {
 			result = true;
@@ -240,44 +249,38 @@ public class RestService {
 	}
 
 	/**
-	 * Edit user account on db. 
-	 * Username cannot be changed, password or userType can be changed
-	 * userType = 0 means ready only account
-	 * userType = 1 means read-write account
+	 * Edit user account on db. Username cannot be changed, password or userType can
+	 * be changed userType = 0 means ready only account userType = 1 means
+	 * read-write account
 	 * 
 	 * Post method should be used.
 	 * 
 	 * application/x-www-form-urlencoded
 	 * 
-	 * form parameters - case sensitive
-	 * "userName", "password", "userType
+	 * form parameters - case sensitive "userName", "password", "userType
 	 * 
 	 * @param userName
-	 * @return JSON data
-	 * if user is edited, success will be true
-	 * if not, success will be false
-	 * 	errorId = 2 means user does not exist
+	 * @return JSON data if user is edited, success will be true if not, success
+	 *         will be false errorId = 2 means user does not exist
 	 */
 	/*
-	@POST
-	@Path("/editUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult editUser(@FormParam("userName") String userName, @FormParam("password") String password, @FormParam("userType") Integer userType) {
-		//TODO: check that request is coming from authorized user
-		boolean result = false;
-		int errorId = -1;
-		if (userName != null && getDataStore().doesUsernameExist(userName)) {
-			result = getDataStore().editUser(userName, password, userType);
-		}
-		else {
-			errorId = 2;
-		}
-
-		OperationResult operationResult = new OperationResult(result);
-		operationResult.setErrorId(errorId);
-		return operationResult;
-	}
+	 * @POST
+	 * 
+	 * @Path("/editUser")
+	 * 
+	 * @Produces(MediaType.APPLICATION_JSON)
+	 * 
+	 * @Consumes(MediaType.APPLICATION_FORM_URLENCODED) public OperationResult
+	 * editUser(@FormParam("userName") String userName, @FormParam("password")
+	 * String password, @FormParam("userType") Integer userType) { //TODO: check
+	 * that request is coming from authorized user boolean result = false; int
+	 * errorId = -1; if (userName != null &&
+	 * getDataStore().doesUsernameExist(userName)) { result =
+	 * getDataStore().editUser(userName, password, userType); } else { errorId = 2;
+	 * }
+	 * 
+	 * OperationResult operationResult = new OperationResult(result);
+	 * operationResult.setErrorId(errorId); return operationResult; }
 	 */
 
 	/**
@@ -287,25 +290,23 @@ public class RestService {
 	 * 
 	 * application/x-www-form-urlencoded
 	 * 
-	 * form parameters - case sensitive
-	 * "userName"
+	 * form parameters - case sensitive "userName"
 	 * 
 	 * @param userName
 	 * @return
 	 */
 	/*
-	@POST
-	@Path("/deleteUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult deleteUser(@FormParam("userName") String userName) {
-		//TODO: check that request is coming from authorized user
-		boolean result = getDataStore().deleteUser(userName);
-		return new OperationResult(result);
-	}
+	 * @POST
+	 * 
+	 * @Path("/deleteUser")
+	 * 
+	 * @Produces(MediaType.APPLICATION_JSON)
+	 * 
+	 * @Consumes(MediaType.APPLICATION_FORM_URLENCODED) public OperationResult
+	 * deleteUser(@FormParam("userName") String userName) { //TODO: check that
+	 * request is coming from authorized user boolean result =
+	 * getDataStore().deleteUser(userName); return new OperationResult(result); }
 	 */
-
-
 
 	/**
 	 * Authenticates user with userName and password
@@ -329,14 +330,13 @@ public class RestService {
 		return new Result(result);
 	}
 
-
 	@POST
 	@Path("/changeUserPassword")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
 
-		String userMail = (String)servletRequest.getSession().getAttribute(USER_EMAIL);
+		String userMail = (String) servletRequest.getSession().getAttribute(USER_EMAIL);
 
 		return changeUserPasswordInternal(userMail, user);
 
@@ -358,30 +358,24 @@ public class RestService {
 						session.setAttribute(USER_PASSWORD, user.getNewPassword());
 					}
 				}
-			}
-			else {
+			} else {
 				message = "User not exist with that name and pass";
 			}
-		}
-		else {
+		} else {
 			message = "User name does not exist in context";
 		}
 
 		return new Result(result, message);
 	}
 
-
-
-
 	@GET
 	@Path("/isAuthenticated")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result isAuthenticatedRest(){
+	public Result isAuthenticatedRest() {
 		return new Result(isAuthenticated(servletRequest.getSession()));
 	}
 
-	public static boolean isAuthenticated(HttpSession session) 
-	{
+	public static boolean isAuthenticated(HttpSession session) {
 
 		Object isAuthenticated = session.getAttribute(IS_AUTHENTICATED);
 		Object userEmail = session.getAttribute(USER_EMAIL);
@@ -394,36 +388,23 @@ public class RestService {
 	}
 
 	/*
-	 * 	os.name						:Operating System Name
-	 * 	os.arch						: x86/x64/...
-	 * 	java.specification.version	: Java Version (Required 1.5 or 1.6 and higher to run Red5)
-	 * 	-------------------------------
-	 * 	Runtime.getRuntime()._____  (Java Virtual Machine Memory)
-	 * 	===============================
-	 * 	maxMemory()					: Maximum limitation
-	 * 	totalMemory()				: Total can be used
-	 * 	freeMemory()				: Availability
-	 * 	totalMemory()-freeMemory()	: In Use
-	 * 	availableProcessors()		: Total Processors available
-	 * 	-------------------------------
-	 *  getOperatingSystemMXBean()	(Actual Operating System RAM)
-	 *	===============================
-	 *  osCommittedVirtualMemory()	: Virtual Memory
-	 *  osTotalPhysicalMemory()		: Total Physical Memory
-	 *  osFreePhysicalMemory()		: Available Physical Memory
-	 *  osInUsePhysicalMemory()		: In Use Physical Memory
-	 *  osTotalSwapSpace()			: Total Swap Space
-	 *  osFreeSwapSpace()			: Available Swap Space
-	 *  osInUseSwapSpace()			: In Use Swap Space
-	 *  -------------------------------
-	 *  File						(Actual Harddrive Info: Supported for JRE 1.6)
-	 *	===============================
-	 *	osHDUsableSpace()			: Usable Space
-	 *	osHDTotalSpace()			: Total Space
-	 *	osHDFreeSpace()				: Available Space
-	 *	osHDInUseSpace()			: In Use Space
+	 * os.name :Operating System Name os.arch : x86/x64/...
+	 * java.specification.version : Java Version (Required 1.5 or 1.6 and higher to
+	 * run Red5) ------------------------------- Runtime.getRuntime()._____ (Java
+	 * Virtual Machine Memory) =============================== maxMemory() : Maximum
+	 * limitation totalMemory() : Total can be used freeMemory() : Availability
+	 * totalMemory()-freeMemory() : In Use availableProcessors() : Total Processors
+	 * available ------------------------------- getOperatingSystemMXBean() (Actual
+	 * Operating System RAM) ===============================
+	 * osCommittedVirtualMemory() : Virtual Memory osTotalPhysicalMemory() : Total
+	 * Physical Memory osFreePhysicalMemory() : Available Physical Memory
+	 * osInUsePhysicalMemory() : In Use Physical Memory osTotalSwapSpace() : Total
+	 * Swap Space osFreeSwapSpace() : Available Swap Space osInUseSwapSpace() : In
+	 * Use Swap Space ------------------------------- File (Actual Harddrive Info:
+	 * Supported for JRE 1.6) =============================== osHDUsableSpace() :
+	 * Usable Space osHDTotalSpace() : Total Space osHDFreeSpace() : Available Space
+	 * osHDInUseSpace() : In Use Space
 	 **/
-
 
 	@GET
 	@Path("/getSystemInfo")
@@ -431,7 +412,6 @@ public class RestService {
 	public String getSystemInfo() {
 		return gson.toJson(getSystemInfoJSObject());
 	}
-
 
 	public JsonObject getSystemInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
@@ -443,13 +423,11 @@ public class RestService {
 	}
 
 	/*
-	 * 	Runtime.getRuntime()._____  (Java Virtual Machine Memory)
-	 * 	===============================
-	 * 	maxMemory()					: Maximum limitation
-	 * 	totalMemory()				: Total can be used
-	 * 	freeMemory()				: Availability
-	 * 	totalMemory()-freeMemory()	: In Use
-	 * 	availableProcessors()		: Total Processors available
+	 * Runtime.getRuntime()._____ (Java Virtual Machine Memory)
+	 * =============================== maxMemory() : Maximum limitation
+	 * totalMemory() : Total can be used freeMemory() : Availability
+	 * totalMemory()-freeMemory() : In Use availableProcessors() : Total Processors
+	 * available
 	 */
 	@GET
 	@Path("/getJVMMemoryInfo")
@@ -457,7 +435,6 @@ public class RestService {
 	public String getJVMMemoryInfo() {
 		return gson.toJson(getJVMMemoryInfoJSObject());
 	}
-
 
 	public JsonObject getJVMMemoryInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
@@ -469,16 +446,12 @@ public class RestService {
 		return jsonObject;
 	}
 
-
-
 	/*
-	 *  osCommittedVirtualMemory()	: Virtual Memory
-	 *  osTotalPhysicalMemory()		: Total Physical Memory
-	 *  osFreePhysicalMemory()		: Available Physical Memory
-	 *  osInUsePhysicalMemory()		: In Use Physical Memory
-	 *  osTotalSwapSpace()			: Total Swap Space
-	 *  osFreeSwapSpace()			: Available Swap Space
-	 *  osInUseSwapSpace()			: In Use Swap Space
+	 * osCommittedVirtualMemory() : Virtual Memory osTotalPhysicalMemory() : Total
+	 * Physical Memory osFreePhysicalMemory() : Available Physical Memory
+	 * osInUsePhysicalMemory() : In Use Physical Memory osTotalSwapSpace() : Total
+	 * Swap Space osFreeSwapSpace() : Available Swap Space osInUseSwapSpace() : In
+	 * Use Swap Space
 	 */
 	@GET
 	@Path("/getSystemMemoryInfo")
@@ -486,7 +459,6 @@ public class RestService {
 	public String getSystemMemoryInfo() {
 		return gson.toJson(getSysteMemoryInfoJSObject());
 	}
-
 
 	public JsonObject getSysteMemoryInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
@@ -500,13 +472,12 @@ public class RestService {
 		jsonObject.addProperty("inUseSwapSpace", SystemUtils.osInUseSwapSpace("B", false));
 		return jsonObject;
 	}
+
 	/*
-	 *  File						(Actual Harddrive Info: Supported for JRE 1.6)
-	 *	===============================
-	 *	osHDUsableSpace()			: Usable Space
-	 *	osHDTotalSpace()			: Total Space
-	 *	osHDFreeSpace()				: Available Space
-	 *	osHDInUseSpace()			: In Use Space
+	 * File (Actual Harddrive Info: Supported for JRE 1.6)
+	 * =============================== osHDUsableSpace() : Usable Space
+	 * osHDTotalSpace() : Total Space osHDFreeSpace() : Available Space
+	 * osHDInUseSpace() : In Use Space
 	 **/
 	@GET
 	@Path("/getFileSystemInfo")
@@ -515,22 +486,22 @@ public class RestService {
 		return gson.toJson(getFileSystemInfoJSObject());
 	}
 
-
 	public JsonObject getFileSystemInfoJSObject() {
 		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("usableSpace", SystemUtils.osHDUsableSpace(null,"B", false));
+		jsonObject.addProperty("usableSpace", SystemUtils.osHDUsableSpace(null, "B", false));
 		jsonObject.addProperty("totalSpace", SystemUtils.osHDTotalSpace(null, "B", false));
-		jsonObject.addProperty("freeSpace", SystemUtils.osHDFreeSpace(null,  "B", false));
+		jsonObject.addProperty("freeSpace", SystemUtils.osHDFreeSpace(null, "B", false));
 		jsonObject.addProperty("inUseSpace", SystemUtils.osHDInUseSpace(null, "B", false));
 		return jsonObject;
 	}
 
 	/**
-	 * getProcessCpuTime:  microseconds CPU time used by the process
+	 * getProcessCpuTime: microseconds CPU time used by the process
 	 * 
-	 * getSystemCpuLoad:	"% recent cpu usage" for the whole system. 
+	 * getSystemCpuLoad: "% recent cpu usage" for the whole system.
 	 * 
-	 * getProcessCpuLoad: "% recent cpu usage" for the Java Virtual Machine process. 
+	 * getProcessCpuLoad: "% recent cpu usage" for the Java Virtual Machine process.
+	 * 
 	 * @return
 	 */
 	@GET
@@ -559,25 +530,25 @@ public class RestService {
 		jsonObject.add(SYSTEM_MEMORY_INFO, getSysteMemoryInfoJSObject());
 		jsonObject.add(FILE_SYSTEM_INFO, getFileSystemInfoJSObject());
 
-		//add gpu info 
+		// add gpu info
 		jsonObject.add(GPU_USAGE_INFO, getGPUInfoJSObject());
 
-		//add live stream size
+		// add live stream size
 		int totalLiveStreams = 0;
 		int localHlsViewers = 0;
 		int localWebRTCViewers = 0;
 		int localWebRTCStreams = 0;
 		AdminApplication application = getApplication();
 		List<String> appNames = application.getApplications();
-		for (String name : appNames) 
-		{
+		for (String name : appNames) {
 			IScope scope = application.getRootScope().getScope(name);
 			totalLiveStreams += application.getAppLiveStreamCount(scope);
 
 			localHlsViewers += getHLSViewers(scope);
 
-			if( scope.getContext().getApplicationContext().containsBean(IWebRTCAdaptor.BEAN_NAME)) {
-				IWebRTCAdaptor webrtcAdaptor = (IWebRTCAdaptor)scope.getContext().getApplicationContext().getBean(IWebRTCAdaptor.BEAN_NAME);
+			if (scope.getContext().getApplicationContext().containsBean(IWebRTCAdaptor.BEAN_NAME)) {
+				IWebRTCAdaptor webrtcAdaptor = (IWebRTCAdaptor) scope.getContext().getApplicationContext()
+						.getBean(IWebRTCAdaptor.BEAN_NAME);
 				localWebRTCViewers += webrtcAdaptor.getNumberOfTotalViewers();
 				localWebRTCStreams += webrtcAdaptor.getNumberOfLiveStreams();
 			}
@@ -585,19 +556,18 @@ public class RestService {
 		}
 
 		jsonObject.addProperty(TOTAL_LIVE_STREAMS, totalLiveStreams);
-		//add local webrtc viewer size
+		// add local webrtc viewer size
 		jsonObject.addProperty(LOCAL_WEBRTC_LIVE_STREAMS, localWebRTCStreams);
 		jsonObject.addProperty(LOCAL_WEBRTC_VIEWERS, localWebRTCViewers);
 		jsonObject.addProperty(LOCAL_HLS_VIEWERS, localHlsViewers);
-
-
 
 		return gson.toJson(jsonObject);
 	}
 
 	private int getHLSViewers(IScope scope) {
 		if (scope.getContext().getApplicationContext().containsBean(HlsViewerStats.BEAN_NAME)) {
-			HlsViewerStats hlsViewerStats = (HlsViewerStats) scope.getContext().getApplicationContext().getBean(HlsViewerStats.BEAN_NAME);
+			HlsViewerStats hlsViewerStats = (HlsViewerStats) scope.getContext().getApplicationContext()
+					.getBean(HlsViewerStats.BEAN_NAME);
 			if (hlsViewerStats != null) {
 				return hlsViewerStats.getTotalViewerCount();
 			}
@@ -605,27 +575,23 @@ public class RestService {
 		return 0;
 	}
 
-
 	@GET
 	@Path("/getGPUInfo")
-	@Produces(MediaType.APPLICATION_JSON) 
-	public String getGPUInfo() 
-	{
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getGPUInfo() {
 		return gson.toJson(getGPUInfoJSObject());
 	}
-
 
 	public JsonArray getGPUInfoJSObject() {
 		int deviceCount = GPUUtils.getInstance().getDeviceCount();
 		JsonArray jsonArray = new JsonArray();
 		if (deviceCount > 0) {
-			for (int i=0; i < deviceCount; i++) {
+			for (int i = 0; i < deviceCount; i++) {
 				jsonArray.add(getGPUInfoJSObject(i));
 			}
 		}
 		return jsonArray;
 	}
-
 
 	private JsonObject getGPUInfoJSObject(int deviceIndex) {
 		JsonObject jsonObject = new JsonObject();
@@ -641,15 +607,12 @@ public class RestService {
 		return jsonObject;
 	}
 
-
-
 	@GET
 	@Path("/getVersion")
-	@Produces(MediaType.APPLICATION_JSON) 
+	@Produces(MediaType.APPLICATION_JSON)
 	public String getVersion() {
 		return gson.toJson(BroadcastRestService.getSoftwareVersion());
 	}
-
 
 	@GET
 	@Path("/getApplications")
@@ -669,15 +632,14 @@ public class RestService {
 	}
 
 	/**
-	 * Refactor name getTotalLiveStreamSize
-	 * only return totalLiveStreamSize
+	 * Refactor name getTotalLiveStreamSize only return totalLiveStreamSize
+	 * 
 	 * @return
 	 */
 	@GET
 	@Path("/getLiveClientsSize")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getLiveClientsSize() 
-	{
+	public String getLiveClientsSize() {
 		int totalConnectionSize = getApplication().getTotalConnectionSize();
 		int totalLiveStreamSize = getApplication().getTotalLiveStreamSize();
 		JsonObject jsonObject = new JsonObject();
@@ -696,8 +658,9 @@ public class RestService {
 	}
 
 	/**
-	 * Refactor remove this function and use ProxyServlet to get this info
-	 * Before deleting check web panel does not use it
+	 * Refactor remove this function and use ProxyServlet to get this info Before
+	 * deleting check web panel does not use it
+	 * 
 	 * @param name
 	 * @return
 	 */
@@ -709,10 +672,10 @@ public class RestService {
 		return gson.toJson(appLiveStreams);
 	}
 
-
 	/**
-	 * Refactor remove this function and use ProxyServlet to get this info
-	 * Before deleting check web panel does not use it
+	 * Refactor remove this function and use ProxyServlet to get this info Before
+	 * deleting check web panel does not use it
+	 * 
 	 * @param name
 	 * @return
 	 */
@@ -724,33 +687,28 @@ public class RestService {
 		return gson.toJson(new Result(deleteVoDStream));
 	}
 
-
 	@POST
 	@Path("/changeSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings){
+	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings) {
 
 		ApplicationContext context = getApplication().getApplicationContext(appname);
 		return gson.toJson(new Result(AppSettingsManager.updateAppSettings(context, appsettings, true)));
 
-
 	}
-
-
 
 	@POST
 	@Path("/changeServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String changeServerSettings(ServerSettings serverSettings){
-
+	public String changeServerSettings(ServerSettings serverSettings) {
 
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH, true);
 
 		String serverName = "";
 		String licenceKey = "";
-		if(serverSettings.getServerName() != null) {
+		if (serverSettings.getServerName() != null) {
 			serverName = serverSettings.getServerName();
 		}
 
@@ -767,14 +725,13 @@ public class RestService {
 		store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
 		getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
 
-
 		return gson.toJson(new Result(store.save()));
 	}
 
 	@GET
 	@Path("/isEnterpriseEdition")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result isEnterpriseEdition(){
+	public Result isEnterpriseEdition() {
 		boolean isEnterprise = BroadcastRestService.isEnterprise();
 		return new Result(isEnterprise, "");
 	}
@@ -782,8 +739,7 @@ public class RestService {
 	@GET
 	@Path("/getSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
-	{
+	public AppSettingsModel getSettings(@PathParam("appname") String appname) {
 
 		return AppSettingsManager.getAppSettings(appname);
 
@@ -792,23 +748,18 @@ public class RestService {
 	@GET
 	@Path("/getServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
-	public ServerSettings getServerSettings() 
-	{
+	public ServerSettings getServerSettings() {
 
 		return getServerSettingsInternal();
 	}
-
-
 
 	@GET
 	@Path("/getLicenceStatus/{key}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Licence getLicenceStatus(@PathParam("key") String key) 
-	{
+	public Licence getLicenceStatus(@PathParam("key") String key) {
 		return getLicenceServiceInstance().checkLicence(key);
 	}
-
 
 	public void setDataStore(IDataStore dataStore) {
 		this.dataStore = dataStore;
@@ -823,35 +774,31 @@ public class RestService {
 
 	private ServerSettings getServerSettingsInternal() {
 
-		if(serverSettings == null) {
+		if (serverSettings == null) {
 
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+			serverSettings = (ServerSettings) ctxt.getBean(ServerSettings.BEAN_NAME);
 		}
 		return serverSettings;
 	}
 
+	public ILicenceService getLicenceServiceInstance() {
+		if (licenceService == null) {
 
-
-	public ILicenceService getLicenceServiceInstance () {
-		if(licenceService == null) {
-
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+			licenceService = (ILicenceService) ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
 		}
 		return licenceService;
 	}
 
-
 	public AdminApplication getApplication() {
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		return (AdminApplication)ctxt.getBean("web.handler");
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+		return (AdminApplication) ctxt.getBean("web.handler");
 	}
 
 	public DataStoreFactory getDataStoreFactory() {
-		if(dataStoreFactory == null)
-		{
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
+		if (dataStoreFactory == null) {
+			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
 			dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
 		}
 		return dataStoreFactory;
@@ -864,9 +811,9 @@ public class RestService {
 	@GET
 	@Path("/isInClusterMode")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result isInClusterMode(){
+	public Result isInClusterMode() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-		//TODO move BEAN name from TCPCluster to IClusterNotifier then use it
+		// TODO move BEAN name from TCPCluster to IClusterNotifier then use it
 		boolean isCluster = ctxt.containsBean("tomcat.cluster");
 		return new Result(isCluster, "");
 	}
@@ -874,14 +821,12 @@ public class RestService {
 	@GET
 	@Path("/getLogLevel")
 	@Produces(MediaType.APPLICATION_JSON)
-	public LogSettings getLogSettings() 
-	{
+	public LogSettings getLogSettings() {
 
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);
 
 		logSettings = new LogSettings();
-
 
 		if (store.get(LOG_LEVEL) != null) {
 			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
@@ -893,17 +838,17 @@ public class RestService {
 	@GET
 	@Path("/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String changeLogSettings(@PathParam("level") String logLevel){
+	public String changeLogSettings(@PathParam("level") String logLevel) {
 
-		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory
+				.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
-		store.setFullPath(RED5_PROPERTIES_PATH);	
+		store.setFullPath(RED5_PROPERTIES_PATH);
 
-		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
-				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
-				|| logLevel.equals(LOG_LEVEL_WARN)  || logLevel.equals(LOG_LEVEL_ERROR)
-				|| logLevel.equals(LOG_LEVEL_OFF)) {
+		if (logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) || logLevel.equals(LOG_LEVEL_DEBUG)
+				|| logLevel.equals(LOG_LEVEL_INFO) || logLevel.equals(LOG_LEVEL_WARN)
+				|| logLevel.equals(LOG_LEVEL_ERROR) || logLevel.equals(LOG_LEVEL_OFF)) {
 
 			rootLogger.setLevel(currentLevelDetect(logLevel));
 
@@ -920,31 +865,30 @@ public class RestService {
 
 	public Level currentLevelDetect(String logLevel) {
 
-		if( logLevel.equals(LOG_LEVEL_OFF)) {
+		if (logLevel.equals(LOG_LEVEL_OFF)) {
 			currentLevel = Level.OFF;
 			return currentLevel;
 		}
-		if( logLevel.equals(LOG_LEVEL_ERROR)) {
+		if (logLevel.equals(LOG_LEVEL_ERROR)) {
 			currentLevel = Level.ERROR;
 			return currentLevel;
 		}
-		if( logLevel.equals(LOG_LEVEL_WARN)) {
+		if (logLevel.equals(LOG_LEVEL_WARN)) {
 			currentLevel = Level.WARN;
 			return currentLevel;
 		}
-		if( logLevel.equals(LOG_LEVEL_DEBUG)) {
+		if (logLevel.equals(LOG_LEVEL_DEBUG)) {
 			currentLevel = Level.DEBUG;
 			return currentLevel;
 		}
-		if( logLevel.equals(LOG_LEVEL_TRACE)) {
+		if (logLevel.equals(LOG_LEVEL_TRACE)) {
 			currentLevel = Level.ALL;
 			return currentLevel;
 		}
-		if( logLevel.equals(LOG_LEVEL_ALL)) {
+		if (logLevel.equals(LOG_LEVEL_ALL)) {
 			currentLevel = Level.ALL;
 			return currentLevel;
-		}
-		else {
+		} else {
 			currentLevel = Level.INFO;
 			return currentLevel;
 		}
@@ -952,57 +896,57 @@ public class RestService {
 	}
 
 	@GET
-	@Path("/getLogFile/{charSize}") 
+	@Path("/getLogFile/{offsetSize}/{charSize}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getLogFile(@PathParam("charSize") int charSize,@QueryParam("logType") String logType,@QueryParam("offsetSize") long offsetSize) throws IOException 
-	{
+	public String getLogFile(@PathParam("charSize") int charSize, @QueryParam("logType") String logType,
+			@PathParam("offsetSize") long offsetSize) throws IOException {
 
 		long skipValue = 0;
-		int countKb = 0 ;
+		int countKb = 0;
 		int maxCount = 500;
+		String logLocation;
 
-		JsonObject jsonObject = new JsonObject(); 
-		String logContent = ""; 
+		JsonObject jsonObject = new JsonObject();
+		String logContent = "";
 
-		if(logType.equals("error")) {
-			logType = "log/antmedia-error.log";
+		if (logType.equals(LOG_TYPE_ERROR)) {
+			logLocation = ERROR_LOG_LOCATION;
+		} 
+		else if(logType.equals(LOG_TYPE_TEST)) {
+			logLocation = TEST_LOG_LOCATION;
+		} 
+		else{
+			logLocation = SERVER_LOG_LOCATION;
 		}
-		else if(logType.equals("server")) {
-			logType = "log/ant-media-server.log";
-		}
 
+		File file = new File(logLocation);
 
-		File file = new File(logType);
+		if (!file.isFile()) {
+			logContent = FILE_NOT_EXIST;
 
-		if (!file.isFile()) {  
-			logContent = "There are no registered logs yet";
-
-			jsonObject.addProperty("logContent", logContent);
+			jsonObject.addProperty(LOG_CONTENT, logContent);
 
 			return jsonObject.toString();
 		}
 
-		//check charSize > 500kb
-		if(charSize>MAX_CHAR_SIZE)
-		{
-			charSize=MAX_CHAR_SIZE;
+		// check charSize > 500kb
+		if (charSize > MAX_CHAR_SIZE) {
+			charSize = MAX_CHAR_SIZE;
 		}
 
-		if(offsetSize != 0){
-
-			if(file.length()>offsetSize ) { // offsetSize value max 500kb , if it's return false defined skipValue = 0 
-				skipValue = offsetSize; 
-				maxCount = charSize/1024;
-				jsonObject.addProperty("logContentRange", String.format("%.2f MB",offsetSize/MEGABYTE) + " - "+ String.format("%.2f MB",((offsetSize+charSize)/MEGABYTE))  );
-			}
-			else if (file.length()>charSize) { // charSize value max 500kb , if it's return false defined skipValue = 0 
-				skipValue = file.length() - charSize;
-			}
-		}
+		if (file.length() > offsetSize && offsetSize != -1) { 
+			skipValue = offsetSize;
+			maxCount = charSize / 1024;
+			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (offsetSize) / MEGABYTE) + " - "
+					+ String.format(MB_STRING, ((offsetSize + charSize) / MEGABYTE)));
+		} 
+		else if (file.length() > charSize) {
+			skipValue = file.length() - charSize;
+			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (file.length() - charSize) / MEGABYTE)
+					+ " - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
+		} 
 		else {
-			if(file.length()>charSize) {
-				skipValue = file.length() - charSize;
-			}
+			jsonObject.addProperty(LOG_CONTENT_RANGE, "0,00 MB - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
 		}
 
 		ByteArrayOutputStream ous = null;
@@ -1016,23 +960,22 @@ public class RestService {
 
 			ios.skip(skipValue);
 
-
 			int read = 0;
 			while ((read = ios.read(buffer)) != -1) {
 
 				ous.write(buffer, 0, read);
 				countKb++;
 
-				if(countKb==maxCount) { // max read 500kb
+				if (countKb == maxCount) { // max read 500kb
 					break;
 				}
 
 			}
-		}finally {
+		} finally {
 			try {
 				if (ous != null)
 					ous.close();
-			} catch (IOException e) {
+			} catch (IOException e) { 
 				logger.error(e.toString());
 			}
 
@@ -1044,13 +987,12 @@ public class RestService {
 			}
 		}
 
-		logContent =  ous.toString("UTF-8");
+		logContent = ous.toString("UTF-8");
 
-		jsonObject.addProperty("logContent", logContent);
-		jsonObject.addProperty("logFileSize", file.length());
+		jsonObject.addProperty(LOG_CONTENT, logContent);
+		jsonObject.addProperty(LOG_SIZE, String.format(MB_STRING, file.length() / MEGABYTE));
 
 		return jsonObject.toString();
 	}
-
 
 }

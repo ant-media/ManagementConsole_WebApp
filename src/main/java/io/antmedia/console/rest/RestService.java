@@ -823,11 +823,14 @@ public class RestService {
 
 
 	@GET
-	@Path("/getLicenceStatus/{key}")
+	@Path("/getLicenceStatus")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Licence getLicenceStatus(@PathParam("key") String key) 
+	public Licence getLicenceStatus(@QueryParam("key") String key) 
 	{
+		if(key == null) {
+			return null;
+		}
 		return getLicenceServiceInstance().checkLicence(key);
 	}
 

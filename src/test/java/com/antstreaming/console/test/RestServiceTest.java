@@ -28,7 +28,7 @@ public class RestServiceTest {
 	private static final Integer logHeaderSize = 11;
 	private static final String fileNonExistError = "{\"logs\":\""+"There are no registered logs yet\"}";
 	private static final String manyCharError = "{\"logs\":\""+"There are no many Chars in File\"}";
-	private static final String defaultLogLocation = "target/test-classes/test.log";
+	private static final String defaultLogLocation = "server";
 	private static final String writeFileText = "Test Log File String Values Lorem Ipsum Dolor Sit Amet";
 	private static final String fileText = "{\"logs\":\""+"Test Log File String Values Lorem Ipsum Dolor Sit Amet\"}";
 
@@ -240,31 +240,31 @@ public class RestServiceTest {
 
 		//Tests Non-Exist File Parameter values in Log Services
 
-		String getNonFileLog = restService.getLogFile(100, "");
+		String getNonFileLog = restService.getLogFile(100, defaultLogLocation,-1);
 
 		assertEquals(fileNonExistError, getNonFileLog);
 
 		//Test Too Many Char Read log files with logLocation Parameters
 
-		String getManyCharLog = restService.getLogFile(1000, defaultLogLocation);
+		String getManyCharLog = restService.getLogFile(1000, defaultLogLocation,-1);
 
 		assertEquals(manyCharError, getManyCharLog);
 
 		//Test char bytes check log files with logLocation Parameters
 
-		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation);
+		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation,-1);
 
 		assertEquals(20+logHeaderSize, getByteCheckLog.getBytes().length);
 		
 		//Test char different bytes check log files with logLocation Parameters
 
-		String getByteCheckLog2 = restService.getLogFile(30, defaultLogLocation);
+		String getByteCheckLog2 = restService.getLogFile(30, defaultLogLocation,-1);
 
 		assertEquals(30+logHeaderSize, getByteCheckLog2.getBytes().length);
 
 		//Test check log file texts with logLocation Parameters
 
-		String getFileTextLog = restService.getLogFile(54, defaultLogLocation);
+		String getFileTextLog = restService.getLogFile(54, defaultLogLocation,-1);
 
 		assertEquals(fileText, getFileTextLog.toString());
 		

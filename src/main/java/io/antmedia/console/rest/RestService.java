@@ -70,6 +70,8 @@ public class RestService {
 
 	private static final String LOG_TYPE_ERROR = "error";
 
+	private static final String LOG_TYPE_SERVER = "server";
+
 	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
 
 	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
@@ -980,7 +982,7 @@ public class RestService {
 		long skipValue = 0;
 		int countKb = 0;
 		int maxCount = 500;
-		String logLocation;
+		String logLocation = "";
 
 		JsonObject jsonObject = new JsonObject();
 		String logContent = "";
@@ -988,11 +990,11 @@ public class RestService {
 		if (logType.equals(LOG_TYPE_ERROR)) {
 			logLocation = ERROR_LOG_LOCATION;
 		} 
-		else if(logType.equals(LOG_TYPE_TEST)) {
-			logLocation = TEST_LOG_LOCATION;
-		} 
-		else{
+		else if(logType.equals(LOG_TYPE_SERVER)) {
 			logLocation = SERVER_LOG_LOCATION;
+		} 
+		else if(logType.equals(LOG_TYPE_TEST)){
+			logLocation = TEST_LOG_LOCATION;
 		}
 
 		File file = new File(logLocation);

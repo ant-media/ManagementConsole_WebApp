@@ -40,14 +40,12 @@ public class RestServiceTest {
 	private static final String LOG_CONTENT_RANGE = "logContentRange";
 	private static final float MEGABYTE = 1024f * 1024f;
 	private static final String MB_STRING = "%.2f MB";
-	private static final int logHeaderSize = 11;
-	private static final String fileNonExistError = "{\"logs\":\""+"There are no registered logs yet\"}";
-	private static final String manyCharError = "{\"logs\":\""+"There are no many Chars in File\"}";
 	private static final String LOG_TYPE_TEST = "test";
+	private static final String LOG_TYPE_RANDOM = "random";
 	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
+	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
 	private static final String CREATED_FILE_TEXT = "2019-04-24 19:01:24,291 [main] INFO  org.red5.server.Launcher - Ant Media Server Enterprise 1.7.0-SNAPSHOT\n" + 
 			"2019-04-24 19:01:24,334 [main] INFO  o.s.c.s.FileSystemXmlApplicationContext - Refreshing org.springframework.context.support.FileSystemXmlApplicationContext@f0f2775: startup date [Wed Apr 24 19:01:24 EET 2019]; root of context hierarchy";
-	private static final String fileText = "{\"logs\":\""+"Test Log File String Values Lorem Ipsum Dolor Sit Amet\"}";
 
 
 	@Before
@@ -259,6 +257,14 @@ public class RestServiceTest {
 		File file = new File(TEST_LOG_LOCATION);
 
 		assertTrue(file.isFile());
+		
+		//Testing log file non exist scenarios
+
+		resultObject = parser.parse(restService.getLogFile(MIN_CHAR_SIZE, LOG_TYPE_RANDOM ,MIN_OFFSET_SIZE));
+
+		jsonObject = (JSONObject) resultObject;
+		
+		assertEquals(FILE_NOT_EXIST, jsonObject.get(LOG_CONTENT));		
 
 		//Testing offset value = 0 scenarios
 

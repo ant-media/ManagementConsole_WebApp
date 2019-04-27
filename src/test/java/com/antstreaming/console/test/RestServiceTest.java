@@ -315,9 +315,9 @@ public class RestServiceTest {
 
 		jsonObject = (JSONObject) resultObject;
 
-		assertEquals("0,00 MB - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
+		assertEquals(String.format(MB_STRING, (file.length() - MIN_CHAR_SIZE) / MEGABYTE)+" - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
 
-		assertEquals(CREATED_FILE_TEXT.substring(CREATED_FILE_TEXT.length()-10), jsonObject.get(LOG_CONTENT));
+		assertEquals(CREATED_FILE_TEXT.substring(CREATED_FILE_TEXT.length()-MIN_CHAR_SIZE), jsonObject.get(LOG_CONTENT));
 
 		assertEquals(String.format(MB_STRING, (file.length()) / MEGABYTE), jsonObject.get(LOG_SIZE));
 

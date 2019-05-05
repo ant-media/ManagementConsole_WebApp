@@ -37,7 +37,6 @@ import com.google.gson.JsonObject;
 
 import ch.qos.logback.classic.Level;
 import io.antmedia.AppSettingsModel;
-import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
@@ -58,6 +57,32 @@ import io.antmedia.statistic.ResourceMonitor;
 @Component
 @Path("/")
 public class RestService {
+
+	private static final String LOG_TYPE_TEST = "test";
+
+	private static final String LOG_TYPE_ERROR = "error";
+
+	private static final String LOG_TYPE_SERVER = "server";
+
+	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
+
+	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
+
+	private static final String SERVER_LOG_LOCATION = "log/ant-media-server.log";
+
+	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
+
+	private static final String LOG_CONTENT = "logContent";
+
+	private static final String LOG_SIZE = "logSize";
+
+	private static final String LOG_CONTENT_RANGE = "logContentRange";
+
+	private static final String MB_STRING = "%.2f MB";
+
+	private static final float MEGABYTE = 1024f * 1024f;
+
+	private static final int MAX_CHAR_SIZE = 512000;
 
 	private static final String LOG_LEVEL_ALL = "ALL";
 
@@ -101,7 +126,7 @@ public class RestService {
 
 	protected ApplicationContext applicationContext;
 
-	@Context 
+	@Context
 	private ServletContext servletContext;
 
 	@Context
@@ -801,78 +826,103 @@ public class RestService {
 	}
 
 	@GET
-	@Path("/getLogFile/{charCount}")
+	@Path("/getLogFile/{offsetSize}/{charSize}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getLogFile(@PathParam("charCount") int charCount,@QueryParam("logLocation") String logLocation) throws IOException 
-	{
-		JsonObject jsonObject = new JsonObject();
-		String result = ""; 
+	public String getLogFile(@PathParam("charSize") int charSize, @QueryParam("logType") String logType,
+			@PathParam("offsetSize") long offsetSize) throws IOException {
 
-		if(logLocation == null || logLocation.equals(""))
-		{
-			logLocation = "log/ant-media-server.log";
+		long skipValue = 0;
+		int countKb = 0;
+		int maxCount = 500;
+		String logLocation = "";
+
+		JsonObject jsonObject = new JsonObject();
+		String logContent = "";
+
+		if (logType.equals(LOG_TYPE_ERROR)) {
+			logLocation = ERROR_LOG_LOCATION;
+		} 
+		else if(logType.equals(LOG_TYPE_SERVER)) {
+			logLocation = SERVER_LOG_LOCATION;
+		} 
+		else if(logType.equals(LOG_TYPE_TEST)){
+			logLocation = TEST_LOG_LOCATION;
 		}
 
 		File file = new File(logLocation);
 
-		if (!file.isFile()) {  
-			result = "There are no registered logs yet";
+		if (!file.isFile()) {
+			logContent = FILE_NOT_EXIST;
 
-			jsonObject.addProperty("logs", result);
+			jsonObject.addProperty(LOG_CONTENT, logContent);
 
 			return jsonObject.toString();
-		}        
+		}
 
-		if (charCount>Integer.valueOf(SystemUtils.jvmFreeMemory("B", false))) {  
+		// check charSize > 500kb
+		if (charSize > MAX_CHAR_SIZE) {
+			charSize = MAX_CHAR_SIZE;
+		}
 
-			result = "JVM Free Memory Not Enough for this query. Free Memory Size: "+ SystemUtils.jvmFreeMemory("B", false)+ " Char Count Size: " + charCount;
-
-			jsonObject.addProperty("logs", result);
-
-			return jsonObject.toString();	}
-
-		else if (file.length()<charCount) {  
-
-			result = "There are no many Chars in File";
-
-			jsonObject.addProperty("logs", result);
-
-			return jsonObject.toString();	}
+		if (file.length() > offsetSize && offsetSize != -1) { 
+			skipValue = offsetSize;
+			maxCount = charSize / 1024;
+			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (offsetSize) / MEGABYTE) + " - "
+					+ String.format(MB_STRING, ((offsetSize + charSize) / MEGABYTE)));
+		} 
+		else if (file.length() > charSize) {
+			skipValue = file.length() - charSize;
+			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (file.length() - charSize) / MEGABYTE)
+					+ " - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
+		} 
+		else {
+			jsonObject.addProperty(LOG_CONTENT_RANGE, "0,00 MB - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
+		}
 
 		ByteArrayOutputStream ous = null;
 		InputStream ios = null;
+
 		try {
+
 			byte[] buffer = new byte[1024];
 			ous = new ByteArrayOutputStream();
 			ios = new FileInputStream(file);
 
-			ios.skip(file.length()-charCount);
+			ios.skip(skipValue);
 
 			int read = 0;
 			while ((read = ios.read(buffer)) != -1) {
+
 				ous.write(buffer, 0, read);
+				countKb++;
+
+				if (countKb == maxCount) { // max read 500kb
+					break;
+				}
+
 			}
-		}finally {
+		} finally {
 			try {
 				if (ous != null)
 					ous.close();
-			} catch (IOException e) {
-				logger.warn(e.toString());
+			} catch (IOException e) { 
+				logger.error(e.toString());
 			}
 
 			try {
 				if (ios != null)
 					ios.close();
 			} catch (IOException e) {
-				logger.warn(e.toString());
+				logger.error(e.toString());
 			}
 		}
-		result =  ous.toString("UTF-8");
 
-		jsonObject.addProperty("logs", result);
+		logContent = ous.toString("UTF-8");
+
+		jsonObject.addProperty(LOG_CONTENT, logContent);
+		jsonObject.addProperty(LOG_SIZE, String.format(MB_STRING, file.length() / MEGABYTE));
 
 		return jsonObject.toString();
 	}
-
 
 }

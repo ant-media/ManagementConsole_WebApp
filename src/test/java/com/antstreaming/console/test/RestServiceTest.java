@@ -10,9 +10,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import org.json.simple.*;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+
 
 import io.antmedia.console.datastore.MapDBStore;
 import io.antmedia.console.rest.RestService;
@@ -25,14 +30,24 @@ public class RestServiceTest {
 	private RestService restService;
 	private MapDBStore dbStore;
 
-	private static final Integer logHeaderSize = 11;
-	private static final String fileNonExistError = "{\"logs\":\""+"There are no registered logs yet\"}";
-	private static final String manyCharError = "{\"logs\":\""+"There are no many Chars in File\"}";
-	private static final String defaultLogLocation = "target/test-classes/test.log";
-	private static final String writeFileText = "Test Log File String Values Lorem Ipsum Dolor Sit Amet";
-	private static final String fileText = "{\"logs\":\""+"Test Log File String Values Lorem Ipsum Dolor Sit Amet\"}";
+	private static final int OFFSET_NOT_USED = -1;
+	private static final int MAX_OFFSET_SIZE = 10000000;
+	private static final int MAX_CHAR_SIZE = 512000;
+	private static final int MIN_CHAR_SIZE = 10;
+	private static final int MIN_OFFSET_SIZE = 10;
+	private static final String LOG_CONTENT = "logContent";
+	private static final String LOG_SIZE = "logSize";
+	private static final String LOG_CONTENT_RANGE = "logContentRange";
+	private static final float MEGABYTE = 1024f * 1024f;
+	private static final String MB_STRING = "%.2f MB";
+	private static final String LOG_TYPE_TEST = "test";
+	private static final String LOG_TYPE_RANDOM = "random";
+	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
+	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
+	private static final String CREATED_FILE_TEXT = "2019-04-24 19:01:24,291 [main] INFO  org.red5.server.Launcher - Ant Media Server Enterprise 1.7.0-SNAPSHOT\n" + 
+			"2019-04-24 19:01:24,334 [main] INFO  o.s.c.s.FileSystemXmlApplicationContext - Refreshing org.springframework.context.support.FileSystemXmlApplicationContext@f0f2775: startup date [Wed Apr 24 19:01:24 EET 2019]; root of context hierarchy";
 
-	
+
 	@Before
 	public void before() {
 		File f = new File("server.db");
@@ -226,66 +241,124 @@ public class RestServiceTest {
 
 
 	@Test
-	public void testLogFiles() throws IOException {
+	public void testLogFiles() throws IOException, ParseException {
+		
+		JSONParser parser = new JSONParser();
+
+		Object resultObject ;
+		JSONObject jsonObject;
 
 		//Create Log Files
 
-		writeUsingFiles(writeFileText);
+		writeUsingFiles(CREATED_FILE_TEXT);
 
 		//Check Log File Create
 
-		File checkFile = new File(defaultLogLocation);
+		File file = new File(TEST_LOG_LOCATION);
 
-		assertTrue(checkFile.isFile());
-
-		//Tests Non-Exist File Parameter values in Log Services
-
-		String getNonFileLog = restService.getLogFile(100, "");
-
-		assertEquals(fileNonExistError, getNonFileLog);
-
-		//Test Too Many Char Read log files with logLocation Parameters
-
-		String getManyCharLog = restService.getLogFile(1000, defaultLogLocation);
-
-		assertEquals(manyCharError, getManyCharLog);
-
-		//Test char bytes check log files with logLocation Parameters
-
-		String getByteCheckLog = restService.getLogFile(20, defaultLogLocation);
-
-		assertEquals(20+logHeaderSize, getByteCheckLog.getBytes().length);
+		assertTrue(file.isFile());
 		
-		//Test char different bytes check log files with logLocation Parameters
+		//Testing log file non exist scenarios
 
-		String getByteCheckLog2 = restService.getLogFile(30, defaultLogLocation);
+		resultObject = parser.parse(restService.getLogFile(MIN_CHAR_SIZE, LOG_TYPE_RANDOM ,MIN_OFFSET_SIZE));
 
-		assertEquals(30+logHeaderSize, getByteCheckLog2.getBytes().length);
-
-		//Test check log file texts with logLocation Parameters
-
-		String getFileTextLog = restService.getLogFile(54, defaultLogLocation);
-
-		assertEquals(fileText, getFileTextLog.toString());
+		jsonObject = (JSONObject) resultObject;
 		
-		//Remove Log File
+		assertEquals(FILE_NOT_EXIST, jsonObject.get(LOG_CONTENT));		
 
-		File filePath = new File(defaultLogLocation);
+		//Testing offset value = 0 scenarios
 
-		filePath.delete();
+		// 1. option charSize > file.lenght() 
 
-		//Check File is Deleted
+		resultObject = parser.parse(restService.getLogFile(MAX_CHAR_SIZE, LOG_TYPE_TEST ,OFFSET_NOT_USED));
 
-		assertFalse(checkFile.isFile());
+		jsonObject = (JSONObject) resultObject;
+
+		assertEquals("0,00 MB - "+ String.format(MB_STRING, ((file.length()) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
+
+		assertEquals(CREATED_FILE_TEXT, jsonObject.get(LOG_CONTENT));
+
+		assertEquals(String.format(MB_STRING, (file.length()) / MEGABYTE), jsonObject.get(LOG_SIZE));
+
+		// 2. option charSize < file.lenght() 
+
+		resultObject = parser.parse(restService.getLogFile(MIN_CHAR_SIZE, LOG_TYPE_TEST ,OFFSET_NOT_USED));
+
+		jsonObject = (JSONObject) resultObject;
+
+		assertEquals(String.format(MB_STRING, (file.length() - MIN_CHAR_SIZE) / MEGABYTE)
+				+ " - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
+
+		assertEquals(CREATED_FILE_TEXT.substring(CREATED_FILE_TEXT.length()-MIN_CHAR_SIZE), jsonObject.get(LOG_CONTENT));
+
+		assertEquals(String.format(MB_STRING, (file.length()) / MEGABYTE), jsonObject.get(LOG_SIZE));
+
+		//Testing offset value != 0 scenarios
+
+		// 1- Test offsetSize > file.lenght() 
+
+		// 1-  a- charSize > file.lenght()
+
+		resultObject = parser.parse(restService.getLogFile(MAX_CHAR_SIZE, LOG_TYPE_TEST ,MAX_OFFSET_SIZE));
+
+		jsonObject = (JSONObject) resultObject;
+
+		assertEquals("0,00 MB - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
+
+		assertEquals(CREATED_FILE_TEXT, jsonObject.get(LOG_CONTENT));
+
+		assertEquals(String.format(MB_STRING, (file.length()) / MEGABYTE), jsonObject.get(LOG_SIZE));
+
+		// 1- b- charSize < file.lenght()
+
+		resultObject = parser.parse(restService.getLogFile(MIN_CHAR_SIZE, LOG_TYPE_TEST ,MAX_OFFSET_SIZE));
+
+		jsonObject = (JSONObject) resultObject;
+
+		assertEquals(String.format(MB_STRING, (file.length() - MIN_CHAR_SIZE) / MEGABYTE)+" - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
+
+		assertEquals(CREATED_FILE_TEXT.substring(CREATED_FILE_TEXT.length()-MIN_CHAR_SIZE), jsonObject.get(LOG_CONTENT));
+
+		assertEquals(String.format(MB_STRING, (file.length()) / MEGABYTE), jsonObject.get(LOG_SIZE));
+
+		// 2- Test offsetSize < file.lenght() 
+
+		// 2-  a- charSize > file.lenght()
+
+		resultObject = parser.parse(restService.getLogFile(MAX_CHAR_SIZE, LOG_TYPE_TEST ,MIN_OFFSET_SIZE));
+
+		jsonObject = (JSONObject) resultObject;
+
+		assertEquals(String.format(MB_STRING, (MIN_OFFSET_SIZE) / MEGABYTE) + " - "
+				+ String.format(MB_STRING, ((MIN_OFFSET_SIZE + MAX_CHAR_SIZE) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
+
+		assertEquals(CREATED_FILE_TEXT.substring(10), jsonObject.get(LOG_CONTENT));
+
+		assertEquals(String.format(MB_STRING, (file.length()) / MEGABYTE), jsonObject.get(LOG_SIZE));
+
+		// 2-  b- charSize < file.lenght()
+		
+		resultObject = parser.parse(restService.getLogFile(MIN_CHAR_SIZE, LOG_TYPE_TEST ,MIN_OFFSET_SIZE));
+		
+		jsonObject = (JSONObject) resultObject;
+
+		assertEquals(String.format(MB_STRING, (MIN_OFFSET_SIZE) / MEGABYTE) + " - "
+				+ String.format(MB_STRING, ((MIN_OFFSET_SIZE + MIN_CHAR_SIZE) / MEGABYTE)), jsonObject.get(LOG_CONTENT_RANGE));
+
+		assertEquals(CREATED_FILE_TEXT.substring(10), jsonObject.get(LOG_CONTENT));
+
+		assertEquals(String.format(MB_STRING, (file.length()) / MEGABYTE), jsonObject.get(LOG_SIZE));
+
 
 	}
 
 	private static void writeUsingFiles(String data) {
 		try {
-			Files.write(Paths.get(defaultLogLocation), data.getBytes());
+			Files.write(Paths.get(TEST_LOG_LOCATION), data.getBytes());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
+	
 
 }

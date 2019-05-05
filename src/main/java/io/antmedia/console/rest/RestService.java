@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -51,16 +53,12 @@ import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
-import io.antmedia.statistic.GPUUtils;
-import io.antmedia.statistic.GPUUtils.MemoryStatus;
-import io.antmedia.statistic.HlsViewerStats;
 import io.antmedia.statistic.ResourceMonitor;
-import io.antmedia.webrtc.api.IWebRTCAdaptor;
 
 @Component
 @Path("/")
 public class RestService {
-		
+
 	private static final String LOG_LEVEL_ALL = "ALL";
 
 	private static final String LOG_LEVEL_TRACE = "TRACE";
@@ -458,21 +456,22 @@ public class RestService {
 	@Path("/getSystemResourcesInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemResourcesInfo() {
-		
-		AdminApplication application = getApplication();
-		JsonObject jsonObject = ResourceMonitor.getSystemResourcesInfo(application.getRootScope());
-		
 
+		AdminApplication application = getApplication();
+		IScope rootScope = application.getRootScope();
 
 		//add live stream size
 		int totalLiveStreams = 0;
-		
+		Queue<IScope> scopes = new LinkedList<>();
 		List<String> appNames = application.getApplications();
 		for (String name : appNames) 
 		{
-			IScope scope = application.getRootScope().getScope(name);
+			IScope scope = rootScope.getScope(name);
+			scopes.add(scope);
 			totalLiveStreams += application.getAppLiveStreamCount(scope);
 		}
+
+		JsonObject jsonObject = ResourceMonitor.getSystemResourcesInfo(scopes);
 
 		jsonObject.addProperty(ResourceMonitor.TOTAL_LIVE_STREAMS, totalLiveStreams);
 
@@ -748,7 +747,7 @@ public class RestService {
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);	
 
-		
+
 		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
 				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
 				|| logLevel.equals(LOG_LEVEL_WARN)  || logLevel.equals(LOG_LEVEL_ERROR)
@@ -768,7 +767,7 @@ public class RestService {
 	}
 
 	public Level currentLevelDetect(String logLevel) {
-		
+
 		Level currentLevel;
 		if( logLevel.equals(LOG_LEVEL_OFF)) {
 			currentLevel = Level.OFF;

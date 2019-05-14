@@ -64,23 +64,20 @@ public class RestService {
 
 	private static final String LOG_TYPE_SERVER = "server";
 
-	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
+	private static final String FILE_NOT_EXIST = "There is no log yet";
 
 	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
 
 	private static final String SERVER_LOG_LOCATION = "log/ant-media-server.log";
 
+	//TODO: @selim I think we should remove this definition from here. by @mekya
 	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
 
 	private static final String LOG_CONTENT = "logContent";
 
-	private static final String LOG_SIZE = "logSize";
+	private static final String LOG_CONTENT_SIZE = "logContentSize";
 
-	private static final String LOG_CONTENT_RANGE = "logContentRange";
-
-	private static final String MB_STRING = "%.2f MB";
-
-	private static final float MEGABYTE = 1024f * 1024f;
+	private static final String LOG_FILE_SIZE = "logFileSize";
 
 	private static final int MAX_CHAR_SIZE = 512000;
 
@@ -663,11 +660,8 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ServerSettings getServerSettings() 
 	{
-
 		return getServerSettingsInternal();
 	}
-
-
 
 	@GET
 	@Path("/getLicenceStatus")
@@ -681,6 +675,14 @@ public class RestService {
 		return getLicenceServiceInstance().checkLicence(key);
 	}
 
+	@GET
+	@Path("/getLastLicenceStatus")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Licence getLicenceStatus() 
+	{
+		return getLicenceServiceInstance().getLastLicenseStatus();
+	}
 
 	public void setDataStore(IDataStore dataStore) {
 		this.dataStore = dataStore;
@@ -864,63 +866,62 @@ public class RestService {
 			charSize = MAX_CHAR_SIZE;
 		}
 
-		if (file.length() > offsetSize && offsetSize != -1) { 
+		if (offsetSize != -1) { 			
 			skipValue = offsetSize;
 			maxCount = charSize / 1024;
-			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (offsetSize) / MEGABYTE) + " - "
-					+ String.format(MB_STRING, ((offsetSize + charSize) / MEGABYTE)));
 		} 
 		else if (file.length() > charSize) {
 			skipValue = file.length() - charSize;
-			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (file.length() - charSize) / MEGABYTE)
-					+ " - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
-		} 
-		else {
-			jsonObject.addProperty(LOG_CONTENT_RANGE, "0,00 MB - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
 		}
 
-		ByteArrayOutputStream ous = null;
-		InputStream ios = null;
+		int contentSize = 0;
+		if (file.length() > skipValue) {
 
-		try {
+			ByteArrayOutputStream ous = null;
+			InputStream ios = null;
 
-			byte[] buffer = new byte[1024];
-			ous = new ByteArrayOutputStream();
-			ios = new FileInputStream(file);
+			
+			try {
 
-			ios.skip(skipValue);
+				byte[] buffer = new byte[1024];
+				ous = new ByteArrayOutputStream();
+				ios = new FileInputStream(file);
 
-			int read = 0;
-			while ((read = ios.read(buffer)) != -1) {
+				ios.skip(skipValue);
 
-				ous.write(buffer, 0, read);
-				countKb++;
+				int read = 0;
 
-				if (countKb == maxCount) { // max read 500kb
-					break;
+				while ((read = ios.read(buffer)) != -1) {
+
+					ous.write(buffer, 0, read);
+					countKb++;
+					contentSize += read;
+					if (countKb == maxCount) { // max read 500kb
+						break;
+					}
+
+				}
+			} finally {
+				try {
+					if (ous != null)
+						ous.close();
+				} catch (IOException e) { 
+					logger.error(e.toString());
 				}
 
-			}
-		} finally {
-			try {
-				if (ous != null)
-					ous.close();
-			} catch (IOException e) { 
-				logger.error(e.toString());
+				try {
+					if (ios != null)
+						ios.close();
+				} catch (IOException e) {
+					logger.error(e.toString());
+				}
 			}
 
-			try {
-				if (ios != null)
-					ios.close();
-			} catch (IOException e) {
-				logger.error(e.toString());
-			}
+			logContent = ous.toString("UTF-8");
 		}
-
-		logContent = ous.toString("UTF-8");
-
 		jsonObject.addProperty(LOG_CONTENT, logContent);
-		jsonObject.addProperty(LOG_SIZE, String.format(MB_STRING, file.length() / MEGABYTE));
+		jsonObject.addProperty(LOG_CONTENT_SIZE, contentSize);
+		jsonObject.addProperty(LOG_FILE_SIZE, file.length());
 
 		return jsonObject.toString();
 	}

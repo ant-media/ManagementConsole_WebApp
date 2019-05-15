@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -35,7 +37,6 @@ import com.google.gson.JsonObject;
 
 import ch.qos.logback.classic.Level;
 import io.antmedia.AppSettingsModel;
-import io.antmedia.SystemUtils;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
@@ -51,20 +52,11 @@ import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
-import io.antmedia.statistic.GPUUtils;
-import io.antmedia.statistic.GPUUtils.MemoryStatus;
-import io.antmedia.statistic.HlsViewerStats;
-import io.antmedia.webrtc.api.IWebRTCAdaptor;
+import io.antmedia.statistic.ResourceMonitor;
 
 @Component
 @Path("/")
 public class RestService {
-
-	public ch.qos.logback.classic.Logger rootLogger;
-
-	public Level currentLevel;
-
-	public LogSettings logSettings;
 
 	private static final String LOG_TYPE_TEST = "test";
 
@@ -72,23 +64,20 @@ public class RestService {
 
 	private static final String LOG_TYPE_SERVER = "server";
 
-	private static final String FILE_NOT_EXIST = "There are no registered logs yet";
+	private static final String FILE_NOT_EXIST = "There is no log yet";
 
 	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
 
 	private static final String SERVER_LOG_LOCATION = "log/ant-media-server.log";
 
+	//TODO: @selim I think we should remove this definition from here. by @mekya
 	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
 
 	private static final String LOG_CONTENT = "logContent";
 
-	private static final String LOG_SIZE = "logSize";
+	private static final String LOG_CONTENT_SIZE = "logContentSize";
 
-	private static final String LOG_CONTENT_RANGE = "logContentRange";
-
-	private static final String MB_STRING = "%.2f MB";
-
-	private static final float MEGABYTE = 1024f * 1024f;
+	private static final String LOG_FILE_SIZE = "logFileSize";
 
 	private static final int MAX_CHAR_SIZE = 512000;
 
@@ -130,45 +119,9 @@ public class RestService {
 
 	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
 
-	private static final String CPU_USAGE = "cpuUsage";
-
-	private static final String JVM_MEMORY_USAGE = "jvmMemoryUsage";
-
-	private static final String SYSTEM_INFO = "systemInfo";
-
-	private static final String SYSTEM_MEMORY_INFO = "systemMemoryInfo";
-
-	private static final String FILE_SYSTEM_INFO = "fileSystemInfo";
-
 	private static final String SOFTWARE_VERSION = "softwareVersion";
 
-	private static final String GPU_UTILIZATION = "gpuUtilization";
-
-	private static final String GPU_DEVICE_INDEX = "index";
-
-	private static final String GPU_MEMORY_UTILIZATION = "memoryUtilization";
-
-	private static final String GPU_USAGE_INFO = "gpuUsageInfo";
-
-	private static final String TOTAL_LIVE_STREAMS = "totalLiveStreamSize";
-
-	private static final String GPU_MEMORY_TOTAL = "memoryTotal";
-
-	private static final String GPU_MEMORY_FREE = "memoryFree";
-
-	private static final String GPU_MEMORY_USED = "memoryUsed";
-
-	private static final String GPU_DEVICE_NAME = "deviceName";
-
-	private static final String LOCAL_WEBRTC_LIVE_STREAMS = "localWebRTCLiveStreams";
-
-	private static final String LOCAL_WEBRTC_VIEWERS = "localWebRTCViewers";
-
-	private static final String LOCAL_HLS_VIEWERS = "localHLSViewers";
-
 	protected ApplicationContext applicationContext;
-
-	public LogSettings logSettingsModel;
 
 	@Context
 	private ServletContext servletContext;
@@ -451,18 +404,9 @@ public class RestService {
 	@Path("/getSystemInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemInfo() {
-		return gson.toJson(getSystemInfoJSObject());
+		return gson.toJson(ResourceMonitor.getSystemInfoJSObject());
 	}
 
-
-	public JsonObject getSystemInfoJSObject() {
-		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("osName", SystemUtils.osName);
-		jsonObject.addProperty("osArch", SystemUtils.osArch);
-		jsonObject.addProperty("javaVersion", SystemUtils.jvmVersion);
-		jsonObject.addProperty("processorCount", SystemUtils.osProcessorX);
-		return jsonObject;
-	}
 
 	/*
 	 * 	Runtime.getRuntime()._____  (Java Virtual Machine Memory)
@@ -477,20 +421,8 @@ public class RestService {
 	@Path("/getJVMMemoryInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getJVMMemoryInfo() {
-		return gson.toJson(getJVMMemoryInfoJSObject());
+		return gson.toJson(ResourceMonitor.getJVMMemoryInfoJSObject());
 	}
-
-
-	public JsonObject getJVMMemoryInfoJSObject() {
-		JsonObject jsonObject = new JsonObject();
-
-		jsonObject.addProperty("maxMemory", SystemUtils.jvmMaxMemory("B", false));
-		jsonObject.addProperty("totalMemory", SystemUtils.jvmTotalMemory("B", false));
-		jsonObject.addProperty("freeMemory", SystemUtils.jvmFreeMemory("B", false));
-		jsonObject.addProperty("inUseMemory", SystemUtils.jvmInUseMemory("B", false));
-		return jsonObject;
-	}
-
 
 
 	/*
@@ -506,22 +438,10 @@ public class RestService {
 	@Path("/getSystemMemoryInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemMemoryInfo() {
-		return gson.toJson(getSysteMemoryInfoJSObject());
+		return gson.toJson(ResourceMonitor.getSysteMemoryInfoJSObject());
 	}
 
 
-	public JsonObject getSysteMemoryInfoJSObject() {
-		JsonObject jsonObject = new JsonObject();
-
-		jsonObject.addProperty("virtualMemory", SystemUtils.osCommittedVirtualMemory("B", false));
-		jsonObject.addProperty("totalMemory", SystemUtils.osTotalPhysicalMemory("B", false));
-		jsonObject.addProperty("freeMemory", SystemUtils.osFreePhysicalMemory("B", false));
-		jsonObject.addProperty("inUseMemory", SystemUtils.osInUsePhysicalMemory("B", false));
-		jsonObject.addProperty("totalSwapSpace", SystemUtils.osTotalSwapSpace("B", false));
-		jsonObject.addProperty("freeSwapSpace", SystemUtils.osFreeSwapSpace("B", false));
-		jsonObject.addProperty("inUseSwapSpace", SystemUtils.osInUseSwapSpace("B", false));
-		return jsonObject;
-	}
 	/*
 	 *  File						(Actual Harddrive Info: Supported for JRE 1.6)
 	 *	===============================
@@ -534,17 +454,7 @@ public class RestService {
 	@Path("/getFileSystemInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getFileSystemInfo() {
-		return gson.toJson(getFileSystemInfoJSObject());
-	}
-
-
-	public JsonObject getFileSystemInfoJSObject() {
-		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("usableSpace", SystemUtils.osHDUsableSpace(null,"B", false));
-		jsonObject.addProperty("totalSpace", SystemUtils.osHDTotalSpace(null, "B", false));
-		jsonObject.addProperty("freeSpace", SystemUtils.osHDFreeSpace(null,  "B", false));
-		jsonObject.addProperty("inUseSpace", SystemUtils.osHDInUseSpace(null, "B", false));
-		return jsonObject;
+		return gson.toJson(ResourceMonitor.getFileSystemInfoJSObject());
 	}
 
 	/**
@@ -559,110 +469,44 @@ public class RestService {
 	@Path("/getCPUInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getCPUInfo() {
-		return gson.toJson(getCPUInfoJSObject());
+		return gson.toJson(ResourceMonitor.getCPUInfoJSObject());
 	}
 
-	public JsonObject getCPUInfoJSObject() {
-		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("processCPUTime", SystemUtils.getProcessCpuTime());
-		jsonObject.addProperty("systemCPULoad", SystemUtils.getSystemCpuLoad());
-		jsonObject.addProperty("processCPULoad", SystemUtils.getProcessCpuLoad());
-		return jsonObject;
-	}
+
 
 	@GET
 	@Path("/getSystemResourcesInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemResourcesInfo() {
-		JsonObject jsonObject = new JsonObject();
-		jsonObject.add(CPU_USAGE, getCPUInfoJSObject());
-		jsonObject.add(JVM_MEMORY_USAGE, getJVMMemoryInfoJSObject());
-		jsonObject.add(SYSTEM_INFO, getSystemInfoJSObject());
-		jsonObject.add(SYSTEM_MEMORY_INFO, getSysteMemoryInfoJSObject());
-		jsonObject.add(FILE_SYSTEM_INFO, getFileSystemInfoJSObject());
 
-		//add gpu info 
-		jsonObject.add(GPU_USAGE_INFO, getGPUInfoJSObject());
+		AdminApplication application = getApplication();
+		IScope rootScope = application.getRootScope();
 
 		//add live stream size
 		int totalLiveStreams = 0;
-		int localHlsViewers = 0;
-		int localWebRTCViewers = 0;
-		int localWebRTCStreams = 0;
-		AdminApplication application = getApplication();
+		Queue<IScope> scopes = new LinkedList<>();
 		List<String> appNames = application.getApplications();
 		for (String name : appNames) 
 		{
-			IScope scope = application.getRootScope().getScope(name);
+			IScope scope = rootScope.getScope(name);
+			scopes.add(scope);
 			totalLiveStreams += application.getAppLiveStreamCount(scope);
-
-			localHlsViewers += getHLSViewers(scope);
-
-			if( scope.getContext().getApplicationContext().containsBean(IWebRTCAdaptor.BEAN_NAME)) {
-				IWebRTCAdaptor webrtcAdaptor = (IWebRTCAdaptor)scope.getContext().getApplicationContext().getBean(IWebRTCAdaptor.BEAN_NAME);
-				localWebRTCViewers += webrtcAdaptor.getNumberOfTotalViewers();
-				localWebRTCStreams += webrtcAdaptor.getNumberOfLiveStreams();
-			}
-
 		}
 
-		jsonObject.addProperty(TOTAL_LIVE_STREAMS, totalLiveStreams);
-		//add local webrtc viewer size
-		jsonObject.addProperty(LOCAL_WEBRTC_LIVE_STREAMS, localWebRTCStreams);
-		jsonObject.addProperty(LOCAL_WEBRTC_VIEWERS, localWebRTCViewers);
-		jsonObject.addProperty(LOCAL_HLS_VIEWERS, localHlsViewers);
+		JsonObject jsonObject = ResourceMonitor.getSystemResourcesInfo(scopes);
 
-
+		jsonObject.addProperty(ResourceMonitor.TOTAL_LIVE_STREAMS, totalLiveStreams);
 
 		return gson.toJson(jsonObject);
 	}
-
-	private int getHLSViewers(IScope scope) {
-		if (scope.getContext().getApplicationContext().containsBean(HlsViewerStats.BEAN_NAME)) {
-			HlsViewerStats hlsViewerStats = (HlsViewerStats) scope.getContext().getApplicationContext().getBean(HlsViewerStats.BEAN_NAME);
-			if (hlsViewerStats != null) {
-				return hlsViewerStats.getTotalViewerCount();
-			}
-		}
-		return 0;
-	}
-
 
 	@GET
 	@Path("/getGPUInfo")
 	@Produces(MediaType.APPLICATION_JSON) 
 	public String getGPUInfo() 
 	{
-		return gson.toJson(getGPUInfoJSObject());
+		return gson.toJson(ResourceMonitor.getGPUInfoJSObject());
 	}
-
-
-	public JsonArray getGPUInfoJSObject() {
-		int deviceCount = GPUUtils.getInstance().getDeviceCount();
-		JsonArray jsonArray = new JsonArray();
-		if (deviceCount > 0) {
-			for (int i=0; i < deviceCount; i++) {
-				jsonArray.add(getGPUInfoJSObject(i));
-			}
-		}
-		return jsonArray;
-	}
-
-
-	private JsonObject getGPUInfoJSObject(int deviceIndex) {
-		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty(GPU_DEVICE_INDEX, deviceIndex);
-		jsonObject.addProperty(GPU_UTILIZATION, GPUUtils.getInstance().getGPUUtilization(deviceIndex));
-		jsonObject.addProperty(GPU_MEMORY_UTILIZATION, GPUUtils.getInstance().getMemoryUtilization(deviceIndex));
-		MemoryStatus memoryStatus = GPUUtils.getInstance().getMemoryStatus(deviceIndex);
-		jsonObject.addProperty(GPU_MEMORY_TOTAL, memoryStatus.getMemoryTotal());
-		jsonObject.addProperty(GPU_MEMORY_FREE, memoryStatus.getMemoryFree());
-		jsonObject.addProperty(GPU_MEMORY_USED, memoryStatus.getMemoryUsed());
-		jsonObject.addProperty(GPU_DEVICE_NAME, GPUUtils.getInstance().getDeviceName(deviceIndex));
-
-		return jsonObject;
-	}
-
 
 
 	@GET
@@ -704,7 +548,7 @@ public class RestService {
 		int totalLiveStreamSize = getApplication().getTotalLiveStreamSize();
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("totalConnectionSize", totalConnectionSize);
-		jsonObject.addProperty(TOTAL_LIVE_STREAMS, totalLiveStreamSize);
+		jsonObject.addProperty(ResourceMonitor.TOTAL_LIVE_STREAMS, totalLiveStreamSize);
 
 		return gson.toJson(jsonObject);
 	}
@@ -816,11 +660,8 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ServerSettings getServerSettings() 
 	{
-
 		return getServerSettingsInternal();
 	}
-
-
 
 	@GET
 	@Path("/getLicenceStatus")
@@ -834,6 +675,14 @@ public class RestService {
 		return getLicenceServiceInstance().checkLicence(key);
 	}
 
+	@GET
+	@Path("/getLastLicenceStatus")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Licence getLicenceStatus() 
+	{
+		return getLicenceServiceInstance().getLastLicenseStatus();
+	}
 
 	public void setDataStore(IDataStore dataStore) {
 		this.dataStore = dataStore;
@@ -905,7 +754,7 @@ public class RestService {
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);
 
-		logSettings = new LogSettings();
+		LogSettings logSettings = new LogSettings();
 
 
 		if (store.get(LOG_LEVEL) != null) {
@@ -920,10 +769,11 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
 
-		rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+		ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 
 		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
 		store.setFullPath(RED5_PROPERTIES_PATH);	
+
 
 		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
 				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
@@ -934,7 +784,7 @@ public class RestService {
 
 			store.put(LOG_LEVEL, logLevel);
 
-			logSettings = new LogSettings();
+			LogSettings logSettings = new LogSettings();
 
 			logSettings.setLogLevel(String.valueOf(logLevel));
 
@@ -945,6 +795,7 @@ public class RestService {
 
 	public Level currentLevelDetect(String logLevel) {
 
+		Level currentLevel;
 		if( logLevel.equals(LOG_LEVEL_OFF)) {
 			currentLevel = Level.OFF;
 			return currentLevel;
@@ -1015,63 +866,62 @@ public class RestService {
 			charSize = MAX_CHAR_SIZE;
 		}
 
-		if (file.length() > offsetSize && offsetSize != -1) { 
+		if (offsetSize != -1) { 			
 			skipValue = offsetSize;
 			maxCount = charSize / 1024;
-			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (offsetSize) / MEGABYTE) + " - "
-					+ String.format(MB_STRING, ((offsetSize + charSize) / MEGABYTE)));
 		} 
 		else if (file.length() > charSize) {
 			skipValue = file.length() - charSize;
-			jsonObject.addProperty(LOG_CONTENT_RANGE, String.format(MB_STRING, (file.length() - charSize) / MEGABYTE)
-					+ " - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
-		} 
-		else {
-			jsonObject.addProperty(LOG_CONTENT_RANGE, "0,00 MB - " + String.format(MB_STRING, ((file.length()) / MEGABYTE)));
 		}
 
-		ByteArrayOutputStream ous = null;
-		InputStream ios = null;
+		int contentSize = 0;
+		if (file.length() > skipValue) {
 
-		try {
+			ByteArrayOutputStream ous = null;
+			InputStream ios = null;
 
-			byte[] buffer = new byte[1024];
-			ous = new ByteArrayOutputStream();
-			ios = new FileInputStream(file);
+			
+			try {
 
-			ios.skip(skipValue);
+				byte[] buffer = new byte[1024];
+				ous = new ByteArrayOutputStream();
+				ios = new FileInputStream(file);
 
-			int read = 0;
-			while ((read = ios.read(buffer)) != -1) {
+				ios.skip(skipValue);
 
-				ous.write(buffer, 0, read);
-				countKb++;
+				int read = 0;
 
-				if (countKb == maxCount) { // max read 500kb
-					break;
+				while ((read = ios.read(buffer)) != -1) {
+
+					ous.write(buffer, 0, read);
+					countKb++;
+					contentSize += read;
+					if (countKb == maxCount) { // max read 500kb
+						break;
+					}
+
+				}
+			} finally {
+				try {
+					if (ous != null)
+						ous.close();
+				} catch (IOException e) { 
+					logger.error(e.toString());
 				}
 
-			}
-		} finally {
-			try {
-				if (ous != null)
-					ous.close();
-			} catch (IOException e) { 
-				logger.error(e.toString());
+				try {
+					if (ios != null)
+						ios.close();
+				} catch (IOException e) {
+					logger.error(e.toString());
+				}
 			}
 
-			try {
-				if (ios != null)
-					ios.close();
-			} catch (IOException e) {
-				logger.error(e.toString());
-			}
+			logContent = ous.toString("UTF-8");
 		}
-
-		logContent = ous.toString("UTF-8");
-
 		jsonObject.addProperty(LOG_CONTENT, logContent);
-		jsonObject.addProperty(LOG_SIZE, String.format(MB_STRING, file.length() / MEGABYTE));
+		jsonObject.addProperty(LOG_CONTENT_SIZE, contentSize);
+		jsonObject.addProperty(LOG_FILE_SIZE, file.length());
 
 		return jsonObject.toString();
 	}

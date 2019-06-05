@@ -8,12 +8,9 @@
 	http://www.springframework.org/schema/context/spring-context-4.3.xsd"
 >
 
-	<!--
-	Defines a properties file for dereferencing variables
-	-->
-	<bean id="placeholderConfig" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-	    <property name="location" value="/WEB-INF/red5-web.properties" />
-	</bean>
+	<context:annotation-config />
+	<!-- Defines a properties file for dereferencing variables -->
+	<context:property-placeholder location="/WEB-INF/red5-web.properties"/>
 	
 	<!--
 	Defines the web context
@@ -30,18 +27,9 @@
 		<property name="parent" ref="global.scope" />
 		<property name="context" ref="web.context" />
 		<property name="handler" ref="web.handler" />
-		<property name="contextPath" value="${webapp.contextPath}" />
-		<property name="virtualHosts" value="${webapp.virtualHosts}" />
 	</bean>
 	
-	<bean id="dataStoreFactory" class="io.antmedia.console.datastore.DataStoreFactory">
-		<property name="appName" value="${db.app.name}" />
-		<property name="dbName" value="${db.name}" />
-		<property name="dbType" value="${db.type}" />
-		<property name="dbHost" value="${db.host}" />
-		<property name="dbUser" value="${db.user}" />
-		<property name="dbPassword" value="${db.password}" />
-	</bean>
+	<bean id="dataStoreFactory" class="io.antmedia.console.datastore.DataStoreFactory"/>
 
 	<!--
 	Defines the web handler which acts as an applications endpoint

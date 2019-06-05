@@ -2,6 +2,12 @@
 
 mvn clean install -Dmaven.javadoc.skip=true -Dmaven.test.skip=true -Dgpg.skip=true
 
+OUT=$?
+
+if [ $OUT -ne 0 ]; then
+    exit $OUT
+fi
+
 SRC=target/root.war
 
 DEST=~/softwares/ant-media-server/webapps/

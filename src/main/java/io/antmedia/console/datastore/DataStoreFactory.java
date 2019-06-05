@@ -1,13 +1,27 @@
 package io.antmedia.console.datastore;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public class DataStoreFactory {
 
 	private IDataStore dataStore;
+	
+	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_APP_NAME+":#{null}}" )
 	private String appName;
+	
+	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_NAME+":#{null}}" )
 	private String dbName;
+	
+	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_TYPE+":#{null}}" )
 	private String dbType;
+	
+	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_HOST+":#{null}}" )
 	private String dbHost;
+	
+	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_USER+":#{null}}" )
 	private String dbUser;
+	
+	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_PASS+":#{null}}" )
 	private String dbPassword;
 	
 	public String getAppName() {
@@ -60,7 +74,7 @@ public class DataStoreFactory {
 
 	public IDataStore getDataStore() {
 		if (dataStore == null) {
-			if(dbType .contentEquals("mongodb"))
+			if(dbType.contentEquals("mongodb"))
 			{
 				
 				dataStore = new MongoStore(dbHost, dbUser, dbPassword);

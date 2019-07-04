@@ -181,6 +181,12 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-catalina-ha</artifactId>
+            <version>${tomcat.version}</version>
+            <scope>provided</scope>
+        </dependency>
+		<dependency>
 		    <groupId>org.mitre.dsmiley.httpproxy</groupId>
 		    <artifactId>smiley-http-proxy-servlet</artifactId>
 		    <version>1.10</version>

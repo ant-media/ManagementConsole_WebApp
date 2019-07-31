@@ -472,7 +472,16 @@ public class RestService {
 		return gson.toJson(ResourceMonitor.getCPUInfoJSObject());
 	}
 
-
+	/**
+	 * Return server uptime and startime in milliseconds
+	 * @return JSON object contains the server uptime and start time
+	 */
+	@GET
+	@Path("/server-time")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getServerTime() {
+		return gson.toJson(ResourceMonitor.getServerTime());
+	}
 
 	@GET
 	@Path("/getSystemResourcesInfo")

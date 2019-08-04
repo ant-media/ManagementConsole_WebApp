@@ -52,7 +52,7 @@ import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
-import io.antmedia.statistic.ResourceMonitor;
+import io.antmedia.statistic.StatsCollector;
 
 @Component
 @Path("/")
@@ -404,7 +404,7 @@ public class RestService {
 	@Path("/getSystemInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemInfo() {
-		return gson.toJson(ResourceMonitor.getSystemInfoJSObject());
+		return gson.toJson(StatsCollector.getSystemInfoJSObject());
 	}
 
 
@@ -421,7 +421,7 @@ public class RestService {
 	@Path("/getJVMMemoryInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getJVMMemoryInfo() {
-		return gson.toJson(ResourceMonitor.getJVMMemoryInfoJSObject());
+		return gson.toJson(StatsCollector.getJVMMemoryInfoJSObject());
 	}
 
 
@@ -438,7 +438,7 @@ public class RestService {
 	@Path("/getSystemMemoryInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemMemoryInfo() {
-		return gson.toJson(ResourceMonitor.getSysteMemoryInfoJSObject());
+		return gson.toJson(StatsCollector.getSysteMemoryInfoJSObject());
 	}
 
 
@@ -454,7 +454,7 @@ public class RestService {
 	@Path("/getFileSystemInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getFileSystemInfo() {
-		return gson.toJson(ResourceMonitor.getFileSystemInfoJSObject());
+		return gson.toJson(StatsCollector.getFileSystemInfoJSObject());
 	}
 
 	/**
@@ -469,10 +469,19 @@ public class RestService {
 	@Path("/getCPUInfo")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getCPUInfo() {
-		return gson.toJson(ResourceMonitor.getCPUInfoJSObject());
+		return gson.toJson(StatsCollector.getCPUInfoJSObject());
 	}
 
-
+	/**
+	 * Return server uptime and startime in milliseconds
+	 * @return JSON object contains the server uptime and start time
+	 */
+	@GET
+	@Path("/server-time")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getServerTime() {
+		return gson.toJson(StatsCollector.getServerTime());
+	}
 
 	@GET
 	@Path("/getSystemResourcesInfo")
@@ -493,9 +502,9 @@ public class RestService {
 			totalLiveStreams += application.getAppLiveStreamCount(scope);
 		}
 
-		JsonObject jsonObject = ResourceMonitor.getSystemResourcesInfo(scopes);
+		JsonObject jsonObject = StatsCollector.getSystemResourcesInfo(scopes);
 
-		jsonObject.addProperty(ResourceMonitor.TOTAL_LIVE_STREAMS, totalLiveStreams);
+		jsonObject.addProperty(StatsCollector.TOTAL_LIVE_STREAMS, totalLiveStreams);
 
 		return gson.toJson(jsonObject);
 	}
@@ -505,7 +514,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON) 
 	public String getGPUInfo() 
 	{
-		return gson.toJson(ResourceMonitor.getGPUInfoJSObject());
+		return gson.toJson(StatsCollector.getGPUInfoJSObject());
 	}
 
 
@@ -548,7 +557,7 @@ public class RestService {
 		int totalLiveStreamSize = getApplication().getTotalLiveStreamSize();
 		JsonObject jsonObject = new JsonObject();
 		jsonObject.addProperty("totalConnectionSize", totalConnectionSize);
-		jsonObject.addProperty(ResourceMonitor.TOTAL_LIVE_STREAMS, totalLiveStreamSize);
+		jsonObject.addProperty(StatsCollector.TOTAL_LIVE_STREAMS, totalLiveStreamSize);
 
 		return gson.toJson(jsonObject);
 	}

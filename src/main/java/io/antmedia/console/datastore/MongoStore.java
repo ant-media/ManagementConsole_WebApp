@@ -12,9 +12,8 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.WriteResult;
 
-import io.antmedia.datastore.DBUtils;
 import io.antmedia.rest.model.User;
-import io.antmedia.rest.model.UserType;;
+import io.antmedia.rest.model.UserType;
 
 public class MongoStore implements IDataStore {
 
@@ -22,11 +21,12 @@ public class MongoStore implements IDataStore {
 	private Datastore datastore;
 
 	protected static Logger logger = LoggerFactory.getLogger(MongoStore.class);
+	
 
 	public MongoStore(String dbHost, String dbUser, String dbPassword) {
 		String dbName = SERVER_STORAGE_MAP_NAME;
 
-		String uri = DBUtils.getMongoConnectionUri(dbHost, dbUser, dbPassword);
+		String uri =  io.antmedia.datastore.db.MongoStore.getMongoConnectionUri(dbHost, dbUser, dbPassword);
 
 		MongoClientURI mongoUri = new MongoClientURI(uri);
 		MongoClient client = new MongoClient(mongoUri);
@@ -36,6 +36,8 @@ public class MongoStore implements IDataStore {
 		datastore = morphia.createDatastore(client, dbName);
 		datastore.ensureIndexes();
 	}
+	
+	
 
 	@Override
 	public boolean addUser(String username, String password, UserType userType) {

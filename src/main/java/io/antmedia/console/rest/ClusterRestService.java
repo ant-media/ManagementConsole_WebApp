@@ -20,6 +20,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import io.antmedia.cluster.ClusterNode;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.cluster.IClusterStore;
+import io.antmedia.rest.BroadcastRestServiceV2.SimpleStat;
 import io.antmedia.rest.model.Result;
 
 @Component
@@ -38,12 +39,17 @@ public class ClusterRestService {
 		return clusterNotifier.getClusterStore();
 	}
 	
+	@GET
+	@Path("/node-count")
+	public SimpleStat getNodeCount() {
+		return new SimpleStat(getClusterStore().getNodeCount());
+	}
 	
 	@GET
-	@Path("/nodes")
+	@Path("/nodes/{offset}/{size}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<ClusterNode> getNodeList() {
-		return getClusterStore().getClusterNodes();
+	public List<ClusterNode> getNodeList(@PathParam("offset") int offset, @PathParam("size") int size) {
+		return getClusterStore().getClusterNodes(offset, size);
 	}	
 	
 	@GET

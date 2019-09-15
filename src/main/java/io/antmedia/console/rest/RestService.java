@@ -37,6 +37,7 @@ import com.google.gson.JsonObject;
 
 import ch.qos.logback.classic.Level;
 import io.antmedia.AntMediaApplicationAdapter;
+import io.antmedia.AppSettings;
 import io.antmedia.AppSettingsModel;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.AdminApplication;
@@ -44,7 +45,6 @@ import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
-import io.antmedia.datastore.db.DataStore;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
@@ -600,11 +600,8 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings){
-
 		AntMediaApplicationAdapter adapter = (AntMediaApplicationAdapter) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME);
 		return gson.toJson(new Result(adapter.updateSettings(appsettings)));
-
-
 	}
 
 
@@ -651,9 +648,10 @@ public class RestService {
 	@GET
 	@Path("/getSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
+	public AppSettings getSettings(@PathParam("appname") String appname) 
 	{
-		return DataStore.getAppSettings(appname);
+		AntMediaApplicationAdapter adapter = (AntMediaApplicationAdapter) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME);
+		return adapter.getAppSettings();
 	}
 
 	@GET

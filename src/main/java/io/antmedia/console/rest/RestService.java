@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -38,7 +39,7 @@ import com.google.gson.JsonObject;
 import ch.qos.logback.classic.Level;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.AppSettingsModel;
+import io.antmedia.EncoderSettings;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
@@ -599,9 +600,41 @@ public class RestService {
 	@Path("/changeSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings){
+	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
+		//if there is any wrong encoder settings, remove it at first
+		List<EncoderSettings> encoderSettingsList = newSettings.getEncoderSettings();
+		if (encoderSettingsList != null) {
+			for (Iterator<EncoderSettings> iterator = encoderSettingsList.iterator(); iterator.hasNext();) {
+				EncoderSettings encoderSettings = iterator.next();
+				if (encoderSettings.getHeight() == 0 || encoderSettings.getVideoBitrate() == 0 || encoderSettings.getAudioBitrate() == 0)
+				{
+					iterator.remove();
+				}
+			}
+		}
+
+		if (Integer.valueOf(newSettings.getHlsListSize()) < 5) {
+			newSettings.setHlsListSize("5");
+		}
+
+		if (Integer.valueOf(newSettings.getHlsTime()) < 1) {
+			newSettings.setHlsTime("1");
+		}
+
+		if (newSettings.getVodFolder() == null) {
+			newSettings.setVodFolder("");
+		}
+
+		if (newSettings.getHlsPlayListType() == null) {
+			newSettings.setHlsPlayListType("");
+		}
+
+		if (newSettings.getTokenHashSecret() == null) {
+			newSettings.setTokenHashSecret("");
+		}
+
 		AntMediaApplicationAdapter adapter = (AntMediaApplicationAdapter) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME);
-		return gson.toJson(new Result(adapter.updateSettings(appsettings)));
+		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 	}
 
 
@@ -837,7 +870,7 @@ public class RestService {
 		if (logType.equals(LOG_TYPE_ERROR)) {
 			logLocation = ERROR_LOG_LOCATION;
 		} 
-		
+
 		JsonObject jsonObject = new JsonObject();
 		String logContent = "";
 		File file = new File(logLocation);
@@ -869,7 +902,7 @@ public class RestService {
 			ByteArrayOutputStream ous = null;
 			InputStream ios = null;
 
-			
+
 			try {
 
 				byte[] buffer = new byte[1024];

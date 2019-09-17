@@ -2,11 +2,13 @@ package io.antmedia.console.datastore;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import io.antmedia.AppSettings;
+
 public class DataStoreFactory {
 
 	private IDataStore dataStore;
 	
-	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_APP_NAME+":#{null}}" )
+	@Value( "${"+AppSettings.SETTINGS_DB_APP_NAME+":#{null}}" )
 	private String appName;
 	
 	@Value( "${"+io.antmedia.datastore.db.DataStoreFactory.SETTINGS_DB_NAME+":#{null}}" )

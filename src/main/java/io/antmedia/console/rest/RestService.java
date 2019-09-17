@@ -612,6 +612,9 @@ public class RestService {
 				}
 			}
 		}
+		//synch again because of string to list mapping- TODO: There is a better way for string to list mapping
+		//in properties files
+		newSettings.setEncoderSettings(encoderSettingsList);
 
 		if (Integer.valueOf(newSettings.getHlsListSize()) < 5) {
 			newSettings.setHlsListSize("5");

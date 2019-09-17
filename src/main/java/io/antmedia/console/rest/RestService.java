@@ -601,41 +601,6 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
-		//if there is any wrong encoder settings, remove it at first
-		List<EncoderSettings> encoderSettingsList = newSettings.getEncoderSettings();
-		if (encoderSettingsList != null) {
-			for (Iterator<EncoderSettings> iterator = encoderSettingsList.iterator(); iterator.hasNext();) {
-				EncoderSettings encoderSettings = iterator.next();
-				if (encoderSettings.getHeight() == 0 || encoderSettings.getVideoBitrate() == 0 || encoderSettings.getAudioBitrate() == 0)
-				{
-					iterator.remove();
-				}
-			}
-		}
-		//synch again because of string to list mapping- TODO: There is a better way for string to list mapping
-		//in properties files
-		newSettings.setEncoderSettings(encoderSettingsList);
-
-		if (Integer.valueOf(newSettings.getHlsListSize()) < 5) {
-			newSettings.setHlsListSize("5");
-		}
-
-		if (Integer.valueOf(newSettings.getHlsTime()) < 1) {
-			newSettings.setHlsTime("1");
-		}
-
-		if (newSettings.getVodFolder() == null) {
-			newSettings.setVodFolder("");
-		}
-
-		if (newSettings.getHlsPlayListType() == null) {
-			newSettings.setHlsPlayListType("");
-		}
-
-		if (newSettings.getTokenHashSecret() == null) {
-			newSettings.setTokenHashSecret("");
-		}
-
 		AntMediaApplicationAdapter adapter = (AntMediaApplicationAdapter) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME);
 		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 	}

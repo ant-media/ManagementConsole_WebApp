@@ -40,6 +40,7 @@ import ch.qos.logback.classic.Level;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
+import io.antmedia.IApplicationAdaptorFactory;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
@@ -651,7 +652,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettings getSettings(@PathParam("appname") String appname) 
 	{
-		AntMediaApplicationAdapter adapter = (AntMediaApplicationAdapter) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME);
+		AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
 		return adapter.getAppSettings();
 	}
 

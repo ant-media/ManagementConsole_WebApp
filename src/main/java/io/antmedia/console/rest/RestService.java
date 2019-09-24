@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -36,13 +37,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import ch.qos.logback.classic.Level;
-import io.antmedia.AppSettingsModel;
+import io.antmedia.AntMediaApplicationAdapter;
+import io.antmedia.AppSettings;
+import io.antmedia.EncoderSettings;
+import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
-import io.antmedia.datastore.AppSettingsManager;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
@@ -58,8 +61,6 @@ import io.antmedia.statistic.StatsCollector;
 @Path("/")
 public class RestService {
 
-	private static final String LOG_TYPE_TEST = "test";
-
 	private static final String LOG_TYPE_ERROR = "error";
 
 	private static final String LOG_TYPE_SERVER = "server";
@@ -69,9 +70,6 @@ public class RestService {
 	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
 
 	private static final String SERVER_LOG_LOCATION = "log/ant-media-server.log";
-
-	//TODO: @selim I think we should remove this definition from here. by @mekya
-	private static final String TEST_LOG_LOCATION = "target/test-classes/ant-media-server.log";
 
 	private static final String LOG_CONTENT = "logContent";
 
@@ -112,8 +110,6 @@ public class RestService {
 	private IDataStore dataStore;
 
 	private static final String LOG_LEVEL = "logLevel";
-
-	private static final String RED5_PROPERTIES = "red5.properties";
 
 	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
 
@@ -604,12 +600,9 @@ public class RestService {
 	@Path("/changeSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public String changeSettings(@PathParam("appname") String appname, AppSettingsModel appsettings){
-
-		ApplicationContext context = getApplication().getApplicationContext(appname);
-		return gson.toJson(new Result(AppSettingsManager.updateAppSettings(context, appsettings, true)));
-
-
+	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
+		AntMediaApplicationAdapter adapter = (AntMediaApplicationAdapter) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME);
+		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 	}
 
 
@@ -620,8 +613,7 @@ public class RestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeServerSettings(ServerSettings serverSettings){
 
-
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH, true);
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
 
 		String serverName = "";
 		String licenceKey = "";
@@ -657,11 +649,10 @@ public class RestService {
 	@GET
 	@Path("/getSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public AppSettingsModel getSettings(@PathParam("appname") String appname) 
+	public AppSettings getSettings(@PathParam("appname") String appname) 
 	{
-
-		return AppSettingsManager.getAppSettings(appname);
-
+		AntMediaApplicationAdapter adapter = (AntMediaApplicationAdapter) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME);
+		return adapter.getAppSettings();
 	}
 
 	@GET
@@ -749,8 +740,7 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isInClusterMode(){
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-		//TODO move BEAN name from TCPCluster to IClusterNotifier then use it
-		boolean isCluster = ctxt.containsBean("tomcat.cluster");
+		boolean isCluster = ctxt.containsBean(IClusterNotifier.BEAN_NAME);
 		return new Result(isCluster, "");
 	}
 
@@ -760,8 +750,7 @@ public class RestService {
 	public LogSettings getLogSettings() 
 	{
 
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
-		store.setFullPath(RED5_PROPERTIES_PATH);
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
 
 		LogSettings logSettings = new LogSettings();
 
@@ -780,9 +769,7 @@ public class RestService {
 
 		ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES);
-		store.setFullPath(RED5_PROPERTIES_PATH);	
-
+		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
 
 		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
 				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
@@ -845,21 +832,15 @@ public class RestService {
 		long skipValue = 0;
 		int countKb = 0;
 		int maxCount = 500;
-		String logLocation = "";
-
-		JsonObject jsonObject = new JsonObject();
-		String logContent = "";
+		//default log 
+		String logLocation = SERVER_LOG_LOCATION;
 
 		if (logType.equals(LOG_TYPE_ERROR)) {
 			logLocation = ERROR_LOG_LOCATION;
 		} 
-		else if(logType.equals(LOG_TYPE_SERVER)) {
-			logLocation = SERVER_LOG_LOCATION;
-		} 
-		else if(logType.equals(LOG_TYPE_TEST)){
-			logLocation = TEST_LOG_LOCATION;
-		}
 
+		JsonObject jsonObject = new JsonObject();
+		String logContent = "";
 		File file = new File(logLocation);
 
 		if (!file.isFile()) {
@@ -889,7 +870,7 @@ public class RestService {
 			ByteArrayOutputStream ous = null;
 			InputStream ios = null;
 
-			
+
 			try {
 
 				byte[] buffer = new byte[1024];

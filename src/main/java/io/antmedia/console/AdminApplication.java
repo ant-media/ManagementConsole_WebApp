@@ -28,6 +28,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
+import io.antmedia.IApplicationAdaptorFactory;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.settings.ServerSettings;
@@ -295,7 +296,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	public int getAppLiveStreamCount(IScope appScope) {
 		int size = 0;
 		if (appScope != null) {
-			Object adapter = appScope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
+			Object adapter = ((IApplicationAdaptorFactory) appScope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
 			if (adapter instanceof AntMediaApplicationAdapter) 
 			{
 				DataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();

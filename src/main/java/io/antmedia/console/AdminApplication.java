@@ -221,11 +221,6 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	}
 
 	public ApplicationContext getApplicationContext(String scopeName) {
-		log.info("** ApplicationContext:"+scopeName);
-		log.info("** ApplicationContext:"+getScope(scopeName));
-		log.info("** ApplicationContext:"+getScope(scopeName).getContext());
-		log.info("** ApplicationContext:"+getScope(scopeName).getContext().getApplicationContext());
-
 		return getScope(scopeName).getContext().getApplicationContext();
 	}
 

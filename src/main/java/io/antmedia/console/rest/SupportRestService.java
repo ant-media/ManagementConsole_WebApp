@@ -132,11 +132,15 @@ public class SupportRestService {
 					SupportResponse supportResponse = gson.fromJson(jsonResponse, SupportResponse.class);
 					success = supportResponse.isResult();
 				}
+				
 			} finally {
 				response.close();
 			}
 		} finally {
 			httpclient.close();
+		}
+		if (!success) {
+			logger.error("Cannot send e-mail in support form for e-mail: {}", supportRequest.getEmail());
 		}
 		return success;
 	}

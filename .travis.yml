@@ -6,36 +6,55 @@ sudo: required
 before_install:
 - openssl aes-256-cbc -K $encrypted_0ec9fe721525_key -iv $encrypted_0ec9fe721525_iv
   -in codesigning.asc.enc -out codesigning.asc -d
-- openssl aes-256-cbc -K $encrypted_7373d903a788_key -iv $encrypted_7373d903a788_iv
-  -in codesigning.asc.enc -out codesigning.asc -d
 - gpg --fast-import codesigning.asc
-- (if [ $(git ls-remote https://github.com/ant-media/ant-media-server-parent.git $TRAVIS_BRANCH  |
-  wc -l) == "1" ]; then echo " $TRAVIS_BRANCH branch found"; git clone --depth=1 -b
-  $TRAVIS_BRANCH https://github.com/ant-media/ant-media-server-parent.git; else echo
-  "branch not found"; git clone --depth=1 https://github.com/ant-media/ant-media-server-parent.git;
+# get parent project
+- (if [ $(git ls-remote https://github.com/ant-media/ant-media-server-parent.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
+    then 
+      echo " $TRAVIS_BRANCH branch found";  
+      git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/ant-media-server-parent.git;  
+    else
+      echo "branch not found"; 
+      git clone --depth=1 https://github.com/ant-media/ant-media-server-parent.git;  
   fi)
 - cd ant-media-server-parent
 - mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true --quiet
 - cd ..
-- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server-Common.git $TRAVIS_BRANCH  |
-  wc -l) == "1" ]; then echo " $TRAVIS_BRANCH branch found"; git clone --depth=1 -b
-  $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server-Common.git; else echo
-  "branch not found"; git clone --depth=1 https://github.com/ant-media/Ant-Media-Server-Common.git;
+#Checkout Ant Media Server Common
+- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server-Common.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
+   then 
+     echo " $TRAVIS_BRANCH branch found";  
+     git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server-Common.git;  
+   else
+     echo "branch not found"; 
+     git clone --depth=1 https://github.com/ant-media/Ant-Media-Server-Common.git;  
   fi)
 - cd Ant-Media-Server-Common
 - mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true --quiet
 - cd ..
-- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server-Service.git
-  $TRAVIS_BRANCH  | wc -l) == "1" ]; then echo " $TRAVIS_BRANCH branch found"; git
-  clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server-Service.git;
-  cd Ant-Media-Server-Service; mvn install -DskipTests=true -Dmaven.javadoc.skip=true
-  -Dgpg.skip=true -B -V --quiet; cd ..; else echo "branch not found. Using version
-  in sonatype"; fi)
-- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server.git $TRAVIS_BRANCH  |
-  wc -l) == "1" ]; then echo "This build is tag with $TRAVIS_BRANCH. Check Ant Media
-  Server $TRAVIS_BRANCH"; git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server.git;
-  cd Ant-Media-Server; mvn clean install -DskipTests -Dgpg.skip=true --quiet; cd ..;
-  else echo "There is no branch. Use the version in maven repo"; fi)
+
+#Checkout Service Project
+- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server-Service.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
+   then 
+     echo " $TRAVIS_BRANCH branch found";  
+     git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server-Service.git; 
+     cd Ant-Media-Server-Service; 
+     mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true -B -V --quiet;
+     cd ..;
+   else
+     echo "branch not found. Using version in sonatype"; 
+  fi) 
+
+# Checkout Ant Media Server from git, in order to fix dependency issue
+- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server.git $TRAVIS_BRANCH  | wc -l) == "1" ];
+    then
+       echo "This build is tag with $TRAVIS_BRANCH. Check Ant Media Server $TRAVIS_BRANCH";
+       git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server.git; 
+       cd Ant-Media-Server;
+       mvn clean install -DskipTests -Dgpg.skip=true --quiet;
+       cd ..;
+    else 
+       echo "There is no branch. Use the version in maven repo";
+  fi)
 - npm install -g @angular/cli@6.0.5
 - sudo git clone --depth=1 https://github.com/ant-media/ManagementConsole_AngularApp.git
 - sudo chown -R `whoami` ./ManagementConsole_AngularApp

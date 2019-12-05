@@ -47,6 +47,8 @@ import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
+import io.antmedia.datastore.db.DataStore;
+import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
@@ -683,6 +685,48 @@ public class RestService {
 	public Licence getLicenceStatus() 
 	{
 		return getLicenceServiceInstance().getLastLicenseStatus();
+	}
+	
+	/**
+	 * This method resets the viewers counts and broadcast status in the db. 
+	 * This should be used to recover db after server crashes. 
+	 * It's not intended to use to ignore the crash
+	 * @param appname
+	 * @return
+	 */
+	@POST
+	@Path("/reset-broadcasts/{appname}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Result resetBroadcast(@PathParam("appname") String appname) 
+	{
+		AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
+		
+		DataStore appDataStore = appAdaptor.getDataStore();
+		
+		long broadcastCount = appDataStore.getBroadcastCount();
+		int successfulOperations = 0;
+		for (int i = 0; (i * DataStore.MAX_ITEM_IN_ONE_LIST) < broadcastCount; i++) {
+			List<Broadcast> broadcastList = appDataStore.getBroadcastList(i*DataStore.MAX_ITEM_IN_ONE_LIST, DataStore.MAX_ITEM_IN_ONE_LIST);
+			for (Broadcast broadcast : broadcastList) 
+			{
+				broadcast.setHlsViewerCount(0);
+				broadcast.setWebRTCViewerCount(0);
+				broadcast.setRtmpViewerCount(0);
+				broadcast.setStatus(AntMediaApplicationAdapter.BROADCAST_STATUS_FINISHED);
+				String streamId = appDataStore.save(broadcast);
+				if (streamId != null) {
+					successfulOperations++;
+				}
+			}
+		}
+		boolean result = false;
+		String message = "";
+		if (successfulOperations == broadcastCount) {
+			result = true;
+			message = "Successfull operations: " + successfulOperations + " total operations: " + broadcastCount;
+		}
+		return new Result(result, message);
 	}
 
 	public void setDataStore(IDataStore dataStore) {

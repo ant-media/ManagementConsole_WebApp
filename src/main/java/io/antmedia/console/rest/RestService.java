@@ -439,6 +439,19 @@ public class RestService {
 	public String getSystemMemoryInfo() {
 		return gson.toJson(StatsCollector.getSysteMemoryInfoJSObject());
 	}
+	
+	/*
+	 * 	osMaxPhysicalMemory()		: Max Native Physical Memory
+	 *  osTotalPhysicalMemory()		: Total Native Physical Memory
+	 *  osFreePhysicalMemory()		: Available Native Physical Memory
+	 *  osInUsePhysicalMemory()		: In Use Native Physical Memory
+	 */
+	@GET
+	@Path("/getRamMemorySystemInfo")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getRamMemorySystemInfo() {
+		return gson.toJson(StatsCollector.getRAMMemoryInfoJSObject());
+	}
 
 
 	/*

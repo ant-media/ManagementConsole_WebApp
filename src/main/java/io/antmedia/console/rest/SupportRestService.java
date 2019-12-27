@@ -119,8 +119,8 @@ public class SupportRestService {
 			nameValuePairs.add(new BasicNameValuePair("licenseKey", getServerSettings().getLicenceKey()));
 			nameValuePairs.add(new BasicNameValuePair("cpuInfo", cpuInfo));
 			nameValuePairs.add(new BasicNameValuePair("cpuUsage", getStatsCollector().getCpuLoad()+""));
-			nameValuePairs.add(new BasicNameValuePair("ramUsage", SystemUtils.osFreePhysicalMemory("B", false)+"/"+SystemUtils.osTotalPhysicalMemory("B", false)));
-			nameValuePairs.add(new BasicNameValuePair("diskUsage", SystemUtils.osHDFreeSpace(null,  "B", false)+"/"+SystemUtils.osHDTotalSpace(null, "B", false)));
+			nameValuePairs.add(new BasicNameValuePair("ramUsage", SystemUtils.osFreePhysicalMemory()+"/"+SystemUtils.osTotalPhysicalMemory()));
+			nameValuePairs.add(new BasicNameValuePair("diskUsage", SystemUtils.osHDFreeSpace(null)+"/"+SystemUtils.osHDTotalSpace(null)));
 			nameValuePairs.add(new BasicNameValuePair("version", version.getVersionType()+" "+version.getVersionName()+" "+version.getBuildNumber()));
 			
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs, StandardCharsets.UTF_8));

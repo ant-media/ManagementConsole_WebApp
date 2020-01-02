@@ -16,7 +16,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -25,7 +24,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -119,8 +117,8 @@ public class SupportRestService {
 			nameValuePairs.add(new BasicNameValuePair("licenseKey", getServerSettings().getLicenceKey()));
 			nameValuePairs.add(new BasicNameValuePair("cpuInfo", cpuInfo));
 			nameValuePairs.add(new BasicNameValuePair("cpuUsage", getStatsCollector().getCpuLoad()+""));
-			nameValuePairs.add(new BasicNameValuePair("ramUsage", SystemUtils.osFreePhysicalMemory("B", false)+"/"+SystemUtils.osTotalPhysicalMemory("B", false)));
-			nameValuePairs.add(new BasicNameValuePair("diskUsage", SystemUtils.osHDFreeSpace(null,  "B", false)+"/"+SystemUtils.osHDTotalSpace(null, "B", false)));
+			nameValuePairs.add(new BasicNameValuePair("ramUsage", SystemUtils.osFreePhysicalMemory()+"/"+SystemUtils.osTotalPhysicalMemory()));
+			nameValuePairs.add(new BasicNameValuePair("diskUsage", SystemUtils.osHDFreeSpace(null)+"/"+SystemUtils.osHDTotalSpace(null)));
 			nameValuePairs.add(new BasicNameValuePair("version", version.getVersionType()+" "+version.getVersionName()+" "+version.getBuildNumber()));
 			
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs, StandardCharsets.UTF_8));

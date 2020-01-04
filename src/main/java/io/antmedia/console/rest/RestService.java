@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ThreadInfo;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,6 +25,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
@@ -41,6 +44,7 @@ import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
 import io.antmedia.EncoderSettings;
 import io.antmedia.IApplicationAdaptorFactory;
+import io.antmedia.SystemUtils;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
@@ -53,6 +57,7 @@ import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
 import io.antmedia.rest.BroadcastRestService;
+import io.antmedia.rest.RestServiceBase;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
@@ -483,6 +488,41 @@ public class RestService {
 	public String getCPUInfo() {
 		return gson.toJson(StatsCollector.getCPUInfoJSObject());
 	}
+	
+	@GET
+	@Path("/thread-dump-raw")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getThreadDump() {
+		return Arrays.toString(StatsCollector.getThreadDump());
+	}
+	
+	@GET
+	@Path("/thread-dump-json")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getThreadDumpJSON() {
+		return gson.toJson(StatsCollector.getThreadDumpJSON());
+	}
+	
+	
+	@GET
+	@Path("/threads-info")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getThreadsInfo() {
+		return gson.toJson(StatsCollector.getThreadInfoJSONObject());
+	}
+	
+	@GET
+	@Path("/heap-dump")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	public Response getHeapDump() {
+		SystemUtils.getHeapDump(SystemUtils.HEAPDUMP_HPROF);
+		File file = new File(SystemUtils.HEAPDUMP_HPROF);
+		return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
+			      .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"" ) //optional
+			      .build();
+	}
+	
+	
 
 	/**
 	 * Return server uptime and startime in milliseconds
@@ -534,7 +574,7 @@ public class RestService {
 	@Path("/getVersion")
 	@Produces(MediaType.APPLICATION_JSON) 
 	public String getVersion() {
-		return gson.toJson(BroadcastRestService.getSoftwareVersion());
+		return gson.toJson(RestServiceBase.getSoftwareVersion());
 	}
 
 

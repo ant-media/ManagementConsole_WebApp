@@ -446,16 +446,27 @@ public class RestService {
 	}
 	
 	/*
-	 * 	osMaxPhysicalMemory()		: Max Native Physical Memory
-	 *  osTotalPhysicalMemory()		: Total Native Physical Memory
-	 *  osFreePhysicalMemory()		: Available Native Physical Memory
-	 *  osInUsePhysicalMemory()		: In Use Native Physical Memory
+	 *  osTotalNativePhysicalMemory()		: Total Native Physical Memory
+	 *  osFreeNativePhysicalMemory()		: Available Native Physical Memory
+	 *  osInUseNativePhysicalMemory()		: In Use Native Physical Memory
 	 */
 	@GET
-	@Path("/getRamMemorySystemInfo")
+	@Path("/getNativeMemorySystemInfo")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String getRamMemorySystemInfo() {
-		return gson.toJson(StatsCollector.getRAMMemoryInfoJSObject());
+	public String getNativeMemoryInfoJSObject() {
+		return gson.toJson(StatsCollector.getNativeMemoryInfoJSObject());
+	}
+	
+	
+	/*
+	 *  JVMTotalNativePhysicalMemory()		: Total JVM Native Physical Memory
+	 *  JVMInUseNativePhysicalMemory()		: In Use JVM Native Physical Memory
+	 */
+	@GET
+	@Path("/getJVMNativeMemoryInfoJSObject")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getJVMNativeMemoryInfoJSObject() {
+		return gson.toJson(StatsCollector.getNativeMemoryInfoJSObject());
 	}
 
 

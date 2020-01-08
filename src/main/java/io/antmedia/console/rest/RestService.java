@@ -466,7 +466,7 @@ public class RestService {
 	@Path("/getJVMNativeMemoryInfoJSObject")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getJVMNativeMemoryInfoJSObject() {
-		return gson.toJson(StatsCollector.getNativeMemoryInfoJSObject());
+		return gson.toJson(StatsCollector.getJVMNativeMemoryInfoJSObject());
 	}
 
 

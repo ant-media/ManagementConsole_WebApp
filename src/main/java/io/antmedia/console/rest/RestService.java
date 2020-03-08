@@ -56,7 +56,6 @@ import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
-import io.antmedia.rest.BroadcastRestService;
 import io.antmedia.rest.RestServiceBase;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
@@ -685,7 +684,7 @@ public class RestService {
 	@Path("/isEnterpriseEdition")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
-		boolean isEnterprise = BroadcastRestService.isEnterprise();
+		boolean isEnterprise = RestServiceBase.isEnterprise();
 		return new Result(isEnterprise, "");
 	}
 

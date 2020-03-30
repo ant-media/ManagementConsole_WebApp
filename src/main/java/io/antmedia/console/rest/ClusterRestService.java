@@ -20,7 +20,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import io.antmedia.cluster.ClusterNode;
 import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.cluster.IClusterStore;
-import io.antmedia.rest.BroadcastRestServiceV2.SimpleStat;
+import io.antmedia.rest.BroadcastRestService.SimpleStat;
 import io.antmedia.rest.model.Result;
 
 @Component

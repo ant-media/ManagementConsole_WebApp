@@ -740,32 +740,7 @@ public class RestService {
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
 		AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		
-		DataStore appDataStore = appAdaptor.getDataStore();
-		
-		long broadcastCount = appDataStore.getBroadcastCount();
-		int successfulOperations = 0;
-		for (int i = 0; (i * DataStore.MAX_ITEM_IN_ONE_LIST) < broadcastCount; i++) {
-			List<Broadcast> broadcastList = appDataStore.getBroadcastList(i*DataStore.MAX_ITEM_IN_ONE_LIST, DataStore.MAX_ITEM_IN_ONE_LIST);
-			for (Broadcast broadcast : broadcastList) 
-			{
-				broadcast.setHlsViewerCount(0);
-				broadcast.setWebRTCViewerCount(0);
-				broadcast.setRtmpViewerCount(0);
-				broadcast.setStatus(AntMediaApplicationAdapter.BROADCAST_STATUS_FINISHED);
-				String streamId = appDataStore.save(broadcast);
-				if (streamId != null) {
-					successfulOperations++;
-				}
-			}
-		}
-		boolean result = false;
-		String message = "";
-		if (successfulOperations == broadcastCount) {
-			result = true;
-			message = "Successfull operations: " + successfulOperations + " total operations: " + broadcastCount;
-		}
-		return new Result(result, message);
+		return appAdaptor.resetBroadcast();
 	}
 
 	public void setDataStore(IDataStore dataStore) {

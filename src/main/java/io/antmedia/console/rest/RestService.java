@@ -740,7 +740,7 @@ public class RestService {
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
 		AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		return appAdaptor.resetBroadcast();
+		return appAdaptor.resetBroadcasts();
 	}
 
 	public void setDataStore(IDataStore dataStore) {

@@ -113,7 +113,7 @@ public class SupportRestService {
 			
 			File logFile = null;
 
-			HttpPost httpPost = new HttpPost("https://antmedia.io/livedemo/upload/upload2.php");
+			HttpPost httpPost = new HttpPost("https://antmedia.io/livedemo/upload/upload.php");
 			
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 			builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
@@ -123,9 +123,9 @@ public class SupportRestService {
 				
 				zipFile("log/ant-media-server.log");
 				logFile = new File(LOG_FILE);
+				
+				builder.addBinaryBody(LOG_FILE, logFile, ContentType.create("application/zip"), LOG_FILE);
 			}
-			
-			builder.addBinaryBody(LOG_FILE, logFile, ContentType.create("application/zip"), LOG_FILE);
 			
 			builder.addTextBody("name", supportRequest.getName());
 			builder.addTextBody("email", supportRequest.getEmail());

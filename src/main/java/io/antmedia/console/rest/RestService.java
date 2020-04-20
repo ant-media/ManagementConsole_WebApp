@@ -63,6 +63,7 @@ import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.StatsCollector;
+import io.swagger.annotations.ApiParam;
 
 @Component
 @Path("/")
@@ -646,8 +647,45 @@ public class RestService {
 		AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
 		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 	}
+	
+	@GET
+	@Path("/getShutdownProperly")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
+		
+		String[] appNames = appNamesArray.split(",");
+		boolean result = true;
 
+		for (String appName : appNames) {
+			//Check apps shutdown properly
+			if(((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().getAppSettings().getShutdownProperly().equals("false")) {
+				result = false;
+				break;
+			}
+		}
 
+		return result;
+	}
+	
+	@GET
+	@Path("/setShutdownProperly")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public boolean setShutdownStatus(@QueryParam("appNames") String appNamesArray){
+		
+		String[] appNames = appNamesArray.split(",");
+		boolean result = true;
+
+		for (String appName : appNames) {
+			//Check apps shutdown properly
+			if(((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().getAppSettings().getShutdownProperly().equals("false")) {
+				((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().getAppSettings().setShutdownProperly("true");
+			}
+		}
+
+		return result;
+	}
 
 	@POST
 	@Path("/changeServerSettings")

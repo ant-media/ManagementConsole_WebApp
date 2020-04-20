@@ -1,11 +1,15 @@
 package io.antmedia.console.rest;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
@@ -16,14 +20,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -63,6 +68,7 @@ public class SupportRestService {
 	private IStatsCollector statsCollector;
 	private ServerSettings serverSettings;
 	private Gson gson = new Gson();
+	private static final String LOG_FILE = "ant-media-server.log.zip";
 	
 	@POST
 	@Path("/request")
@@ -100,48 +106,85 @@ public class SupportRestService {
 		boolean success = false;
 		String cpuInfo = "not allowed to get";
 		
-		if(supportRequest.isSendSystemInfo()) {
-			cpuInfo = getCpuInfo();
-		}
-		Version version = RestServiceBase.getSoftwareVersion();
-		CloseableHttpClient httpclient = HttpClients.createDefault();
+		CloseableHttpClient httpClient = HttpClients.createDefault();
+		
 		try {
-			HttpPost httppost = new HttpPost("https://antmedia.io/livedemo/upload/upload.php");
-			List<NameValuePair> nameValuePairs = new ArrayList<>();
-			nameValuePairs.add(new BasicNameValuePair("Content-Type", "application/x-www-form-urlencoded;"));
-			nameValuePairs.add(new BasicNameValuePair("name", supportRequest.getName()));
-			nameValuePairs.add(new BasicNameValuePair("email", supportRequest.getEmail()));
-			nameValuePairs.add(new BasicNameValuePair("title", supportRequest.getTitle()));
-			nameValuePairs.add(new BasicNameValuePair("description", supportRequest.getDescription()));
-			nameValuePairs.add(new BasicNameValuePair("isEnterprise", RestServiceBase.isEnterprise()+""));
-			nameValuePairs.add(new BasicNameValuePair("licenseKey", getServerSettings().getLicenceKey()));
-			nameValuePairs.add(new BasicNameValuePair("cpuInfo", cpuInfo));
-			nameValuePairs.add(new BasicNameValuePair("cpuUsage", getStatsCollector().getCpuLoad()+""));
-			nameValuePairs.add(new BasicNameValuePair("ramUsage", SystemUtils.osFreePhysicalMemory()+"/"+SystemUtils.osTotalPhysicalMemory()));
-			nameValuePairs.add(new BasicNameValuePair("diskUsage", SystemUtils.osHDFreeSpace(null)+"/"+SystemUtils.osHDTotalSpace(null)));
-			nameValuePairs.add(new BasicNameValuePair("version", version.getVersionType()+" "+version.getVersionName()+" "+version.getBuildNumber()));
+			Version version = RestServiceBase.getSoftwareVersion();
 			
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs, StandardCharsets.UTF_8));
+			File logFile = null;
 
-			CloseableHttpResponse response = httpclient.execute(httppost);
+			HttpPost httpPost = new HttpPost("https://antmedia.io/livedemo/upload/upload2.php");
+			
+			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+			builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+			
+			if(supportRequest.isSendSystemInfo()) {
+				cpuInfo = getCpuInfo();
+				
+				zipFile("log/ant-media-server.log");
+				logFile = new File(LOG_FILE);
+			}
+			
+			builder.addBinaryBody(LOG_FILE, logFile, ContentType.create("application/zip"), LOG_FILE);
+			
+			builder.addTextBody("name", supportRequest.getName());
+			builder.addTextBody("email", supportRequest.getEmail());
+			builder.addTextBody("title", supportRequest.getTitle());
+			builder.addTextBody("description", supportRequest.getDescription());
+			builder.addTextBody("isEnterprise", RestServiceBase.isEnterprise()+"");
+			builder.addTextBody("licenseKey", getServerSettings().getLicenceKey());
+			builder.addTextBody("cpuInfo", cpuInfo);
+			builder.addTextBody("cpuUsage", getStatsCollector().getCpuLoad()+"");
+			builder.addTextBody("ramUsage", SystemUtils.osFreePhysicalMemory()+"/"+SystemUtils.osTotalPhysicalMemory());
+			builder.addTextBody("diskUsage", SystemUtils.osHDFreeSpace(null)+"/"+SystemUtils.osHDTotalSpace(null));
+			builder.addTextBody("version", version.getVersionType()+" "+version.getVersionName()+" "+version.getBuildNumber());
+			
+			HttpEntity httpEntity = builder.build();
+			
+			httpPost.setEntity(httpEntity);
+
+			CloseableHttpResponse response = httpClient.execute(httpPost);
+			
 			try {
 				if (response.getStatusLine().getStatusCode() == 200) {
 					String jsonResponse = readResponse(response).toString();
 					SupportResponse supportResponse = gson.fromJson(jsonResponse, SupportResponse.class);
 					success = supportResponse.isResult();
-				}
-				
+				}	
 			} finally {
 				response.close();
 			}
-		} finally {
-			httpclient.close();
+		}catch (Exception e) {
+			logger.error(e.getMessage());
+		}
+		finally {
+			httpClient.close();
 		}
 		if (!success) {
 			logger.error("Cannot send e-mail in support form for e-mail: {}", supportRequest.getEmail());
 		}
-		return success;
+		return success;		
 	}
+	
+	private static void zipFile(String filePath) {
+        try {
+            File file = new File(filePath);
+            String zipFileName = file.getName().concat(".zip");
+        	
+            FileOutputStream fos = new FileOutputStream(zipFileName);
+            ZipOutputStream zos = new ZipOutputStream(fos);
+    		
+            zos.putNextEntry(new ZipEntry(file.getName()));
+ 
+            byte[] bytes = Files.readAllBytes(Paths.get(filePath));
+            zos.write(bytes, 0, bytes.length);
+            zos.closeEntry();
+            zos.close();
+ 
+        } catch (IOException ex) {
+        	logger.error(ex.getMessage());
+        }
+    }
 	
 	public String getCpuInfo() {
 		StringBuilder cpuInfo = new StringBuilder();

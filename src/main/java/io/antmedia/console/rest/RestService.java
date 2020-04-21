@@ -649,7 +649,7 @@ public class RestService {
 	}
 	
 	@GET
-	@Path("/getShutdownProperly")
+	@Path("/isShutdownProperly")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
@@ -659,7 +659,7 @@ public class RestService {
 
 		for (String appName : appNames) {
 			//Check apps shutdown properly
-			if(((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().getAppSettings().getShutdownProperly().equals("false")) {
+			if(!((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().isShutdownProperly()) {
 				result = false;
 				break;
 			}
@@ -679,8 +679,8 @@ public class RestService {
 
 		for (String appName : appNames) {
 			//Check apps shutdown properly
-			if(((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().getAppSettings().getShutdownProperly().equals("false")) {
-				((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().getAppSettings().setShutdownProperly("true");
+			if(!((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().isShutdownProperly()) {
+				((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().setShutdownProperly(true);
 			}
 		}
 

@@ -1,13 +1,16 @@
 package io.antmedia.console.rest;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -113,15 +116,15 @@ public class SupportRestService {
 			
 			File logFile = null;
 
-			HttpPost httpPost = new HttpPost("https://antmedia.io/livedemo/upload/upload.php");
-			
+			HttpPost httpPost = new HttpPost("");
+			//https://antmedia.io/livedemo/upload/upload.php
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 			builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 			
 			if(supportRequest.isSendSystemInfo()) {
 				cpuInfo = getCpuInfo();
 				
-				zipFile("log/ant-media-server.log");
+				zipFile();
 				logFile = new File(LOG_FILE);
 				
 				builder.addBinaryBody(LOG_FILE, logFile, ContentType.create("application/zip"), LOG_FILE);
@@ -166,25 +169,62 @@ public class SupportRestService {
 		return success;		
 	}
 	
-	private static void zipFile(String filePath) {
-        try {
-            File file = new File(filePath);
-            String zipFileName = file.getName().concat(".zip");
-        	
-            FileOutputStream fos = new FileOutputStream(zipFileName);
-            ZipOutputStream zos = new ZipOutputStream(fos);
-    		
-            zos.putNextEntry(new ZipEntry(file.getName()));
- 
-            byte[] bytes = Files.readAllBytes(Paths.get(filePath));
-            zos.write(bytes, 0, bytes.length);
-            zos.closeEntry();
-            zos.close();
- 
-        } catch (IOException ex) {
-        	logger.error(ex.getMessage());
-        }
+	private static void zipFile() {
+		
+        List<String> files = new ArrayList<>();
+        
+        files.add("log/ant-media-server.log");
+        files.add("log/antmedia-error.log");
+        
+    	// your directory
+    	File f = new File(".");
+    	File[] matchingFiles = f.listFiles(new FilenameFilter() {
+    	    public boolean accept(File dir, String name) {
+    	        return name.startsWith("hs_err") ;
+    	    }
+    	});
+    	
+    	for (File file : matchingFiles) {
+    		files.add(file.getName());
+		}
+    	
+		
+		 FileOutputStream fos = null;
+		 ZipOutputStream zipOut = null;
+	     FileInputStream fis = null;
+	     try {
+	    	 fos = new FileOutputStream(LOG_FILE);
+	         zipOut = new ZipOutputStream(new BufferedOutputStream(fos));
+	         for(String filePath:files){
+	        	 File input = new File(filePath);
+	             fis = new FileInputStream(input);
+	             ZipEntry ze = new ZipEntry(input.getName());
+	             System.out.println("Zipping the file: "+input.getName());
+	             zipOut.putNextEntry(ze);
+	             byte[] tmp = new byte[4*1024];
+	             int size = 0;
+	             while((size = fis.read(tmp)) != -1){
+	            	 zipOut.write(tmp, 0, size);
+	             }
+	             zipOut.flush();
+	             fis.close();
+	             }
+	            zipOut.close();
+	        } catch (FileNotFoundException e) {
+	            // TODO Auto-generated catch block
+	            e.printStackTrace();
+	        } catch (IOException e) {
+	            // TODO Auto-generated catch block
+	            e.printStackTrace();
+	        } finally{
+	            try{
+	                if(fos != null) fos.close();
+	            } catch(Exception ex){
+	                 
+	            }
+	        }
     }
+	
 	
 	public String getCpuInfo() {
 		StringBuilder cpuInfo = new StringBuilder();

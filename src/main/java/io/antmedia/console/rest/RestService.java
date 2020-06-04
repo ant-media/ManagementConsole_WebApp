@@ -693,8 +693,21 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettings getSettings(@PathParam("appname") String appname) 
 	{
-		AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		return adapter.getAppSettings();
+		AdminApplication application = getApplication();
+		if (application != null) {
+			ApplicationContext context = application.getApplicationContext(appname);
+			if (context != null) {
+				IApplicationAdaptorFactory adaptorFactory = (IApplicationAdaptorFactory)context.getBean(AntMediaApplicationAdapter.BEAN_NAME);
+				if (adaptorFactory != null) {
+					AntMediaApplicationAdapter adapter = adaptorFactory.getAppAdaptor();
+					if (adapter != null) {
+						return adapter.getAppSettings();
+					}
+				}
+			}
+		}
+		logger.warn("getSettings for app: {} returns null. It's likely not initialized.", appname);
+		return null;
 	}
 
 	@GET

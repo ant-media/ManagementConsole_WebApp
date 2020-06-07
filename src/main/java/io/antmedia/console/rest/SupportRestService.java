@@ -113,11 +113,9 @@ public class SupportRestService {
 		
 		try {
 			Version version = RestServiceBase.getSoftwareVersion();
-			
-			File logFile = null;
 
-			HttpPost httpPost = new HttpPost("");
-			//https://antmedia.io/livedemo/upload/upload.php
+			HttpPost httpPost = new HttpPost("https://antmedia.io/livedemo/upload/upload.php");
+
 			MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 			builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
 			
@@ -125,7 +123,7 @@ public class SupportRestService {
 				cpuInfo = getCpuInfo();
 				
 				zipFile();
-				logFile = new File(LOG_FILE);
+				File logFile = new File(LOG_FILE);
 				
 				builder.addBinaryBody(LOG_FILE, logFile, ContentType.create("application/zip"), LOG_FILE);
 			}

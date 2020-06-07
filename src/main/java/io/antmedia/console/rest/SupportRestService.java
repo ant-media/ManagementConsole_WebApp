@@ -171,8 +171,15 @@ public class SupportRestService {
 		
         List<String> files = new ArrayList<>();
         
-        files.add("log/ant-media-server.log");
-        files.add("log/antmedia-error.log");
+        File serverLogFile = new File("log/ant-media-server.log");
+        File errorLogFile = new File("log/antmedia-error.log");
+        
+        if(serverLogFile.exists()) {
+        	files.add("log/ant-media-server.log");
+        }
+        if(errorLogFile.exists()) {
+        	files.add("log/antmedia-error.log");
+        }
         
     	// your directory
     	File f = new File(".");

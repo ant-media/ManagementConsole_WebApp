@@ -63,6 +63,7 @@ import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.StatsCollector;
+import io.swagger.annotations.ApiParam;
 
 @Component
 @Path("/")
@@ -646,8 +647,45 @@ public class RestService {
 		AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
 		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 	}
+	
+	@GET
+	@Path("/isShutdownProperly")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
+		
+		String[] appNames = appNamesArray.split(",");
+		boolean result = true;
 
+		for (String appName : appNames) {
+			//Check apps shutdown properly
+			if(!((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().isShutdownProperly()) {
+				result = false;
+				break;
+			}
+		}
 
+		return result;
+	}
+	
+	@GET
+	@Path("/setShutdownProperly")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public boolean setShutdownStatus(@QueryParam("appNames") String appNamesArray){
+		
+		String[] appNames = appNamesArray.split(",");
+		boolean result = true;
+
+		for (String appName : appNames) {
+			//Check apps shutdown properly
+			if(!((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().isShutdownProperly()) {
+				((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().setShutdownProperly(true);
+			}
+		}
+
+		return result;
+	}
 
 	@POST
 	@Path("/changeServerSettings")
@@ -740,32 +778,7 @@ public class RestService {
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
 		AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		
-		DataStore appDataStore = appAdaptor.getDataStore();
-		
-		long broadcastCount = appDataStore.getBroadcastCount();
-		int successfulOperations = 0;
-		for (int i = 0; (i * DataStore.MAX_ITEM_IN_ONE_LIST) < broadcastCount; i++) {
-			List<Broadcast> broadcastList = appDataStore.getBroadcastList(i*DataStore.MAX_ITEM_IN_ONE_LIST, DataStore.MAX_ITEM_IN_ONE_LIST);
-			for (Broadcast broadcast : broadcastList) 
-			{
-				broadcast.setHlsViewerCount(0);
-				broadcast.setWebRTCViewerCount(0);
-				broadcast.setRtmpViewerCount(0);
-				broadcast.setStatus(AntMediaApplicationAdapter.BROADCAST_STATUS_FINISHED);
-				String streamId = appDataStore.save(broadcast);
-				if (streamId != null) {
-					successfulOperations++;
-				}
-			}
-		}
-		boolean result = false;
-		String message = "";
-		if (successfulOperations == broadcastCount) {
-			result = true;
-			message = "Successfull operations: " + successfulOperations + " total operations: " + broadcastCount;
-		}
-		return new Result(result, message);
+		return appAdaptor.resetBroadcasts();
 	}
 
 	public void setDataStore(IDataStore dataStore) {

@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
 import org.red5.server.api.IClient;
 import org.red5.server.api.IConnection;
+import org.red5.server.api.IContext;
 import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.ScopeType;
@@ -221,7 +222,15 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	}
 
 	public ApplicationContext getApplicationContext(String scopeName) {
-		return getScope(scopeName).getContext().getApplicationContext();
+		IScope scope = getScope(scopeName);
+		if (scope != null) {
+			IContext context = scope.getContext();
+			if (context != null) {
+				return context.getApplicationContext();
+			}
+		}
+		log.warn("Application:{} is not initilized", scopeName);
+		return null;
 	}
 
 

@@ -55,7 +55,7 @@ before_install:
     else 
        echo "There is no branch. Use the version in maven repo";
   fi)
-- npm install -g @angular/cli@6.0.5
+- npm install -g @angular/cli@10.0.5
 - sudo git clone --depth=1 https://github.com/ant-media/ManagementConsole_AngularApp.git
 - sudo chown -R `whoami` ./ManagementConsole_AngularApp
 - cd ManagementConsole_AngularApp

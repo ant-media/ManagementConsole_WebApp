@@ -26,6 +26,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
@@ -648,25 +649,105 @@ public class RestService {
 		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 	}
 	
+	
+	@Deprecated
 	@GET
 	@Path("/isShutdownProperly")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
 		
-		String[] appNames = appNamesArray.split(",");
-		boolean result = true;
-
-		for (String appName : appNames) {
-			//Check apps shutdown properly
-			if(!((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().isShutdownProperly()) {
-				result = false;
-				break;
+		boolean appShutdownProblemExists = false;
+		if (appNamesArray != null) 
+		{
+			String[] appNames = appNamesArray.split(",");
+			
+			if (appNames != null) 
+			{
+				for (String appName : appNames) 
+				{
+					//Check apps shutdown properly
+					AntMediaApplicationAdapter appAdaptor = getAppAdaptor(appName);
+					if (!appAdaptor.isShutdownProperly()) {
+						appShutdownProblemExists = true;
+						break;
+					};
+										
+				}
 			}
 		}
-
-		return result;
+		
+		return !appShutdownProblemExists;
 	}
+	
+	public AntMediaApplicationAdapter getAppAdaptor(String appName) {
+		
+		AntMediaApplicationAdapter appAdaptor = null;
+		AdminApplication application = getApplication();
+		if (application != null) 
+		{
+			ApplicationContext context = application.getApplicationContext(appName);
+			if (context != null) 
+			{
+				IApplicationAdaptorFactory adaptorFactory = (IApplicationAdaptorFactory) context.getBean(AntMediaApplicationAdapter.BEAN_NAME);
+				if (adaptorFactory != null) 
+				{
+					appAdaptor = adaptorFactory.getAppAdaptor();
+				}
+			}
+		}
+		return appAdaptor;
+	}
+	
+	
+	@GET
+	@Path("/shutdown-properly")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response isShutdownProperly(@QueryParam("appNames") String appNamesArray)
+	{
+		boolean appShutdownProblemExists = false;
+		Response response = null;
+		
+		if (appNamesArray != null) 
+		{
+			String[] appNames = appNamesArray.split(",");
+			
+			if (appNames != null) 
+			{
+				for (String appName : appNames) 
+				{
+					//Check apps shutdown properly
+					AntMediaApplicationAdapter appAdaptor = getAppAdaptor(appName);
+					if (appAdaptor != null) 
+					{
+						if (!appAdaptor.isShutdownProperly()) {
+							appShutdownProblemExists = true;
+							break;
+						}
+					}
+					else {
+						response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Result(false, "Either server may not be initialized or application name that does not exist is requested. ")).build();
+						break;
+					}
+				}
+			}
+			else {
+				response = Response.status(Status.BAD_REQUEST).entity(new Result(false, "Bad parameter for appNames. ")).build();
+			}
+			
+		}
+		else {
+			response = Response.status(Status.BAD_REQUEST).entity(new Result(false, "Bad parameter for appNames. ")).build();
+		}
+		
+		if (response == null) {
+			response = Response.status(Status.OK).entity(new Result(!appShutdownProblemExists)).build();
+		}
+		
+		return response; 
+	}
+	
 	
 	@GET
 	@Path("/setShutdownProperly")

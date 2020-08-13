@@ -7,7 +7,8 @@ sudo: required
 before_install:
 - openssl aes-256-cbc -K $encrypted_0ec9fe721525_key -iv $encrypted_0ec9fe721525_iv
   -in codesigning.asc.enc -out codesigning.asc -d
-- gpg --fast-import codesigning.asc
+- export GPG_TTY=$(tty) #-> https://github.com/keybase/keybase-issues/issues/2798
+- gpg2 --batch --fast-import codesigning.asc
 # get parent project
 - (if [ $(git ls-remote https://github.com/ant-media/ant-media-server-parent.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
     then 

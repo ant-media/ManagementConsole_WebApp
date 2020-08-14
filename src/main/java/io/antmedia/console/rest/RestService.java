@@ -157,7 +157,7 @@ public class RestService {
 	 * form parameters - case sensitive
 	 * "userName", "password", "userType
 	 * 
-	 * @param userName
+	 * @param user: The user to be added
 	 * @return JSON data
 	 * if user is added success will be true
 	 * if user is not added success will be false
@@ -291,7 +291,7 @@ public class RestService {
 	 * Authenticates user with userName and password
 	 * 
 	 * 
-	 * @param user
+	 * @param user: The User object to be authenticated 
 	 * @return json that shows user is authenticated or not
 	 */
 	@POST
@@ -468,7 +468,7 @@ public class RestService {
 	 * getSystemCpuLoad:	"% recent cpu usage" for the whole system. 
 	 * 
 	 * getProcessCpuLoad: "% recent cpu usage" for the Java Virtual Machine process. 
-	 * @return
+	 * @return the CPU load info
 	 */
 	@GET
 	@Path("/getCPUInfo")
@@ -586,7 +586,7 @@ public class RestService {
 	/**
 	 * Refactor name getTotalLiveStreamSize
 	 * only return totalLiveStreamSize
-	 * @return
+	 * @return the number of live clients
 	 */
 	@GET
 	@Path("/getLiveClientsSize")
@@ -613,8 +613,8 @@ public class RestService {
 	/**
 	 * Refactor remove this function and use ProxyServlet to get this info
 	 * Before deleting check web panel does not use it
-	 * @param name
-	 * @return
+	 * @param name: application name 
+	 * @return live streams in the application
 	 */
 	@GET
 	@Path("/getAppLiveStreams/{appname}")
@@ -628,9 +628,11 @@ public class RestService {
 	/**
 	 * Refactor remove this function and use ProxyServlet to get this info
 	 * Before deleting check web panel does not use it
-	 * @param name
-	 * @return
+	 * @param name application name
+	 * @param streamName the stream name to be deleted
+	 * @return operation value
 	 */
+	@Deprecated
 	@POST
 	@Path("/deleteVoDStream/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -862,7 +864,7 @@ public class RestService {
 	 * This method resets the viewers counts and broadcast status in the db. 
 	 * This should be used to recover db after server crashes. 
 	 * It's not intended to use to ignore the crash
-	 * @param appname
+	 * @param appname the application name that broadcasts will be reset
 	 * @return
 	 */
 	@POST

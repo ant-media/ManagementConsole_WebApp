@@ -1,12 +1,14 @@
+dist: bionic
 language: java
 jdk:
 - openjdk8
-node_js: 8.10.0
+node_js: "14.8.0"
 sudo: required
 before_install:
 - openssl aes-256-cbc -K $encrypted_0ec9fe721525_key -iv $encrypted_0ec9fe721525_iv
   -in codesigning.asc.enc -out codesigning.asc -d
-- gpg --fast-import codesigning.asc
+- export GPG_TTY=$(tty) #-> https://github.com/keybase/keybase-issues/issues/2798
+- gpg2 --batch --fast-import codesigning.asc
 # get parent project
 - (if [ $(git ls-remote https://github.com/ant-media/ant-media-server-parent.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
     then 
@@ -55,7 +57,7 @@ before_install:
     else 
        echo "There is no branch. Use the version in maven repo";
   fi)
-- npm install -g @angular/cli@6.0.5
+- npm install -g @angular/cli@10.0.5
 - sudo git clone --depth=1 https://github.com/ant-media/ManagementConsole_AngularApp.git
 - sudo chown -R `whoami` ./ManagementConsole_AngularApp
 - cd ManagementConsole_AngularApp

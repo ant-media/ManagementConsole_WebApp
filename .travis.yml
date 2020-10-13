@@ -1,7 +1,7 @@
 dist: bionic
 language: java
 jdk:
-- openjdk8
+- openjdk11
 node_js: "14.8.0"
 sudo: required
 before_install:
@@ -52,7 +52,7 @@ before_install:
        echo "This build is tag with $TRAVIS_BRANCH. Check Ant Media Server $TRAVIS_BRANCH";
        git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server.git; 
        cd Ant-Media-Server;
-       mvn clean install -DskipTests -Dgpg.skip=true --quiet;
+       mvn -U clean install -DskipTests -Dgpg.skip=true --quiet;
        cd ..;
     else 
        echo "There is no branch. Use the version in maven repo";

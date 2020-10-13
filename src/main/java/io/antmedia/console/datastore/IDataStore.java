@@ -1,17 +1,13 @@
 package io.antmedia.console.datastore;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.antmedia.cluster.ClusterNode;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
 
 
 public interface IDataStore {
 	
-	public final static String SERVER_STORAGE_FILE = "server.db";
-	public final static String SERVER_STORAGE_MAP_NAME = "serverdb";
+	public static final String SERVER_STORAGE_FILE = "server.db";
+	public static final String SERVER_STORAGE_MAP_NAME = "serverdb";
 
 	public boolean addUser(String username, String password, UserType userType);
 

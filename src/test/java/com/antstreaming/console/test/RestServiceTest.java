@@ -154,15 +154,14 @@ public class RestServiceTest {
 	@Test
 	public void testEditUser() {
 
-		Integer userType = 1;
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 100000);
 		User user = new User(userName, password, UserType.ADMIN);
 
 		Result result = restService.addInitialUser(user);
 		assertTrue(result.isSuccess());
-		assertEquals(password, dbStore.getUser(userName).getPassword());
-		assertEquals((int) userType, dbStore.getUser(userName).getUserType());
+		assertEquals(restService.getMD5Hash(password), dbStore.getUser(userName).getPassword());
+		assertEquals(UserType.ADMIN, dbStore.getUser(userName).getUserType());
 
 		// TODO: open below test
 
@@ -170,7 +169,7 @@ public class RestServiceTest {
 		Result result2 = restService.changeUserPasswordInternal(userName, user);
 		assertTrue(result2.isSuccess());
 
-		assertEquals(user.getNewPassword(), dbStore.getUser(userName).getPassword());
+		assertEquals(restService.getMD5Hash(user.getNewPassword()), dbStore.getUser(userName).getPassword());
 		// assertEquals((int)userType2, dbStore.getUser(userName).userType);
 
 		user.setPassword(user.getNewPassword());
@@ -230,10 +229,10 @@ public class RestServiceTest {
 		/*
 		 * result = restService.authenticateUser(userName, password);
 		 * assertTrue(result.isSuccess());
-		 * 
+
 		 * result = restService.authenticateUser("nope", password);
 		 * assertFalse(result.isSuccess());
-		 * 
+
 		 * result = restService.authenticateUser(userName, "nope");
 		 * assertFalse(result.isSuccess());
 		 */

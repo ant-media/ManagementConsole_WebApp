@@ -6,6 +6,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ThreadInfo;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -28,6 +31,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.codec.binary.Hex;
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,7 +178,7 @@ public class RestService {
 		boolean result = false;
 		int errorId = -1;
 		if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
-			result = getDataStore().addUser(user.getEmail(), user.getPassword(), UserType.ADMIN);
+			result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), UserType.ADMIN);
 		}
 		else {
 			if (user == null) {
@@ -200,7 +204,7 @@ public class RestService {
 		boolean result = false;
 		int errorId = -1;
 		if (getDataStore().getNumberOfUserRecords() == 0) {
-			result = getDataStore().addUser(user.getEmail(), user.getPassword(), UserType.ADMIN);
+			result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), UserType.ADMIN);
 		}
 
 		Result operationResult = new Result(result);
@@ -301,12 +305,13 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result authenticateUser(User user) {
-		boolean result = getDataStore().doesUserExist(user.getEmail(), user.getPassword());
+		boolean result=getDataStore().doesUserExist(user.getEmail(), user.getPassword()) ||
+				       getDataStore().doesUserExist(user.getEmail(), getMD5Hash(user.getPassword()));
 		if (result) {
 			HttpSession session = servletRequest.getSession();
 			session.setAttribute(IS_AUTHENTICATED, true);
 			session.setAttribute(USER_EMAIL, user.getEmail());
-			session.setAttribute(USER_PASSWORD, user.getPassword());
+			session.setAttribute(USER_PASSWORD, getMD5Hash(user.getPassword()));
 		}
 		return new Result(result);
 	}
@@ -328,16 +333,16 @@ public class RestService {
 		boolean result = false;
 		String message = null;
 		if (userMail != null) {
-			result = getDataStore().doesUserExist(userMail, user.getPassword());
+			result = getDataStore().doesUserExist(userMail, user.getPassword()) || getDataStore().doesUserExist(userMail, getMD5Hash(user.getPassword()));
 			if (result) {
-				result = getDataStore().editUser(userMail, user.getNewPassword(), UserType.ADMIN);
+				result = getDataStore().editUser(userMail, getMD5Hash(user.getNewPassword()), UserType.ADMIN);
 
 				if (result) {
 					HttpSession session = servletRequest.getSession();
 					if (session != null) {
 						session.setAttribute(IS_AUTHENTICATED, true);
 						session.setAttribute(USER_EMAIL, userMail);
-						session.setAttribute(USER_PASSWORD, user.getNewPassword());
+						session.setAttribute(USER_PASSWORD, getMD5Hash(user.getNewPassword()));
 					}
 				}
 			}
@@ -1111,6 +1116,20 @@ public class RestService {
 		jsonObject.addProperty(LOG_FILE_SIZE, file.length());
 
 		return jsonObject.toString();
+	}
+
+	public String getMD5Hash(String pass){
+		String passResult= "";
+		try {
+			MessageDigest m=MessageDigest.getInstance("MD5");
+			m.reset();
+			m.update(pass.getBytes(Charset.forName("UTF8")));
+			byte[] digestResult=m.digest();
+			passResult= Hex.encodeHexString(digestResult);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		return passResult;
 	}
 
 }

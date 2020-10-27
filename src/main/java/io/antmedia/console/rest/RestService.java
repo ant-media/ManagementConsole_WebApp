@@ -117,6 +117,8 @@ public class RestService {
 	public static final String LICENSE_KEY = "server.licence_key";
 
 	public static final String MARKET_BUILD = "server.market_build";
+	
+	public static final String NODE_GROUP = "nodeGroup";
 
 	Gson gson = new Gson();
 
@@ -802,6 +804,8 @@ public class RestService {
 		store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
 		getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
 
+		store.put(NODE_GROUP, String.valueOf(serverSettings.getNodeGroup()));
+		getServerSettingsInternal().setNodeGroup(serverSettings.getNodeGroup());
 
 		return gson.toJson(new Result(store.save()));
 	}

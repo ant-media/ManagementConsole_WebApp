@@ -5,12 +5,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ThreadInfo;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -19,6 +17,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -33,6 +32,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.codec.binary.Hex;
 import org.red5.server.api.scope.IScope;
+import org.red5.server.tomcat.WarDeployer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -47,7 +47,6 @@ import com.google.gson.JsonObject;
 import ch.qos.logback.classic.Level;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.EncoderSettings;
 import io.antmedia.IApplicationAdaptorFactory;
 import io.antmedia.SystemUtils;
 import io.antmedia.cluster.IClusterNotifier;
@@ -56,8 +55,6 @@ import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
-import io.antmedia.datastore.db.DataStore;
-import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
@@ -68,7 +65,6 @@ import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.StatsCollector;
-import io.swagger.annotations.ApiParam;
 
 @Component
 @Path("/")
@@ -1130,6 +1126,32 @@ public class RestService {
 			e.printStackTrace();
 		}
 		return passResult;
+	}
+	
+	@POST
+	@Path("/applications")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Result createApplication(@QueryParam("appName") String appName) {
+		boolean result = SystemUtils.runCreateAppScript(appName);
+		Result operationResult = new Result(result);
+
+		return operationResult;
+	}
+	
+	@DELETE
+	@Path("/applications/{appName}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Result deleteeApplication(@PathParam("appName") String appName) {
+		AppSettings appSettings = getSettings(appName);
+		appSettings.setToBeDeleted(true);
+		boolean result = SystemUtils.runDeleteAppScript(appName);
+		Result operationResult = new Result(result);
+
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+		WarDeployer warDeployer = (WarDeployer) ctxt.getBean("warDeployer");
+		warDeployer.undeploy(appName);
+		
+		return operationResult;
 	}
 
 }

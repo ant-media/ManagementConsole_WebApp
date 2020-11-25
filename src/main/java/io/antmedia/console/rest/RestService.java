@@ -1132,9 +1132,23 @@ public class RestService {
 	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result createApplication(@QueryParam("appName") String appName) {
-		boolean result = SystemUtils.runCreateAppScript(appName);
-		Result operationResult = new Result(result);
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+		Result operationResult = new Result(false);
+		boolean isCluster = ctxt.containsBean(IClusterNotifier.BEAN_NAME);
+		
+		if(isCluster) {
+			String mongoHost = getDataStoreFactory().getDbHost();
+			String mongoUser = getDataStoreFactory().getDbUser();
+			String mongoPass = getDataStoreFactory().getDbPassword();
 
+			boolean result = SystemUtils.runCreateAppScript(appName, true, mongoHost, mongoUser, mongoPass);
+			operationResult.setSuccess(result);
+		}
+		else {
+			boolean result = SystemUtils.runCreateAppScript(appName);
+			operationResult.setSuccess(result);
+		}
+		
 		return operationResult;
 	}
 	
@@ -1144,6 +1158,8 @@ public class RestService {
 	public Result deleteeApplication(@PathParam("appName") String appName) {
 		AppSettings appSettings = getSettings(appName);
 		appSettings.setToBeDeleted(true);
+		changeSettings(appName, appSettings);
+		
 		boolean result = SystemUtils.runDeleteAppScript(appName);
 		Result operationResult = new Result(result);
 

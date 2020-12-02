@@ -32,7 +32,6 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.codec.binary.Hex;
 import org.red5.server.api.scope.IScope;
-import org.red5.server.tomcat.WarDeployer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -1132,23 +1131,7 @@ public class RestService {
 	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result createApplication(@QueryParam("appName") String appName) {
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-		Result operationResult = new Result(false);
-		boolean isCluster = ctxt.containsBean(IClusterNotifier.BEAN_NAME);
-		
-		if(isCluster) {
-			String mongoHost = getDataStoreFactory().getDbHost();
-			String mongoUser = getDataStoreFactory().getDbUser();
-			String mongoPass = getDataStoreFactory().getDbPassword();
-
-			boolean result = SystemUtils.runCreateAppScript(appName, true, mongoHost, mongoUser, mongoPass);
-			operationResult.setSuccess(result);
-		}
-		else {
-			boolean result = SystemUtils.runCreateAppScript(appName);
-			operationResult.setSuccess(result);
-		}
-		
+		Result operationResult = new Result(getApplication().createApplication(appName));
 		return operationResult;
 	}
 	
@@ -1160,13 +1143,7 @@ public class RestService {
 		appSettings.setToBeDeleted(true);
 		changeSettings(appName, appSettings);
 		
-		boolean result = SystemUtils.runDeleteAppScript(appName);
-		Result operationResult = new Result(result);
-
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-		WarDeployer warDeployer = (WarDeployer) ctxt.getBean("warDeployer");
-		warDeployer.undeploy(appName);
-		
+		Result operationResult = new Result(true);
 		return operationResult;
 	}
 

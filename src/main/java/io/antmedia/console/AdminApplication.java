@@ -3,15 +3,13 @@ package io.antmedia.console;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-
-import javax.annotation.Nullable;
-import javax.servlet.ServletContext;
-import javax.ws.rs.core.Context;
 
 import org.apache.commons.io.FileUtils;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
@@ -21,18 +19,20 @@ import org.red5.server.api.IContext;
 import org.red5.server.api.scope.IBroadcastScope;
 import org.red5.server.api.scope.IScope;
 import org.red5.server.api.scope.ScopeType;
+import org.red5.server.tomcat.WarDeployer;
 import org.red5.server.util.ScopeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.IApplicationAdaptorFactory;
+import io.antmedia.SystemUtils;
+import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.settings.ServerSettings;
+import io.vertx.core.Vertx;
 
 
 /**
@@ -41,10 +41,6 @@ import io.antmedia.settings.ServerSettings;
  * @author The Red5 Project (red5@osflash.org)
  */
 public class AdminApplication extends MultiThreadedApplicationAdapter {
-	@Context 
-	private ServletContext servletContext;
-	private ApplicationContext appCtx;
-
 	private static final Logger log = LoggerFactory.getLogger(AdminApplication.class);
 
 
@@ -69,9 +65,23 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	}
 	private IScope rootScope;
 	private ServerSettings serverSettings;
+	private Vertx vertx;
+	private WarDeployer warDeployer;
+	private boolean isCluster = false;
 
-
+	@Override
 	public boolean appStart(IScope app) {
+		isCluster = app.getContext().hasBean(IClusterNotifier.BEAN_NAME);
+
+		vertx = (Vertx) scope.getContext().getBean("vertxCore");
+		warDeployer = (WarDeployer) app.getContext().getBean("warDeployer");
+		
+		if(isCluster) {
+			IClusterNotifier clusterNotifier = (IClusterNotifier) app.getContext().getBean(IClusterNotifier.BEAN_NAME);
+			clusterNotifier.registerCreateAppListener(appName -> createApplication(appName));
+			clusterNotifier.registerDeleteAppListener(appName -> deleteApplication(appName));
+		}
+		
 		return super.appStart(app);
 	}
 
@@ -194,7 +204,9 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		java.util.Set<String> names = root.getScopeNames();
 		List<String> apps = new ArrayList<String>();
 		for (String name : names) {
-			apps.add(name);
+			if(!name.equals("root")) {
+				apps.add(name);
+			}
 		}
 		return apps;
 	}
@@ -234,35 +246,10 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 	}
 
 
-	public void updateServerSettings( ServerSettings settings) {
-		serverSettings = getServerSettings();
-		serverSettings.setLicenceKey(settings.getLicenceKey());
-		log.info(" Server License Key Updated");	
-	}
-
 	private IScope getScope(String scopeName) {
 		IScope root = ScopeUtils.findRoot(scope);
 		return getScopes(root, scopeName);
 	}
-
-	@Nullable
-	private ApplicationContext getAppContext() {
-		if (servletContext != null) {
-			appCtx = (ApplicationContext) servletContext
-					.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE);
-		}
-		return appCtx;
-	}
-
-
-	public ServerSettings getServerSettings() {
-
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-
-		return serverSettings;
-	}
-
 
 	/**
 	 * Search through all the scopes in the given scope to a scope with the
@@ -315,5 +302,91 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			}
 		}
 		return size;
+	}
+
+	public boolean createApplication(String appName) {
+		boolean success = false;
+		
+		if(isCluster) {
+			String mongoHost = getDataStoreFactory().getDbHost();
+			String mongoUser = getDataStoreFactory().getDbUser();
+			String mongoPass = getDataStoreFactory().getDbPassword();
+
+			boolean result = runCreateAppScript(appName, true, mongoHost, mongoUser, mongoPass);
+			success = result;
+		}
+		else {
+			boolean result = runCreateAppScript(appName);
+			success = result;
+		}
+		
+		vertx.setTimer(3000, i -> warDeployer.deploy(true));
+
+		return success;
+		
+	}
+
+	public boolean deleteApplication(String appName) {
+		boolean success = runDeleteAppScript(appName);
+		warDeployer.undeploy(appName);
+		
+		IScope appScope = getRootScope().getScope(appName);	
+		getRootScope().removeChildScope(appScope);
+		
+		return success;
+	}
+	
+	
+	public boolean runCreateAppScript(String appName) {
+		return runCreateAppScript(appName, false, null, null, null);
+	}
+	
+	public boolean runCreateAppScript(String appName, boolean isCluster, 
+			String mongoHost, String mongoUser, String mongoPass) {
+		Path currentRelativePath = Paths.get("");
+		String webappsPath = currentRelativePath.toAbsolutePath().toString();
+		
+		String command = "/bin/bash create_app.sh"
+				+ " -n "+appName
+				+ " -w \"true\""
+				+ " -p "+webappsPath
+				+ " -c "+isCluster;
+		
+		if(isCluster) {
+			command += " -m "+mongoHost
+					+ " -u "+mongoUser
+					+ " -s "+mongoPass;
+		}
+		
+		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+		pb.inheritIO().redirectOutput(ProcessBuilder.Redirect.INHERIT);
+		pb.inheritIO().redirectError(ProcessBuilder.Redirect.INHERIT);
+		
+		try {
+			pb.start();
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+	
+	public boolean runDeleteAppScript(String appName) {
+		Path currentRelativePath = Paths.get("");
+		String webappsPath = currentRelativePath.toAbsolutePath().toString();
+		
+		String command = "/bin/bash delete_app.sh -n "+appName+" -p "+webappsPath;
+
+		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
+		pb.inheritIO().redirectOutput(ProcessBuilder.Redirect.INHERIT);
+		pb.inheritIO().redirectError(ProcessBuilder.Redirect.INHERIT);
+		
+		try {
+			pb.start();
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 }

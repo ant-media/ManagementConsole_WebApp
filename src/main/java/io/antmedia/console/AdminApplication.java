@@ -153,7 +153,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 			if (scope != null && appName.equals(scope.getName())){
 
-				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
+				Object adapter = ((IApplicationAdaptorFactory) scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
 				if (adapter instanceof AntMediaApplicationAdapter) 
 				{
 					DataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();

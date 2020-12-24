@@ -127,7 +127,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 			ApplicationInfo info = new ApplicationInfo();
 			info.name = name;
 			info.liveStreamCount = getAppLiveStreamCount(getRootScope().getScope(name));
-			info.vodCount = getVoDCount(name);
+			info.vodCount = getVoDCount(getRootScope().getScope(name));
 
 			info.storage = getStorage(name);
 			appsInfo.add(info);
@@ -141,28 +141,17 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return FileUtils.sizeOfDirectory(appFolder);
 	}
 
-	private int getVoDCount(String appName) {
-
-
-		IScope root = getRootScope();
-		java.util.Set<String> names = root.getScopeNames();
+	private int getVoDCount(IScope appScope) {
 		int size = 0;
-		for (String name : names) {
-
-			IScope scope = root.getScope(name);
-
-			if (scope != null && appName.equals(scope.getName())){
-
-				Object adapter = scope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME);
-				if (adapter instanceof AntMediaApplicationAdapter) 
-				{
-					DataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
-					if (dataStore != null) {
-						size =  (int) dataStore.getTotalVodNumber();
-					}
+		if (appScope != null ){
+			Object adapter = ((IApplicationAdaptorFactory) appScope.getContext().getApplicationContext().getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
+			if (adapter instanceof AntMediaApplicationAdapter)
+			{
+				DataStore dataStore = ((AntMediaApplicationAdapter)adapter).getDataStore();
+				if (dataStore != null) {
+					size =  (int) dataStore.getTotalVodNumber();
 				}
 			}
-
 		}
 
 		return size;

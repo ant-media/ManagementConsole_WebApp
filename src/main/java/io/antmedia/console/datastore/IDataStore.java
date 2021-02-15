@@ -2,6 +2,7 @@ package io.antmedia.console.datastore;
 
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
+import java.util.List;
 
 
 public interface IDataStore {
@@ -18,6 +19,8 @@ public interface IDataStore {
 	public boolean doesUsernameExist(String username);
 
 	public boolean doesUserExist(String username, String password);
+
+	public List<User> getUserList();
 
 	public User getUser(String username);
 

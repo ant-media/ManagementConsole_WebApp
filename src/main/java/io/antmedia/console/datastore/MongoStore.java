@@ -16,6 +16,8 @@ import dev.morphia.query.UpdateResults;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
 
+import java.util.List;
+
 public class MongoStore implements IDataStore {
 
 	private Morphia morphia;
@@ -37,8 +39,11 @@ public class MongoStore implements IDataStore {
 		datastore = morphia.createDatastore(client, dbName);
 		datastore.ensureIndexes();
 	}
-	
-	
+
+	@Override
+	public List<User> getUserList(){
+		return null;
+	}
 
 	@Override
 	public boolean addUser(String username, String password, UserType userType) {

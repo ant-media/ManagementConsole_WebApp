@@ -30,6 +30,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import io.antmedia.datastore.db.types.Broadcast;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.apache.commons.codec.binary.Hex;
 import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
@@ -169,27 +172,48 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addUser(User user) {
-		//TODO: check that request is coming from authorized user
 		boolean result = false;
 		int errorId = -1;
-		if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
-			result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), UserType.ADMIN);
-		}
-		else {
-			if (user == null) {
-				logger.info("user variable null");
-			}
-			else {
-				logger.info("user already exist in db");
-			}
 
-			errorId = 1;
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)){
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if(currentUser.getUserType().equals(UserType.ADMIN)){
+				if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
+					result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), user.getUserType());
+					logger.info("added user = " + user.getEmail() + " password = " + user.getPassword() +  " user type = " + user.getUserType());
+					logger.info("current user = " + currentUser.getEmail() + " password = " + currentUser.getPassword() +  " user type = " + currentUser.getUserType());
+				}
+				else {
+					if (user == null) {
+						logger.info("user variable null");
+					}
+					else {
+						logger.info("user already exist in db");
+					}
+
+					errorId = 1;
+				}
+			}
 		}
 		Result operationResult = new Result(result);
 		operationResult.setErrorId(errorId);
 		return operationResult;
 	}
-
+	@GET
+	@Path("/isAdmin")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Result isAdmin(){
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				return new Result(true, "User is admin");
+			}
+		}
+		return new Result(false, "User is not admin");
+	}
 
 	@POST
 	@Path("/addInitialUser")
@@ -223,68 +247,74 @@ public class RestService {
 	/**
 	 * Edit user account on db. 
 	 * Username cannot be changed, password or userType can be changed
-	 * userType = 0 means ready only account
-	 * userType = 1 means read-write account
+	 * Post method should be used
 	 * 
-	 * Post method should be used.
-	 * 
-	 * application/x-www-form-urlencoded
-	 * 
-	 * form parameters - case sensitive
-	 * "userName", "password", "userType
-	 * 
-	 * @param userName
+	 * @param user
 	 * @return JSON data
 	 * if user is edited, success will be true
 	 * if not, success will be false
-	 * 	errorId = 2 means user does not exist
 	 */
-	/*
+
 	@POST
 	@Path("/editUser")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult editUser(@FormParam("userName") String userName, @FormParam("password") String password, @FormParam("userType") Integer userType) {
-		//TODO: check that request is coming from authorized user
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Result editUser(User user) {
 		boolean result = false;
-		int errorId = -1;
-		if (userName != null && getDataStore().doesUsernameExist(userName)) {
-			result = getDataStore().editUser(userName, password, userType);
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				int errorId = -1;
+				if (user.getEmail() != null && getDataStore().doesUsernameExist(user.getEmail())) {
+					User oldUser = getDataStore().getUser(user.getEmail());
+					getDataStore().deleteUser(user.getEmail());
+					if(user.getNewPassword() != null && user.getNewPassword() != "") {
+						logger.info("Changing password of user: " + user.getEmail());
+						result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getNewPassword()), user.getUserType());
+					}
+					else {
+						logger.info("Changing type of user: " + user.getEmail());
+						result = getDataStore().addUser(user.getEmail(), oldUser.getPassword(), user.getUserType());
+					}
+					return new Result(true, "Sucessfully edited");
+				} else {
+					return new Result(false, "Edited user is not found in database");
+				}
+			}else{
+				return new Result(false, "User is not admin");
+			}
 		}
-		else {
-			errorId = 2;
-		}
-
-		OperationResult operationResult = new OperationResult(result);
-		operationResult.setErrorId(errorId);
-		return operationResult;
+		return new Result(false, "Session is not authenticated");
 	}
-	 */
 
 	/**
-	 * Deletes user account from db
-	 * 
-	 * Post method should be used.
-	 * 
-	 * application/x-www-form-urlencoded
-	 * 
-	 * form parameters - case sensitive
-	 * "userName"
-	 * 
-	 * @param userName
+	 * Deletes user account from database
+	 * @param username
 	 * @return
 	 */
-	/*
-	@POST
-	@Path("/deleteUser")
+	@DELETE
+	@Path("/deleteUser/{username}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult deleteUser(@FormParam("userName") String userName) {
-		//TODO: check that request is coming from authorized user
-		boolean result = getDataStore().deleteUser(userName);
-		return new OperationResult(result);
+	public Result deleteUser(@PathParam("username") String userName) {
+		HttpSession session = servletRequest.getSession();
+		boolean result = false;
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				result = getDataStore().deleteUser(userName);
+			}
+			else{
+				logger.info("Caller is not admin for delete")
+			}
+		}
+		if(result)
+			logger.info("Deleted user: " + userName);
+		else
+			logger.info("Could not find and delete user: " + userName);
+		return new Result(result);
 	}
-	 */
 
 
 
@@ -307,6 +337,9 @@ public class RestService {
 			session.setAttribute(IS_AUTHENTICATED, true);
 			session.setAttribute(USER_EMAIL, user.getEmail());
 			session.setAttribute(USER_PASSWORD, getMD5Hash(user.getPassword()));
+			logger.info("authenticated ve session.remoteUser = " + servletRequest.getRemoteUser());
+			logger.info("session attributes e-mail = " + session.getAttribute(USER_EMAIL).toString() + " pass " + session.getAttribute(USER_PASSWORD));
+
 		}
 		return new Result(result);
 	}
@@ -322,6 +355,19 @@ public class RestService {
 
 		return changeUserPasswordInternal(userMail, user);
 
+	}
+	@GET
+	@Path("/userList")
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<User> getUserList() {
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				return getDataStore().getUserList();
+			}
+		}
+		return null;
 	}
 
 	public Result changeUserPasswordInternal(String userMail, User user) {
@@ -639,8 +685,15 @@ public class RestService {
 	@Path("/deleteVoDStream/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String deleteVoDStream(@PathParam("appname") String name, @FormParam("streamName") String streamName) {
-		boolean deleteVoDStream = getApplication().deleteVoDStream(name, streamName);
-		return gson.toJson(new Result(deleteVoDStream));
+		HttpSession session = servletRequest.getSession();
+		boolean deleteVoDStream = false;
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				deleteVoDStream = getApplication().deleteVoDStream(name, streamName);
+			}
+		}
+		return gson.toJson(new Result(deleteVoDStream, "User is not admin"));
 	}
 
 
@@ -649,8 +702,15 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
-		AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
+				return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
+			}
+		}
+		return gson.toJson(new Result(false, "User is not admin"));
 	}
 	
 	
@@ -777,32 +837,38 @@ public class RestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeServerSettings(ServerSettings serverSettings){
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
 
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
+				String serverName = "";
+				String licenceKey = "";
+				if (serverSettings.getServerName() != null) {
+					serverName = serverSettings.getServerName();
+				}
 
-		String serverName = "";
-		String licenceKey = "";
-		if(serverSettings.getServerName() != null) {
-			serverName = serverSettings.getServerName();
+				store.put(SERVER_NAME, serverName);
+				getServerSettingsInternal().setServerName(serverName);
+
+				if (serverSettings.getLicenceKey() != null) {
+					licenceKey = serverSettings.getLicenceKey();
+				}
+
+				store.put(LICENSE_KEY, licenceKey);
+				getServerSettingsInternal().setLicenceKey(licenceKey);
+
+				store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
+				getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
+
+				store.put(NODE_GROUP, String.valueOf(serverSettings.getNodeGroup()));
+				getServerSettingsInternal().setNodeGroup(serverSettings.getNodeGroup());
+
+				return gson.toJson(new Result(store.save()));
+			}
 		}
-
-		store.put(SERVER_NAME, serverName);
-		getServerSettingsInternal().setServerName(serverName);
-
-		if (serverSettings.getLicenceKey() != null) {
-			licenceKey = serverSettings.getLicenceKey();
-		}
-
-		store.put(LICENSE_KEY, licenceKey);
-		getServerSettingsInternal().setLicenceKey(licenceKey);
-
-		store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
-		getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
-
-		store.put(NODE_GROUP, String.valueOf(serverSettings.getNodeGroup()));
-		getServerSettingsInternal().setNodeGroup(serverSettings.getNodeGroup());
-
-		return gson.toJson(new Result(store.save()));
+		return gson.toJson(new Result(false, "User is not admin"));
 	}
 
 	@GET
@@ -877,8 +943,15 @@ public class RestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
-		AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		return appAdaptor.resetBroadcasts();
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
+				return appAdaptor.resetBroadcasts();
+			}
+		}
+		return new Result(false, "User is not admin");
 	}
 
 	public void setDataStore(IDataStore dataStore) {
@@ -963,27 +1036,33 @@ public class RestService {
 	@Path("/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 
-		ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+				PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
 
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
+				if (logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE)
+						|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO)
+						|| logLevel.equals(LOG_LEVEL_WARN) || logLevel.equals(LOG_LEVEL_ERROR)
+						|| logLevel.equals(LOG_LEVEL_OFF)) {
 
-		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
-				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
-				|| logLevel.equals(LOG_LEVEL_WARN)  || logLevel.equals(LOG_LEVEL_ERROR)
-				|| logLevel.equals(LOG_LEVEL_OFF)) {
+					rootLogger.setLevel(currentLevelDetect(logLevel));
 
-			rootLogger.setLevel(currentLevelDetect(logLevel));
+					store.put(LOG_LEVEL, logLevel);
 
-			store.put(LOG_LEVEL, logLevel);
+					LogSettings logSettings = new LogSettings();
 
-			LogSettings logSettings = new LogSettings();
+					logSettings.setLogLevel(String.valueOf(logLevel));
 
-			logSettings.setLogLevel(String.valueOf(logLevel));
+				}
 
+				return gson.toJson(new Result(store.save()));
+			}
 		}
-
-		return gson.toJson(new Result(store.save()));
+		return gson.toJson(new Result(false, "User is not admin"));
 	}
 
 	public Level currentLevelDetect(String logLevel) {
@@ -1139,12 +1218,20 @@ public class RestService {
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteeApplication(@PathParam("appName") String appName) {
-		AppSettings appSettings = getSettings(appName);
-		appSettings.setToBeDeleted(true);
-		changeSettings(appName, appSettings);
-		
-		Result operationResult = new Result(true);
-		return operationResult;
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+
+				AppSettings appSettings = getSettings(appName);
+				appSettings.setToBeDeleted(true);
+				changeSettings(appName, appSettings);
+
+				Result operationResult = new Result(true);
+				return operationResult;
+			}
+		}
+		return new Result(false, "User is not admin");
 	}
 
 }

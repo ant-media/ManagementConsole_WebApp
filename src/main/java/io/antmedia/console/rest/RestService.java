@@ -306,7 +306,7 @@ public class RestService {
 				result = getDataStore().deleteUser(userName);
 			}
 			else{
-				logger.info("Caller is not admin for delete")
+				logger.info("Caller is not admin for delete");
 			}
 		}
 		if(result)

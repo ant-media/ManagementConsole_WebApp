@@ -8,10 +8,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -576,6 +573,7 @@ public class RestService {
 		JsonObject jsonObject = new JsonObject();
 		JsonArray jsonArray = new JsonArray();
 
+		Collections.sort(applications);
 		for (String appName : applications) {
 			if (!appName.equals(AdminApplication.APP_NAME)) {
 				jsonArray.add(appName);

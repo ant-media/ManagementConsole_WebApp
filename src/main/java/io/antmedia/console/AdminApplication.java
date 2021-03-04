@@ -5,11 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.red5.server.adapter.MultiThreadedApplicationAdapter;
@@ -197,6 +193,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 				apps.add(name);
 			}
 		}
+		Collections.sort(apps);
 		return apps;
 	}
 

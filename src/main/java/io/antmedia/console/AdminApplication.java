@@ -193,7 +193,10 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 				apps.add(name);
 			}
 		}
+
+		/** Sorting applications alphabetically */
 		Collections.sort(apps);
+
 		return apps;
 	}
 

@@ -614,13 +614,6 @@ public class RestService {
 	 * Before deleting check web panel does not use it
 	 * @param name: application name 
 	 * @return live streams in the application
-	 *
-	 * {"name":"1testapp2","liveStreamCount":0,"vodCount":0,"storage":1179761}
-	 * ,{"name":"LiveApp","liveStreamCount":0,"vodCount":0,"storage":1179799}
-	 * ,{"name":"Ztestapp2","liveStreamCount":0,"vodCount":0,"storage":1179761}
-	 * ,{"name":"WebRTCAppEE","liveStreamCount":0,"vodCount":0,"storage":1179827}
-	 * ,{"name":"2testapp2","liveStreamCount":0,"vodCount":0,"storage":1179761}
-	 * ,{"name":"Atestapp2","liveStreamCount":0,"vodCount":0,"storage":1179761}
 	 */
 	@GET
 	@Path("/getAppLiveStreams/{appname}")

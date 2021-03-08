@@ -375,8 +375,9 @@ public class RestService {
 		String message = null;
 		if (userMail != null) {
 			result = getDataStore().doesUserExist(userMail, user.getPassword()) || getDataStore().doesUserExist(userMail, getMD5Hash(user.getPassword()));
+			User currentUser = getDataStore().getUser(userMail);
 			if (result) {
-				result = getDataStore().editUser(userMail, getMD5Hash(user.getNewPassword()), UserType.ADMIN);
+				result = getDataStore().editUser(userMail, getMD5Hash(user.getNewPassword()), currentUser.getUserType());
 
 				if (result) {
 					HttpSession session = servletRequest.getSession();

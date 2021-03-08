@@ -1,6 +1,8 @@
 package io.antmedia.console.datastore;
 
 
+import dev.morphia.query.FindOptions;
+import io.antmedia.datastore.db.types.Broadcast;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +44,13 @@ public class MongoStore implements IDataStore {
 
 	@Override
 	public List<User> getUserList(){
+		try {
+			Query<User> query = datastore.find(User.class);
+			return query.find(new FindOptions()).toList();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 

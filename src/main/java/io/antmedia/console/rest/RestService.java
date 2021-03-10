@@ -168,7 +168,7 @@ public class RestService {
 	 * 	if user is not added, errorId = 1 means username already exist
 	 */
 	@POST
-	@Path("/addUser")
+	@Path("/write/addUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addUser(User user) {
@@ -178,22 +178,10 @@ public class RestService {
 		HttpSession session = servletRequest.getSession();
 		if(isAuthenticated(session)){
 			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if(currentUser.getUserType().equals(UserType.ADMIN)){
-				if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
-					result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), user.getUserType());
-					logger.info("added user = " + user.getEmail() + " password = " + user.getPassword() +  " user type = " + user.getUserType());
-					logger.info("current user = " + currentUser.getEmail() + " password = " + currentUser.getPassword() +  " user type = " + currentUser.getUserType());
-				}
-				else {
-					if (user == null) {
-						logger.info("user variable null");
-					}
-					else {
-						logger.info("user already exist in db");
-					}
-
-					errorId = 1;
-				}
+			if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
+				result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), user.getUserType());
+				logger.info("added user = " + user.getEmail() + " password = " + user.getPassword() + " user type = " + user.getUserType());
+				logger.info("current user = " + currentUser.getEmail() + " password = " + currentUser.getPassword() + " user type = " + currentUser.getUserType());
 			}
 		}
 		Result operationResult = new Result(result);
@@ -256,7 +244,7 @@ public class RestService {
 	 */
 
 	@POST
-	@Path("/editUser")
+	@Path("/write/editUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result editUser(User user) {
@@ -264,25 +252,21 @@ public class RestService {
 		HttpSession session = servletRequest.getSession();
 		if(isAuthenticated(session)) {
 			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				int errorId = -1;
-				if (user.getEmail() != null && getDataStore().doesUsernameExist(user.getEmail())) {
-					User oldUser = getDataStore().getUser(user.getEmail());
-					getDataStore().deleteUser(user.getEmail());
-					if(user.getNewPassword() != null && user.getNewPassword() != "") {
-						logger.info("Changing password of user: " + user.getEmail());
-						result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getNewPassword()), user.getUserType());
-					}
-					else {
-						logger.info("Changing type of user: " + user.getEmail());
-						result = getDataStore().addUser(user.getEmail(), oldUser.getPassword(), user.getUserType());
-					}
-					return new Result(true, "Sucessfully edited");
-				} else {
-					return new Result(false, "Edited user is not found in database");
+			int errorId = -1;
+			if (user.getEmail() != null && getDataStore().doesUsernameExist(user.getEmail())) {
+				User oldUser = getDataStore().getUser(user.getEmail());
+				getDataStore().deleteUser(user.getEmail());
+				if(user.getNewPassword() != null && user.getNewPassword() != "") {
+					logger.info("Changing password of user: " + user.getEmail());
+					result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getNewPassword()), user.getUserType());
 				}
-			}else{
-				return new Result(false, "User is not admin");
+				else {
+					logger.info("Changing type of user: " + user.getEmail());
+					result = getDataStore().addUser(user.getEmail(), oldUser.getPassword(), user.getUserType());
+				}
+				return new Result(true, "Sucessfully edited");
+			} else {
+				return new Result(false, "Edited user is not found in database");
 			}
 		}
 		return new Result(false, "Session is not authenticated");
@@ -294,20 +278,14 @@ public class RestService {
 	 * @return
 	 */
 	@DELETE
-	@Path("/deleteUser/{username}")
+	@Path("/write/deleteUser/{username}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Result deleteUser(@PathParam("username") String userName) {
 		HttpSession session = servletRequest.getSession();
 		boolean result = false;
 		if(isAuthenticated(session)) {
-			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				result = getDataStore().deleteUser(userName);
-			}
-			else{
-				logger.info("Caller is not admin for delete");
-			}
+			result = getDataStore().deleteUser(userName);
 		}
 		if(result)
 			logger.info("Deleted user: " + userName);
@@ -337,7 +315,6 @@ public class RestService {
 			session.setAttribute(IS_AUTHENTICATED, true);
 			session.setAttribute(USER_EMAIL, user.getEmail());
 			session.setAttribute(USER_PASSWORD, getMD5Hash(user.getPassword()));
-			logger.info("authenticated ve session.remoteUser = " + servletRequest.getRemoteUser());
 			logger.info("session attributes e-mail = " + session.getAttribute(USER_EMAIL).toString() + " pass " + session.getAttribute(USER_PASSWORD));
 
 		}
@@ -357,15 +334,12 @@ public class RestService {
 
 	}
 	@GET
-	@Path("/userList")
+	@Path("/write/userList")
 	@Produces(MediaType.APPLICATION_JSON)
 	public List<User> getUserList() {
 		HttpSession session = servletRequest.getSession();
 		if(isAuthenticated(session)) {
-			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				return getDataStore().getUserList();
-			}
+			return getDataStore().getUserList();
 		}
 		return null;
 	}
@@ -689,27 +663,21 @@ public class RestService {
 		HttpSession session = servletRequest.getSession();
 		boolean deleteVoDStream = false;
 		if(isAuthenticated(session)) {
-			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				deleteVoDStream = getApplication().deleteVoDStream(name, streamName);
-			}
+			deleteVoDStream = getApplication().deleteVoDStream(name, streamName);
 		}
 		return gson.toJson(new Result(deleteVoDStream, "User is not admin"));
 	}
 
 
 	@POST
-	@Path("/changeSettings/{appname}")
+	@Path("/write/changeSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
 		HttpSession session = servletRequest.getSession();
 		if(isAuthenticated(session)) {
-			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-				return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
-			}
+			AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
+			return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 		}
 		return gson.toJson(new Result(false, "User is not admin"));
 	}
@@ -834,40 +802,38 @@ public class RestService {
 	}
 
 	@POST
-	@Path("/changeServerSettings")
+	@Path("/write/changeServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeServerSettings(ServerSettings serverSettings){
 		HttpSession session = servletRequest.getSession();
 		if(isAuthenticated(session)) {
 			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
+			PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
 
-				String serverName = "";
-				String licenceKey = "";
-				if (serverSettings.getServerName() != null) {
-					serverName = serverSettings.getServerName();
-				}
-
-				store.put(SERVER_NAME, serverName);
-				getServerSettingsInternal().setServerName(serverName);
-
-				if (serverSettings.getLicenceKey() != null) {
-					licenceKey = serverSettings.getLicenceKey();
-				}
-
-				store.put(LICENSE_KEY, licenceKey);
-				getServerSettingsInternal().setLicenceKey(licenceKey);
-
-				store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
-				getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
-
-				store.put(NODE_GROUP, String.valueOf(serverSettings.getNodeGroup()));
-				getServerSettingsInternal().setNodeGroup(serverSettings.getNodeGroup());
-
-				return gson.toJson(new Result(store.save()));
+			String serverName = "";
+			String licenceKey = "";
+			if (serverSettings.getServerName() != null) {
+				serverName = serverSettings.getServerName();
 			}
+
+			store.put(SERVER_NAME, serverName);
+			getServerSettingsInternal().setServerName(serverName);
+
+			if (serverSettings.getLicenceKey() != null) {
+				licenceKey = serverSettings.getLicenceKey();
+			}
+
+			store.put(LICENSE_KEY, licenceKey);
+			getServerSettingsInternal().setLicenceKey(licenceKey);
+
+			store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
+			getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
+
+			store.put(NODE_GROUP, String.valueOf(serverSettings.getNodeGroup()));
+			getServerSettingsInternal().setNodeGroup(serverSettings.getNodeGroup());
+
+			return gson.toJson(new Result(store.save()));
 		}
 		return gson.toJson(new Result(false, "User is not admin"));
 	}
@@ -1034,34 +1000,31 @@ public class RestService {
 	}
 
 	@GET
-	@Path("/changeLogLevel/{level}")
+	@Path("/write/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
 		HttpSession session = servletRequest.getSession();
 		if(isAuthenticated(session)) {
 			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+			ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 
-				PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
+			PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
 
-				if (logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE)
-						|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO)
-						|| logLevel.equals(LOG_LEVEL_WARN) || logLevel.equals(LOG_LEVEL_ERROR)
-						|| logLevel.equals(LOG_LEVEL_OFF)) {
+			if (logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE)
+					|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO)
+					|| logLevel.equals(LOG_LEVEL_WARN) || logLevel.equals(LOG_LEVEL_ERROR)
+					|| logLevel.equals(LOG_LEVEL_OFF)) {
 
-					rootLogger.setLevel(currentLevelDetect(logLevel));
+				rootLogger.setLevel(currentLevelDetect(logLevel));
 
-					store.put(LOG_LEVEL, logLevel);
+				store.put(LOG_LEVEL, logLevel);
 
-					LogSettings logSettings = new LogSettings();
+				LogSettings logSettings = new LogSettings();
 
-					logSettings.setLogLevel(String.valueOf(logLevel));
+				logSettings.setLogLevel(String.valueOf(logLevel));
 
-				}
-
-				return gson.toJson(new Result(store.save()));
 			}
+			return gson.toJson(new Result(store.save()));
 		}
 		return gson.toJson(new Result(false, "User is not admin"));
 	}

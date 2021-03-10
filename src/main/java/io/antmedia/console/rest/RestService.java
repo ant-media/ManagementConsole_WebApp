@@ -910,15 +910,8 @@ public class RestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
-		HttpSession session = servletRequest.getSession();
-		if(isAuthenticated(session)) {
-			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
-				AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-				return appAdaptor.resetBroadcasts();
-			}
-		}
-		return new Result(false, "User is not admin");
+		AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
+		return appAdaptor.resetBroadcasts();
 	}
 
 	public void setDataStore(IDataStore dataStore) {

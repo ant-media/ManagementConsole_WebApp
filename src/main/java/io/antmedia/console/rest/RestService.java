@@ -1175,20 +1175,12 @@ public class RestService {
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteeApplication(@PathParam("appName") String appName) {
-		HttpSession session = servletRequest.getSession();
-		if(isAuthenticated(session)) {
-			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+		AppSettings appSettings = getSettings(appName);
+		appSettings.setToBeDeleted(true);
+		changeSettings(appName, appSettings);
 
-				AppSettings appSettings = getSettings(appName);
-				appSettings.setToBeDeleted(true);
-				changeSettings(appName, appSettings);
-
-				Result operationResult = new Result(true);
-				return operationResult;
-			}
-		}
-		return new Result(false, "User is not admin");
+		Result operationResult = new Result(true);
+		return operationResult;
 	}
 
 }

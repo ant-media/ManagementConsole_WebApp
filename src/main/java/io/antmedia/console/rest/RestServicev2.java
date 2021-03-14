@@ -2,30 +2,18 @@ package io.antmedia.console.rest;
 
 import ch.qos.logback.classic.Level;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.IApplicationAdaptorFactory;
-import io.antmedia.SystemUtils;
-import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.AdminApplication;
-import io.antmedia.console.AdminApplication.ApplicationInfo;
-import io.antmedia.console.AdminApplication.BroadcastInfo;
 import io.antmedia.console.datastore.DataStoreFactory;
 import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.db.types.Licence;
-import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
-import io.antmedia.rest.RestServiceBase;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
-import io.antmedia.rest.model.UserType;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
-import io.antmedia.statistic.StatsCollector;
 import org.apache.commons.codec.binary.Hex;
-import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -35,24 +23,18 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import java.io.*;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 
 @Component
 @Path("/")
-public class RestfulService {
+public class RestServicev2 extends CommonRestService {
 
 	private static final String LOG_TYPE_ERROR = "error";
 
@@ -108,7 +90,7 @@ public class RestfulService {
 
 	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
 
-	protected static final Logger logger = LoggerFactory.getLogger(RestfulService.class);
+	protected static final Logger logger = LoggerFactory.getLogger(RestServicev2.class);
 
 	private static final String SOFTWARE_VERSION = "softwareVersion";
 
@@ -150,59 +132,32 @@ public class RestfulService {
 	 * 	if user is not added, errorId = 1 means username already exist
 	 */
 	@POST
-	@Path("/addUser")
+	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addUser(User user) {
-		//TODO: check that request is coming from authorized user
-		boolean result = false;
-		int errorId = -1;
-		if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
-			result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), UserType.ADMIN);
-		}
-		else {
-			if (user == null) {
-				logger.info("user variable null");
-			}
-			else {
-				logger.info("user already exist in db");
-			}
 
-			errorId = 1;
-		}
-		Result operationResult = new Result(result);
-		operationResult.setErrorId(errorId);
-		return operationResult;
+		return super.addUser(user);
 	}
 
 
 	@POST
-	@Path("/addInitialUser")
+	@Path("/users/initial")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addInitialUser(User user) {
-		boolean result = false;
-		int errorId = -1;
-		if (getDataStore().getNumberOfUserRecords() == 0) {
-			result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), UserType.ADMIN);
-		}
 
-		Result operationResult = new Result(result);
-		operationResult.setErrorId(errorId);
-		return operationResult;
+		return super.addInitialUser(user);
 	}
 
 	@GET
-	@Path("/isFirstLogin")
+	@Path("/first-login-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result isFirstLogin() 
 	{
-		boolean result = false;
-		if (getDataStore().getNumberOfUserRecords() == 0) {
-			result = true;
-		}
-		return new Result(result);
+
+		return super.isFirstLogin();
 	}
 
 	/**
@@ -281,84 +236,40 @@ public class RestfulService {
 	 * @return json that shows user is authenticated or not
 	 */
 	@POST
-	@Path("/authenticateUser")
+	@Path("/users/authenticate")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result authenticateUser(User user) {
-		boolean result=getDataStore().doesUserExist(user.getEmail(), user.getPassword()) ||
-				       getDataStore().doesUserExist(user.getEmail(), getMD5Hash(user.getPassword()));
-		if (result) {
-			HttpSession session = servletRequest.getSession();
-			session.setAttribute(IS_AUTHENTICATED, true);
-			session.setAttribute(USER_EMAIL, user.getEmail());
-			session.setAttribute(USER_PASSWORD, getMD5Hash(user.getPassword()));
-		}
-		return new Result(result);
+
+		return super.authenticateUser(user);
 	}
 
 
 	@POST
-	@Path("/changeUserPassword")
+	@Path("/users/password")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
 
-		String userMail = (String)servletRequest.getSession().getAttribute(USER_EMAIL);
-
-		return changeUserPasswordInternal(userMail, user);
+		return super.changeUserPassword(user);
 
 	}
 
 	public Result changeUserPasswordInternal(String userMail, User user) {
-		boolean result = false;
-		String message = null;
-		if (userMail != null) {
-			result = getDataStore().doesUserExist(userMail, user.getPassword()) || getDataStore().doesUserExist(userMail, getMD5Hash(user.getPassword()));
-			if (result) {
-				result = getDataStore().editUser(userMail, getMD5Hash(user.getNewPassword()), UserType.ADMIN);
 
-				if (result) {
-					HttpSession session = servletRequest.getSession();
-					if (session != null) {
-						session.setAttribute(IS_AUTHENTICATED, true);
-						session.setAttribute(USER_EMAIL, userMail);
-						session.setAttribute(USER_PASSWORD, getMD5Hash(user.getNewPassword()));
-					}
-				}
-			}
-			else {
-				message = "User not exist with that name and pass";
-			}
-		}
-		else {
-			message = "User name does not exist in context";
-		}
-
-		return new Result(result, message);
+		return super.changeUserPasswordInternal(userMail, user);
 	}
 
 
 
 
 	@GET
-	@Path("/isAuthenticated")
+	@Path("/authentication-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isAuthenticatedRest(){
-		return new Result(isAuthenticated(servletRequest.getSession()));
+		return super.isAuthenticatedRest();
 	}
 
-	public static boolean isAuthenticated(HttpSession session) 
-	{
-
-		Object isAuthenticated = session.getAttribute(IS_AUTHENTICATED);
-		Object userEmail = session.getAttribute(USER_EMAIL);
-		Object userPassword = session.getAttribute(USER_PASSWORD);
-		boolean result = false;
-		if (isAuthenticated != null && userEmail != null && userPassword != null) {
-			result = true;
-		}
-		return result;
-	}
 
 	/*
 	 * 	os.name						:Operating System Name
@@ -393,10 +304,10 @@ public class RestfulService {
 
 
 	@GET
-	@Path("/getSystemInfo")
+	@Path("/system-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemInfo() {
-		return gson.toJson(StatsCollector.getSystemInfoJSObject());
+		return super.getSystemInfo();
 	}
 
 
@@ -410,10 +321,10 @@ public class RestfulService {
 	 * 	availableProcessors()		: Total Processors available
 	 */
 	@GET
-	@Path("/getJVMMemoryInfo")
+	@Path("/jvm-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getJVMMemoryInfo() {
-		return gson.toJson(StatsCollector.getJVMMemoryInfoJSObject());
+		return super.getJVMMemoryInfo();
 	}
 
 
@@ -427,10 +338,10 @@ public class RestfulService {
 	 *  osInUseSwapSpace()			: In Use Swap Space
 	 */
 	@GET
-	@Path("/getSystemMemoryInfo")
+	@Path("/system-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemMemoryInfo() {
-		return gson.toJson(StatsCollector.getSysteMemoryInfoJSObject());
+		return super.getSystemMemoryInfo();
 	}
 
 
@@ -443,10 +354,10 @@ public class RestfulService {
 	 *	osHDInUseSpace()			: In Use Space
 	 **/
 	@GET
-	@Path("/getFileSystemInfo")
+	@Path("/file-system-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getFileSystemInfo() {
-		return gson.toJson(StatsCollector.getFileSystemInfoJSObject());
+		return super.getFileSystemInfo();
 	}
 
 	/**
@@ -458,43 +369,40 @@ public class RestfulService {
 	 * @return the CPU load info
 	 */
 	@GET
-	@Path("/getCPUInfo")
+	@Path("/cpu-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getCPUInfo() {
-		return gson.toJson(StatsCollector.getCPUInfoJSObject());
+		return super.getCPUInfo();
 	}
 	
 	@GET
 	@Path("/thread-dump-raw")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getThreadDump() {
-		return Arrays.toString(StatsCollector.getThreadDump());
+		return super.getThreadDump();
 	}
 	
 	@GET
 	@Path("/thread-dump-json")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getThreadDumpJSON() {
-		return gson.toJson(StatsCollector.getThreadDumpJSON());
+		return super.getThreadDumpJSON();
 	}
 	
 	
 	@GET
-	@Path("/threads-info")
+	@Path("/threads")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getThreadsInfo() {
-		return gson.toJson(StatsCollector.getThreadInfoJSONObject());
+		return super.getThreadsInfo();
 	}
 	
 	@GET
 	@Path("/heap-dump")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getHeapDump() {
-		SystemUtils.getHeapDump(SystemUtils.HEAPDUMP_HPROF);
-		File file = new File(SystemUtils.HEAPDUMP_HPROF);
-		return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
-			      .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"" ) //optional
-			      .build();
+
+		return super.getHeapDump();
 	}
 	
 	
@@ -507,67 +415,40 @@ public class RestfulService {
 	@Path("/server-time")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getServerTime() {
-		return gson.toJson(StatsCollector.getServerTime());
+		return super.getServerTime();
 	}
 
 	@GET
-	@Path("/getSystemResourcesInfo")
+	@Path("/system-resources")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemResourcesInfo() {
 
-		AdminApplication application = getApplication();
-		IScope rootScope = application.getRootScope();
-
-		//add live stream size
-		int totalLiveStreams = 0;
-		Queue<IScope> scopes = new LinkedList<>();
-		List<String> appNames = application.getApplications();
-		for (String name : appNames) 
-		{
-			IScope scope = rootScope.getScope(name);
-			scopes.add(scope);
-			totalLiveStreams += application.getAppLiveStreamCount(scope);
-		}
-
-		JsonObject jsonObject = StatsCollector.getSystemResourcesInfo(scopes);
-
-		jsonObject.addProperty(StatsCollector.TOTAL_LIVE_STREAMS, totalLiveStreams);
-
-		return gson.toJson(jsonObject);
+		return super.getSystemResourcesInfo();
 	}
 
 	@GET
-	@Path("/getGPUInfo")
+	@Path("/gpu-status")
 	@Produces(MediaType.APPLICATION_JSON) 
 	public String getGPUInfo() 
 	{
-		return gson.toJson(StatsCollector.getGPUInfoJSObject());
+		return super.getGPUInfo();
 	}
 
 
 	@GET
-	@Path("/getVersion")
+	@Path("/version")
 	@Produces(MediaType.APPLICATION_JSON) 
 	public String getVersion() {
-		return gson.toJson(RestServiceBase.getSoftwareVersion());
+		return super.getVersion();
 	}
 
 
 	@GET
-	@Path("/getApplications")
+	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getApplications() {
-		List<String> applications = getApplication().getApplications();
-		JsonObject jsonObject = new JsonObject();
-		JsonArray jsonArray = new JsonArray();
 
-		for (String appName : applications) {
-			if (!appName.equals(AdminApplication.APP_NAME)) {
-				jsonArray.add(appName);
-			}
-		}
-		jsonObject.add("applications", jsonArray);
-		return gson.toJson(jsonObject);
+		return super.getApplications();
 	}
 
 	/**
@@ -576,25 +457,20 @@ public class RestfulService {
 	 * @return the number of live clients
 	 */
 	@GET
-	@Path("/getLiveClientsSize")
+	@Path("/live-clients-size")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLiveClientsSize() 
 	{
-		int totalConnectionSize = getApplication().getTotalConnectionSize();
-		int totalLiveStreamSize = getApplication().getTotalLiveStreamSize();
-		JsonObject jsonObject = new JsonObject();
-		jsonObject.addProperty("totalConnectionSize", totalConnectionSize);
-		jsonObject.addProperty(StatsCollector.TOTAL_LIVE_STREAMS, totalLiveStreamSize);
 
-		return gson.toJson(jsonObject);
+		return super.getLiveClientsSize();
 	}
 
 	@GET
-	@Path("/getApplicationsInfo")
+	@Path("/applications-info")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getApplicationInfo() {
-		List<ApplicationInfo> info = getApplication().getApplicationInfo();
-		return gson.toJson(info);
+
+		return super.getApplicationInfo();
 	}
 
 	/**
@@ -604,11 +480,11 @@ public class RestfulService {
 	 * @return live streams in the application
 	 */
 	@GET
-	@Path("/getAppLiveStreams/{appname}")
+	@Path("/applications/live-streams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getAppLiveStreams(@PathParam("appname") String name) {
-		List<BroadcastInfo> appLiveStreams = getApplication().getAppLiveStreams(name);
-		return gson.toJson(appLiveStreams);
+
+		return super.getAppLiveStreams(name);
 	}
 
 
@@ -621,71 +497,37 @@ public class RestfulService {
 	 */
 	@Deprecated
 	@POST
-	@Path("/deleteVoDStream/{appname}")
+	@Path("/vod-streams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String deleteVoDStream(@PathParam("appname") String name, @FormParam("streamName") String streamName) {
-		boolean deleteVoDStream = getApplication().deleteVoDStream(name, streamName);
-		return gson.toJson(new Result(deleteVoDStream));
+
+		return super.deleteVoDStream(name, streamName);
 	}
 
 
 	@POST
-	@Path("/changeSettings/{appname}")
+	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
-		AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
+
+		return super.changeSettings(appname, newSettings);
 	}
 	
 	
 	@Deprecated
 	@GET
-	@Path("/isShutdownProperly")
+	@Path("/shutdown-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
-		
-		boolean appShutdownProblemExists = false;
-		if (appNamesArray != null) 
-		{
-			String[] appNames = appNamesArray.split(",");
-			
-			if (appNames != null) 
-			{
-				for (String appName : appNames) 
-				{
-					//Check apps shutdown properly
-					AntMediaApplicationAdapter appAdaptor = getAppAdaptor(appName);
-					if (!appAdaptor.isShutdownProperly()) {
-						appShutdownProblemExists = true;
-						break;
-					};
-										
-				}
-			}
-		}
-		
-		return !appShutdownProblemExists;
+
+		return super.getShutdownStatus(appNamesArray);
 	}
 	
 	public AntMediaApplicationAdapter getAppAdaptor(String appName) {
-		
-		AntMediaApplicationAdapter appAdaptor = null;
-		AdminApplication application = getApplication();
-		if (application != null) 
-		{
-			ApplicationContext context = application.getApplicationContext(appName);
-			if (context != null) 
-			{
-				IApplicationAdaptorFactory adaptorFactory = (IApplicationAdaptorFactory) context.getBean(AntMediaApplicationAdapter.BEAN_NAME);
-				if (adaptorFactory != null) 
-				{
-					appAdaptor = adaptorFactory.getAppAdaptor();
-				}
-			}
-		}
-		return appAdaptor;
+
+		return super.getAppAdaptor(appName);
 	}
 	
 	
@@ -695,158 +537,71 @@ public class RestfulService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response isShutdownProperly(@QueryParam("appNames") String appNamesArray)
 	{
-		boolean appShutdownProblemExists = false;
-		Response response = null;
-		
-		if (appNamesArray != null) 
-		{
-			String[] appNames = appNamesArray.split(",");
-			
-			if (appNames != null) 
-			{
-				for (String appName : appNames) 
-				{
-					//Check apps shutdown properly
-					AntMediaApplicationAdapter appAdaptor = getAppAdaptor(appName);
-					if (appAdaptor != null) 
-					{
-						if (!appAdaptor.isShutdownProperly()) {
-							appShutdownProblemExists = true;
-							break;
-						}
-					}
-					else {
-						response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(new Result(false, "Either server may not be initialized or application name that does not exist is requested. ")).build();
-						break;
-					}
-				}
-			}
-			else {
-				response = Response.status(Status.BAD_REQUEST).entity(new Result(false, "Bad parameter for appNames. ")).build();
-			}
-			
-		}
-		else {
-			response = Response.status(Status.BAD_REQUEST).entity(new Result(false, "Bad parameter for appNames. ")).build();
-		}
-		
-		if (response == null) {
-			response = Response.status(Status.OK).entity(new Result(!appShutdownProblemExists)).build();
-		}
-		
-		return response; 
+
+		return super.isShutdownProperly(appNamesArray);
 	}
 	
 	
-	@GET
-	@Path("/setShutdownProperly")
+	@PUT
+	@Path("/shutdown-properly")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean setShutdownStatus(@QueryParam("appNames") String appNamesArray){
-		
-		String[] appNames = appNamesArray.split(",");
-		boolean result = true;
 
-		for (String appName : appNames) {
-			//Check apps shutdown properly
-			if(!((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().isShutdownProperly()) {
-				((IApplicationAdaptorFactory) getApplication().getApplicationContext(appName).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor().setShutdownProperly(true);
-			}
-		}
-
-		return result;
+		return super.setShutdownStatus(appNamesArray);
 	}
 
 	@POST
-	@Path("/changeServerSettings")
+	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeServerSettings(ServerSettings serverSettings){
 
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
-
-		String serverName = "";
-		String licenceKey = "";
-		if(serverSettings.getServerName() != null) {
-			serverName = serverSettings.getServerName();
-		}
-
-		store.put(SERVER_NAME, serverName);
-		getServerSettingsInternal().setServerName(serverName);
-
-		if (serverSettings.getLicenceKey() != null) {
-			licenceKey = serverSettings.getLicenceKey();
-		}
-
-		store.put(LICENSE_KEY, licenceKey);
-		getServerSettingsInternal().setLicenceKey(licenceKey);
-
-		store.put(MARKET_BUILD, String.valueOf(serverSettings.isBuildForMarket()));
-		getServerSettingsInternal().setBuildForMarket(serverSettings.isBuildForMarket());
-
-		store.put(NODE_GROUP, String.valueOf(serverSettings.getNodeGroup()));
-		getServerSettingsInternal().setNodeGroup(serverSettings.getNodeGroup());
-
-		return gson.toJson(new Result(store.save()));
+		return super.changeServerSettings(serverSettings);
 	}
 
 	@GET
-	@Path("/isEnterpriseEdition")
+	@Path("/enterprise-edition")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
-		boolean isEnterprise = RestServiceBase.isEnterprise();
-		return new Result(isEnterprise, "");
+
+		return super.isEnterpriseEdition();
 	}
 
 	@GET
-	@Path("/getSettings/{appname}")
+	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettings getSettings(@PathParam("appname") String appname) 
 	{
-		AdminApplication application = getApplication();
-		if (application != null) {
-			ApplicationContext context = application.getApplicationContext(appname);
-			if (context != null) {
-				IApplicationAdaptorFactory adaptorFactory = (IApplicationAdaptorFactory)context.getBean(AntMediaApplicationAdapter.BEAN_NAME);
-				if (adaptorFactory != null) {
-					AntMediaApplicationAdapter adapter = adaptorFactory.getAppAdaptor();
-					if (adapter != null) {
-						return adapter.getAppSettings();
-					}
-				}
-			}
-		}
-		logger.warn("getSettings for app: {} returns null. It's likely not initialized.", appname);
-		return null;
+
+		return super.getSettings(appname);
 	}
 
 	@GET
-	@Path("/getServerSettings")
+	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ServerSettings getServerSettings() 
 	{
-		return getServerSettingsInternal();
+		return super.getServerSettings();
 	}
 
 	@GET
-	@Path("/getLicenceStatus")
+	@Path("/licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus(@QueryParam("key") String key) 
 	{
-		if(key == null) {
-			return null;
-		}
-		return getLicenceServiceInstance().checkLicence(key);
+
+		return super.getLicenceStatus(key);
 	}
 
 	@GET
-	@Path("/getLastLicenceStatus")
+	@Path("/last-licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus() 
 	{
-		return getLicenceServiceInstance().getLastLicenseStatus();
+		return super.getLicenceStatus();
 	}
 	
 	/**
@@ -862,8 +617,8 @@ public class RestfulService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
-		AntMediaApplicationAdapter appAdaptor = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
-		return appAdaptor.resetBroadcasts();
+
+		return super.resetBroadcast(appname);
 	}
 
 	public void setDataStore(IDataStore dataStore) {
@@ -918,184 +673,42 @@ public class RestfulService {
 	}
 
 	@GET
-	@Path("/isInClusterMode")
+	@Path("/cluster-mode-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isInClusterMode(){
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-		boolean isCluster = ctxt.containsBean(IClusterNotifier.BEAN_NAME);
-		return new Result(isCluster, "");
+
+		return super.isInClusterMode();
 	}
 
 	@GET
-	@Path("/getLogLevel")
+	@Path("/log-level")
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
 
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
-
-		LogSettings logSettings = new LogSettings();
-
-
-		if (store.get(LOG_LEVEL) != null) {
-			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
-		}
-
-		return logSettings;
+		return super.getLogSettings();
 	}
 
-	@GET
-	@Path("/changeLogLevel/{level}")
+	@PUT
+	@Path("/log-level/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
 
-		ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
-
-		if(logLevel.equals(LOG_LEVEL_ALL) || logLevel.equals(LOG_LEVEL_TRACE) 
-				|| logLevel.equals(LOG_LEVEL_DEBUG) || logLevel.equals(LOG_LEVEL_INFO) 
-				|| logLevel.equals(LOG_LEVEL_WARN)  || logLevel.equals(LOG_LEVEL_ERROR)
-				|| logLevel.equals(LOG_LEVEL_OFF)) {
-
-			rootLogger.setLevel(currentLevelDetect(logLevel));
-
-			store.put(LOG_LEVEL, logLevel);
-
-			LogSettings logSettings = new LogSettings();
-
-			logSettings.setLogLevel(String.valueOf(logLevel));
-
-		}
-
-		return gson.toJson(new Result(store.save()));
+		return super.changeLogSettings(logLevel);
 	}
 
 	public Level currentLevelDetect(String logLevel) {
 
-		Level currentLevel;
-		if( logLevel.equals(LOG_LEVEL_OFF)) {
-			currentLevel = Level.OFF;
-			return currentLevel;
-		}
-		if( logLevel.equals(LOG_LEVEL_ERROR)) {
-			currentLevel = Level.ERROR;
-			return currentLevel;
-		}
-		if( logLevel.equals(LOG_LEVEL_WARN)) {
-			currentLevel = Level.WARN;
-			return currentLevel;
-		}
-		if( logLevel.equals(LOG_LEVEL_DEBUG)) {
-			currentLevel = Level.DEBUG;
-			return currentLevel;
-		}
-		if( logLevel.equals(LOG_LEVEL_TRACE)) {
-			currentLevel = Level.ALL;
-			return currentLevel;
-		}
-		if( logLevel.equals(LOG_LEVEL_ALL)) {
-			currentLevel = Level.ALL;
-			return currentLevel;
-		}
-		else {
-			currentLevel = Level.INFO;
-			return currentLevel;
-		}
-
+		return super.currentLevelDetect(logLevel);
 	}
 
 	@GET
-	@Path("/getLogFile/{offsetSize}/{charSize}")
+	@Path("/log-file/{offsetSize}/{charSize}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLogFile(@PathParam("charSize") int charSize, @QueryParam("logType") String logType,
 			@PathParam("offsetSize") long offsetSize) throws IOException {
 
-		long skipValue = 0;
-		int countKb = 0;
-		int maxCount = 500;
-		//default log 
-		String logLocation = SERVER_LOG_LOCATION;
-
-		if (logType.equals(LOG_TYPE_ERROR)) {
-			logLocation = ERROR_LOG_LOCATION;
-		} 
-
-		JsonObject jsonObject = new JsonObject();
-		String logContent = "";
-		File file = new File(logLocation);
-
-		if (!file.isFile()) {
-			logContent = FILE_NOT_EXIST;
-
-			jsonObject.addProperty(LOG_CONTENT, logContent);
-
-			return jsonObject.toString();
-		}
-
-		// check charSize > 500kb
-		if (charSize > MAX_CHAR_SIZE) {
-			charSize = MAX_CHAR_SIZE;
-		}
-
-		if (offsetSize != -1) { 			
-			skipValue = offsetSize;
-			maxCount = charSize / 1024;
-		} 
-		else if (file.length() > charSize) {
-			skipValue = file.length() - charSize;
-		}
-
-		int contentSize = 0;
-		if (file.length() > skipValue) {
-
-			ByteArrayOutputStream ous = null;
-			InputStream ios = null;
-
-
-			try {
-
-				byte[] buffer = new byte[1024];
-				ous = new ByteArrayOutputStream();
-				ios = new FileInputStream(file);
-
-				ios.skip(skipValue);
-
-				int read = 0;
-
-				while ((read = ios.read(buffer)) != -1) {
-
-					ous.write(buffer, 0, read);
-					countKb++;
-					contentSize += read;
-					if (countKb == maxCount) { // max read 500kb
-						break;
-					}
-
-				}
-			} finally {
-				try {
-					if (ous != null)
-						ous.close();
-				} catch (IOException e) { 
-					logger.error(e.toString());
-				}
-
-				try {
-					if (ios != null)
-						ios.close();
-				} catch (IOException e) {
-					logger.error(e.toString());
-				}
-			}
-
-			logContent = ous.toString("UTF-8");
-		}
-		jsonObject.addProperty(LOG_CONTENT, logContent);
-		jsonObject.addProperty(LOG_CONTENT_SIZE, contentSize);
-		jsonObject.addProperty(LOG_FILE_SIZE, file.length());
-
-		return jsonObject.toString();
+		return super.getLogFile(charSize,logType, offsetSize);
 	}
 
 	public String getMD5Hash(String pass){
@@ -1116,20 +729,16 @@ public class RestfulService {
 	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result createApplication(@QueryParam("appName") String appName) {
-		Result operationResult = new Result(getApplication().createApplication(appName));
-		return operationResult;
+
+		return super.createApplication(appName);
 	}
 	
 	@DELETE
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteeApplication(@PathParam("appName") String appName) {
-		AppSettings appSettings = getSettings(appName);
-		appSettings.setToBeDeleted(true);
-		changeSettings(appName, appSettings);
-		
-		Result operationResult = new Result(true);
-		return operationResult;
+
+		return super.deleteeApplication(appName);
 	}
 
 }

@@ -928,14 +928,18 @@ public class RestService {
 	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
 		this.dataStoreFactory = dataStoreFactory;
 	}
+	
+	
+	public boolean isClusterMode() {
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+		return ctxt.containsBean(IClusterNotifier.BEAN_NAME);
+	}
 
 	@GET
 	@Path("/isInClusterMode")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isInClusterMode(){
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-		boolean isCluster = ctxt.containsBean(IClusterNotifier.BEAN_NAME);
-		return new Result(isCluster, "");
+		return new Result(isClusterMode(), "");
 	}
 
 	@GET
@@ -1135,13 +1139,17 @@ public class RestService {
 	@DELETE
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result deleteeApplication(@PathParam("appName") String appName) {
+	public Result deleteApplication(@PathParam("appName") String appName) {
 		AppSettings appSettings = getSettings(appName);
 		appSettings.setToBeDeleted(true);
 		changeSettings(appName, appSettings);
-		
-		Result operationResult = new Result(true);
-		return operationResult;
+		boolean result = true;
+		if (!isClusterMode()) {
+			//if it's not in cluster mode, delete application
+			//In cluster mode, it's deleted by synchronization
+			result = getApplication().deleteApplication(appName);
+		}
+		return new Result(result);
 	}
 
 }

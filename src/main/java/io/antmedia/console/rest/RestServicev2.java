@@ -376,14 +376,14 @@ public class RestServicev2 extends CommonRestService {
 	}
 	
 	@GET
-	@Path("/thread-dump-raw")
+	@Path("/thread-dump")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getThreadDump() {
 		return super.getThreadDump();
 	}
 	
 	@GET
-	@Path("/thread-dump-json")
+	@Path("/thread-dump")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getThreadDumpJSON() {
 		return super.getThreadDumpJSON();
@@ -396,9 +396,13 @@ public class RestServicev2 extends CommonRestService {
 	public String getThreadsInfo() {
 		return super.getThreadsInfo();
 	}
-	
+
+
+
+	// method path was already Restful
+	// v2 is added to prevent clashes with older RestService.java
 	@GET
-	@Path("/heap-dump")
+	@Path("/v2/heap-dump")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getHeapDump() {
 
@@ -411,8 +415,11 @@ public class RestServicev2 extends CommonRestService {
 	 * Return server uptime and startime in milliseconds
 	 * @return JSON object contains the server uptime and start time
 	 */
+
+	// method path was already Restful
+	// v2 is added to prevent clashes with older RestService.java
 	@GET
-	@Path("/server-time")
+	@Path("/v2/server-time")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getServerTime() {
 		return super.getServerTime();
@@ -532,7 +539,7 @@ public class RestServicev2 extends CommonRestService {
 	
 	
 	@GET
-	@Path("/shutdown-properly")
+	@Path("/shutdown-proper-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response isShutdownProperly(@QueryParam("appNames") String appNamesArray)
@@ -612,7 +619,7 @@ public class RestServicev2 extends CommonRestService {
 	 * @return
 	 */
 	@POST
-	@Path("/reset-broadcasts/{appname}")
+	@Path("/applications/{appname}/reset")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result resetBroadcast(@PathParam("appname") String appname) 
@@ -724,17 +731,25 @@ public class RestServicev2 extends CommonRestService {
 		}
 		return passResult;
 	}
-	
+
+
+	// method path was already Restful
+	// v2 is added to prevent clashed with RestService.java - identical operations can't have matching parameters
+	// this should be fixed with a tag like v2 or a single rest service file should be used
+
 	@POST
-	@Path("/applications")
+	@Path("/v2/applications")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result createApplication(@QueryParam("appName") String appName) {
 
 		return super.createApplication(appName);
 	}
-	
+
+	// method path was already Restful
+	// v2 is added to prevent clashed with RestService.java - identical operations can't have matching parameters
+	// there is also a typo in the method name, it also should be fixed
 	@DELETE
-	@Path("/applications/{appName}")
+	@Path("/v2/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteeApplication(@PathParam("appName") String appName) {
 

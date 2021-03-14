@@ -337,7 +337,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		
 		String command = "/bin/bash create_app.sh"
 				+ " -n "+appName
-				+ " -w \"true\""
+				+ " -w true"
 				+ " -p "+webappsPath
 				+ " -c "+isCluster;
 		
@@ -347,6 +347,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 					+ " -s "+mongoPass;
 		}
 		
+		log.info("Creating application with command: {}", command);
 		ProcessBuilder pb = new ProcessBuilder(command.split(" "));
 		pb.inheritIO().redirectOutput(ProcessBuilder.Redirect.INHERIT);
 		pb.inheritIO().redirectError(ProcessBuilder.Redirect.INHERIT);

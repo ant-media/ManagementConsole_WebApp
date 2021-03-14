@@ -768,7 +768,7 @@ public class RestService extends CommonRestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteeApplication(@PathParam("appName") String appName) {
 
-		return super.deleteeApplication(appName);
+		return super.deleteApplication(appName);
 	}
 
 }

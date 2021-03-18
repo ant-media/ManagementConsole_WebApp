@@ -568,7 +568,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/enterprise-status")
+	@Path("/v2/enterprise-edition")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
 

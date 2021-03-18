@@ -444,7 +444,7 @@ public class RestServicev2 extends CommonRestService {
 
 	@GET
 	@Path("/v2/version")
-	@Produces(MediaType.APPLICATION_JSON) 
+	@Produces(MediaType.APPLICATION_JSON)
 	public String getVersion() {
 		return super.getVersion();
 	}
@@ -549,7 +549,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 	
 	
-	@PUT
+	@GET
 	@Path("/v2/shutdown-properly")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -568,7 +568,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/enterprise-edition")
+	@Path("/v2/enterprise-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
 
@@ -696,8 +696,8 @@ public class RestServicev2 extends CommonRestService {
 		return super.getLogSettings();
 	}
 
-	@PUT
-	@Path("/v2/log-level/{level}")
+	@GET
+	@Path("/v2/log-level-settings/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
 

@@ -578,7 +578,7 @@ public class RestService extends CommonRestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean setShutdownStatus(@QueryParam("appNames") String appNamesArray){
 
-		return super.getShutdownStatus(appNamesArray);
+		return super.setShutdownStatus(appNamesArray);
 	}
 
 	@POST

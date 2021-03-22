@@ -37,14 +37,19 @@ public class AdminFilter implements Filter {
         if(dataStoreFactory == null)
         {
             WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-            dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+            if (ctxt != null) {
+            	dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+            }
         }
         return dataStoreFactory;
     }
 
     public IDataStore getDataStore(ServletContext servletContext) {
         if (dataStore == null) {
-            dataStore = getDataStoreFactory(servletContext).getDataStore();
+        	DataStoreFactory factory = getDataStoreFactory(servletContext);
+        	if (factory != null) {
+        		dataStore = factory.getDataStore();
+        	}
         }
         return dataStore;
     }
@@ -57,19 +62,17 @@ public class AdminFilter implements Filter {
         //logger.info("servletContext = " + servletContext);
         if (RestService.isAuthenticated(((HttpServletRequest)request).getSession()))
         {
-            //logger.info("getDataStore = " + getDataStore(servletContext));
-            //logger.info("User mail = " + ((HttpServletRequest)request).getSession().getAttribute("user.email").toString())
-            User currentUser = getDataStore(servletContext).getUser(((HttpServletRequest)request).getSession().getAttribute("user.email").toString());
-            if(currentUser.getUserType().equals(UserType.ADMIN)) {
-                chain.doFilter(request, response);
-            }
+        	IDataStore store = getDataStore(servletContext);
+        	if (store != null) {
+	            User currentUser = store.getUser(((HttpServletRequest)request).getSession().getAttribute("user.email").toString());
+	            if(currentUser.getUserType().equals(UserType.ADMIN)) {
+	                chain.doFilter(request, response);
+	                return;
+	            }
+        	}
         }
-        else {
-            HttpServletResponse resp = (HttpServletResponse) response;
-            // resp.reset();
-            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-        }
-
+       
+        ((HttpServletResponse) response).sendError(HttpServletResponse.SC_FORBIDDEN, "Not allowed user");
     }
 
     @Override

@@ -3,6 +3,8 @@ package io.antmedia.console.datastore;
 
 import dev.morphia.query.FindOptions;
 import io.antmedia.datastore.db.types.Broadcast;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,7 +51,7 @@ public class MongoStore implements IDataStore {
 			return query.find(new FindOptions()).toList();
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			logger.error(ExceptionUtils.getStackTrace(e));
 		}
 		return null;
 	}

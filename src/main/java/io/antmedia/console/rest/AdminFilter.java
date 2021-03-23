@@ -34,11 +34,12 @@ public class AdminFilter implements Filter {
 
     }
     public DataStoreFactory getDataStoreFactory(ServletContext servletContext) {
-        if(dataStoreFactory == null)
-        {
-            WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
-            if (ctxt != null) {
-            	dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+        if(dataStoreFactory == null) {
+            if (servletContext != null) {
+                WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+                if (ctxt != null) {
+                    dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+                }
             }
         }
         return dataStoreFactory;

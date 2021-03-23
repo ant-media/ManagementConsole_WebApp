@@ -21,6 +21,7 @@ import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
 
 import java.util.List;
+import java.util.ArrayList;
 
 public class MongoStore implements IDataStore {
 
@@ -46,14 +47,15 @@ public class MongoStore implements IDataStore {
 
 	@Override
 	public List<User> getUserList(){
+		List<User> users = new ArrayList<User>();
 		try {
 			Query<User> query = datastore.find(User.class);
-			return query.find(new FindOptions()).toList();
+			users = query.find(new FindOptions()).toList();
 		}
 		catch (Exception e) {
 			logger.error(ExceptionUtils.getStackTrace(e));
 		}
-		return null;
+		return users;
 	}
 
 	@Override

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @Component
 @Path("/v2")
@@ -489,9 +490,37 @@ public class RestServiceV2 extends CommonRestService {
 	@POST
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result createApplication(@PathParam("appName") String appName) {
+	public Result createApplication(@PathParam("appName") String appName) 
+	{
+		Result result;
+		if (appName != null && appName.matches("^[a-zA-Z0-9]*$")) 
+		{
+			List<String> applications = getApplication().getApplications();
 
-		return super.createApplication(appName);
+			boolean applicationAlreadyExist = false;
+			for (String applicationName : applications) 
+			{
+				if (applicationName.equalsIgnoreCase(appName)) 
+				{
+					applicationAlreadyExist = true;
+					break;
+				}
+			}
+			
+			if (!applicationAlreadyExist) 
+			{
+				result = super.createApplication(appName);
+			}
+			else 
+			{
+				result = new Result(false, "Application with the same name already exists");
+			}
+		}
+		else {
+			result = new Result(false, "Application name is not alphanumeric. Please provide alphanumeric characters");
+		}
+		
+		return result;
 	}
 
 
@@ -499,8 +528,10 @@ public class RestServiceV2 extends CommonRestService {
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteApplication(@PathParam("appName") String appName) {
-
-		return super.deleteApplication(appName);
+		if (appName != null) {
+			return super.deleteApplication(appName);
+		}
+		return new Result(false, "Application name is not defined");
 	}
 
 }

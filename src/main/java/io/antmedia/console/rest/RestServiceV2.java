@@ -33,106 +33,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 @Component
-@Path("/")
-public class RestServicev2 extends CommonRestService {
+@Path("/v2")
+public class RestServiceV2 extends CommonRestService {
 
-	private static final String LOG_TYPE_ERROR = "error";
-
-	private static final String LOG_TYPE_SERVER = "server";
-
-	private static final String FILE_NOT_EXIST = "There is no log yet";
-
-	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
-
-	private static final String SERVER_LOG_LOCATION = "log/ant-media-server.log";
-
-	private static final String LOG_CONTENT = "logContent";
-
-	private static final String LOG_CONTENT_SIZE = "logContentSize";
-
-	private static final String LOG_FILE_SIZE = "logFileSize";
-
-	private static final int MAX_CHAR_SIZE = 512000;
-
-	private static final String LOG_LEVEL_ALL = "ALL";
-
-	private static final String LOG_LEVEL_TRACE = "TRACE";
-
-	private static final String LOG_LEVEL_DEBUG = "DEBUG";
-
-	private static final String LOG_LEVEL_INFO = "INFO";
-
-	private static final String LOG_LEVEL_WARN = "WARN";
-
-	private static final String LOG_LEVEL_ERROR = "ERROR";
-
-	private static final String LOG_LEVEL_OFF = "OFF";
-
-	private static final String USER_PASSWORD = "user.password";
-
-	private static final String USER_EMAIL = "user.email";
-
-	public static final String IS_AUTHENTICATED = "isAuthenticated";
-
-	public static final String SERVER_NAME = "server.name";
-
-	public static final String LICENSE_KEY = "server.licence_key";
-
-	public static final String MARKET_BUILD = "server.market_build";
-	
-	public static final String NODE_GROUP = "nodeGroup";
-
-	Gson gson = new Gson();
-
-	private IDataStore dataStore;
-
-	private static final String LOG_LEVEL = "logLevel";
-
-	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
-
-	protected static final Logger logger = LoggerFactory.getLogger(RestServicev2.class);
-
-	private static final String SOFTWARE_VERSION = "softwareVersion";
-
-	protected ApplicationContext applicationContext;
-
-	@Context
-	private ServletContext servletContext;
-
-	@Context
-	private HttpServletRequest servletRequest;
-
-	private DataStoreFactory dataStoreFactory;
-	private ServerSettings serverSettings;
-
-	private ILicenceService licenceService;
-
-
-
-
-	/**
-	 * Add user account on db. 
-	 * Username must be unique,
-	 * if there is a user with the same name, user will not be created
-	 * 
-	 * userType = 0 means ready only account
-	 * userType = 1 means read-write account
-	 * 
-	 * Post method should be used.
-	 * 
-	 * application/json
-	 * 
-	 * form parameters - case sensitive
-	 * "userName", "password", "userType
-	 * 
-	 * @param user: The user to be added
-	 * @return JSON data
-	 * if user is added success will be true
-	 * if user is not added success will be false
-	 * 	if user is not added, errorId = 1 means username already exist
-	 */
 	@POST
-	@Path("/v2/users")
+	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addUser(User user) {
@@ -142,7 +47,7 @@ public class RestServicev2 extends CommonRestService {
 
 
 	@POST
-	@Path("/v2/users/initial")
+	@Path("/users/initial")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addInitialUser(User user) {
@@ -151,81 +56,13 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/first-login-status")
+	@Path("/first-login-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result isFirstLogin() 
 	{
-
 		return super.isFirstLogin();
 	}
-
-	/**
-	 * Edit user account on db. 
-	 * Username cannot be changed, password or userType can be changed
-	 * userType = 0 means ready only account
-	 * userType = 1 means read-write account
-	 * 
-	 * Post method should be used.
-	 * 
-	 * application/x-www-form-urlencoded
-	 * 
-	 * form parameters - case sensitive
-	 * "userName", "password", "userType
-	 * 
-	 * @param userName
-	 * @return JSON data
-	 * if user is edited, success will be true
-	 * if not, success will be false
-	 * 	errorId = 2 means user does not exist
-	 */
-	/*
-	@POST
-	@Path("/editUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult editUser(@FormParam("userName") String userName, @FormParam("password") String password, @FormParam("userType") Integer userType) {
-		//TODO: check that request is coming from authorized user
-		boolean result = false;
-		int errorId = -1;
-		if (userName != null && getDataStore().doesUsernameExist(userName)) {
-			result = getDataStore().editUser(userName, password, userType);
-		}
-		else {
-			errorId = 2;
-		}
-
-		OperationResult operationResult = new OperationResult(result);
-		operationResult.setErrorId(errorId);
-		return operationResult;
-	}
-	 */
-
-	/**
-	 * Deletes user account from db
-	 * 
-	 * Post method should be used.
-	 * 
-	 * application/x-www-form-urlencoded
-	 * 
-	 * form parameters - case sensitive
-	 * "userName"
-	 * 
-	 * @param userName
-	 * @return
-	 */
-	/*
-	@POST
-	@Path("/deleteUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult deleteUser(@FormParam("userName") String userName) {
-		//TODO: check that request is coming from authorized user
-		boolean result = getDataStore().deleteUser(userName);
-		return new OperationResult(result);
-	}
-	 */
-
 
 
 	/**
@@ -236,7 +73,7 @@ public class RestServicev2 extends CommonRestService {
 	 * @return json that shows user is authenticated or not
 	 */
 	@POST
-	@Path("/v2/users/authenticate")
+	@Path("/users/authenticate")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result authenticateUser(User user) {
@@ -246,7 +83,7 @@ public class RestServicev2 extends CommonRestService {
 
 
 	@POST
-	@Path("/v2/users/password")
+	@Path("/users/password")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
@@ -264,7 +101,7 @@ public class RestServicev2 extends CommonRestService {
 
 
 	@GET
-	@Path("/v2/authentication-status")
+	@Path("/authentication-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isAuthenticatedRest(){
 		return super.isAuthenticatedRest();
@@ -304,7 +141,7 @@ public class RestServicev2 extends CommonRestService {
 
 
 	@GET
-	@Path("/v2/system-status")
+	@Path("/system-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemInfo() {
 		return super.getSystemInfo();
@@ -321,7 +158,7 @@ public class RestServicev2 extends CommonRestService {
 	 * 	availableProcessors()		: Total Processors available
 	 */
 	@GET
-	@Path("/v2/jvm-memory-status")
+	@Path("/jvm-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getJVMMemoryInfo() {
 		return super.getJVMMemoryInfo();
@@ -338,7 +175,7 @@ public class RestServicev2 extends CommonRestService {
 	 *  osInUseSwapSpace()			: In Use Swap Space
 	 */
 	@GET
-	@Path("/v2/system-memory-status")
+	@Path("/system-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemMemoryInfo() {
 		return super.getSystemMemoryInfo();
@@ -354,7 +191,7 @@ public class RestServicev2 extends CommonRestService {
 	 *	osHDInUseSpace()			: In Use Space
 	 **/
 	@GET
-	@Path("/v2/file-system-status")
+	@Path("/file-system-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getFileSystemInfo() {
 		return super.getFileSystemInfo();
@@ -369,21 +206,21 @@ public class RestServicev2 extends CommonRestService {
 	 * @return the CPU load info
 	 */
 	@GET
-	@Path("/v2/cpu-status")
+	@Path("/cpu-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getCPUInfo() {
 		return super.getCPUInfo();
 	}
 	
 	@GET
-	@Path("/v2/thread-dump")
+	@Path("/thread-dump")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getThreadDump() {
 		return super.getThreadDump();
 	}
 	
 	@GET
-	@Path("/v2/thread-dump")
+	@Path("/thread-dump")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getThreadDumpJSON() {
 		return super.getThreadDumpJSON();
@@ -391,7 +228,7 @@ public class RestServicev2 extends CommonRestService {
 	
 	
 	@GET
-	@Path("/v2/threads")
+	@Path("/threads")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getThreadsInfo() {
 		return super.getThreadsInfo();
@@ -402,7 +239,7 @@ public class RestServicev2 extends CommonRestService {
 	// method path was already Restful
 	// v2 is added to prevent clashes with older RestService.java
 	@GET
-	@Path("/v2/heap-dump")
+	@Path("/heap-dump")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
 	public Response getHeapDump() {
 
@@ -419,14 +256,14 @@ public class RestServicev2 extends CommonRestService {
 	// method path was already Restful
 	// v2 is added to prevent clashes with older RestService.java
 	@GET
-	@Path("/v2/server-time")
+	@Path("/server-time")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getServerTime() {
 		return super.getServerTime();
 	}
 
 	@GET
-	@Path("/v2/system-resources")
+	@Path("/system-resources")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemResourcesInfo() {
 
@@ -434,7 +271,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/gpu-status")
+	@Path("/gpu-status")
 	@Produces(MediaType.APPLICATION_JSON) 
 	public String getGPUInfo() 
 	{
@@ -443,7 +280,7 @@ public class RestServicev2 extends CommonRestService {
 
 
 	@GET
-	@Path("/v2/version")
+	@Path("/version")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getVersion() {
 		return super.getVersion();
@@ -451,7 +288,7 @@ public class RestServicev2 extends CommonRestService {
 
 
 	@GET
-	@Path("/v2/applications")
+	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getApplications() {
 
@@ -464,7 +301,7 @@ public class RestServicev2 extends CommonRestService {
 	 * @return the number of live clients
 	 */
 	@GET
-	@Path("/v2/live-clients-size")
+	@Path("/live-clients-size")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLiveClientsSize() 
 	{
@@ -473,7 +310,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/applications-info")
+	@Path("/applications-info")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getApplicationInfo() {
 
@@ -487,7 +324,7 @@ public class RestServicev2 extends CommonRestService {
 	 * @return live streams in the application
 	 */
 	@GET
-	@Path("/v2/applications/live-streams/{appname}")
+	@Path("/applications/live-streams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getAppLiveStreams(@PathParam("appname") String name) {
 
@@ -495,41 +332,13 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 
-	/**
-	 * Refactor remove this function and use ProxyServlet to get this info
-	 * Before deleting check web panel does not use it
-	 * @param name application name
-	 * @param streamName the stream name to be deleted
-	 * @return operation value
-	 */
-	@Deprecated
 	@POST
-	@Path("/v2/vod-streams/{appname}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String deleteVoDStream(@PathParam("appname") String name, @FormParam("streamName") String streamName) {
-
-		return super.deleteVoDStream(name, streamName);
-	}
-
-
-	@POST
-	@Path("/v2/applications/settings/{appname}")
+	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
 
 		return super.changeSettings(appname, newSettings);
-	}
-	
-	
-	@Deprecated
-	@GET
-	@Path("/v2/shutdown-status")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
-
-		return super.getShutdownStatus(appNamesArray);
 	}
 	
 	public AntMediaApplicationAdapter getAppAdaptor(String appName) {
@@ -539,7 +348,7 @@ public class RestServicev2 extends CommonRestService {
 	
 	
 	@GET
-	@Path("/v2/shutdown-proper-status")
+	@Path("/shutdown-proper-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response isShutdownProperly(@QueryParam("appNames") String appNamesArray)
@@ -550,7 +359,7 @@ public class RestServicev2 extends CommonRestService {
 	
 	
 	@GET
-	@Path("/v2/shutdown-properly")
+	@Path("/shutdown-properly")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean setShutdownStatus(@QueryParam("appNames") String appNamesArray){
@@ -559,7 +368,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@POST
-	@Path("/v2/server-settings")
+	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeServerSettings(ServerSettings serverSettings){
@@ -568,7 +377,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/enterprise-edition")
+	@Path("/enterprise-edition")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
 
@@ -576,7 +385,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/applications/settings/{appname}")
+	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettings getSettings(@PathParam("appname") String appname) 
 	{
@@ -585,7 +394,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/server-settings")
+	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ServerSettings getServerSettings() 
 	{
@@ -593,7 +402,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/licence-status")
+	@Path("/licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus(@QueryParam("key") String key) 
@@ -603,7 +412,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/last-licence-status")
+	@Path("/last-licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus() 
@@ -624,63 +433,12 @@ public class RestServicev2 extends CommonRestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
-
 		return super.resetBroadcast(appname);
 	}
 
-	public void setDataStore(IDataStore dataStore) {
-		this.dataStore = dataStore;
-	}
-
-	public IDataStore getDataStore() {
-		if (dataStore == null) {
-			dataStore = getDataStoreFactory().getDataStore();
-		}
-		return dataStore;
-	}
-
-	private ServerSettings getServerSettingsInternal() {
-
-		if(serverSettings == null) {
-
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-		}
-		return serverSettings;
-	}
-
-
-
-	public ILicenceService getLicenceServiceInstance () {
-		if(licenceService == null) {
-
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
-		}
-		return licenceService;
-	}
-
-
-	public AdminApplication getApplication() {
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		return (AdminApplication)ctxt.getBean("web.handler");
-	}
-
-	public DataStoreFactory getDataStoreFactory() {
-		if(dataStoreFactory == null)
-		{
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
-		}
-		return dataStoreFactory;
-	}
-
-	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
-		this.dataStoreFactory = dataStoreFactory;
-	}
 
 	@GET
-	@Path("/v2/cluster-mode-status")
+	@Path("/cluster-mode-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isInClusterMode(){
 
@@ -688,7 +446,7 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 	@GET
-	@Path("/v2/log-level")
+	@Path("/log-level")
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
@@ -696,21 +454,16 @@ public class RestServicev2 extends CommonRestService {
 		return super.getLogSettings();
 	}
 
-	@GET
-	@Path("/v2/log-level-settings/{level}")
+	@POST
+	@Path("/log-level/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@PathParam("level") String logLevel){
 
 		return super.changeLogSettings(logLevel);
 	}
 
-	public Level currentLevelDetect(String logLevel) {
-
-		return super.currentLevelDetect(logLevel);
-	}
-
 	@GET
-	@Path("/v2/log-file/{offsetSize}/{charSize}")
+	@Path("/log-file/{offsetSize}/{charSize}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLogFile(@PathParam("charSize") int charSize, @QueryParam("logType") String logType,
 			@PathParam("offsetSize") long offsetSize) throws IOException {
@@ -733,23 +486,17 @@ public class RestServicev2 extends CommonRestService {
 	}
 
 
-	// method path was already Restful
-	// v2 is added to prevent clashed with RestService.java - identical operations can't have matching parameters
-	// this should be fixed with a tag like v2 or a single rest service file should be used
-
 	@POST
-	@Path("/v2/applications")
+	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result createApplication(@QueryParam("appName") String appName) {
+	public Result createApplication(@PathParam("appName") String appName) {
 
 		return super.createApplication(appName);
 	}
 
-	// method path was already Restful
-	// v2 is added to prevent clashed with RestService.java - identical operations can't have matching parameters
-	// there is also a typo in the method name, it also should be fixed
+
 	@DELETE
-	@Path("/v2/applications/{appName}")
+	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteApplication(@PathParam("appName") String appName) {
 

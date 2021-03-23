@@ -55,8 +55,6 @@ public class CommonRestService {
 
 	private static final String LOG_TYPE_ERROR = "error";
 
-	private static final String LOG_TYPE_SERVER = "server";
-
 	private static final String FILE_NOT_EXIST = "There is no log yet";
 
 	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";

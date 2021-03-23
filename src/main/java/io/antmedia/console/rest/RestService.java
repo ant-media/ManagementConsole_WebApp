@@ -66,79 +66,6 @@ import io.antmedia.statistic.StatsCollector;
 @Path("/")
 public class RestService extends CommonRestService {
 
-	private static final String LOG_TYPE_ERROR = "error";
-
-	private static final String LOG_TYPE_SERVER = "server";
-
-	private static final String FILE_NOT_EXIST = "There is no log yet";
-
-	private static final String ERROR_LOG_LOCATION = "log/antmedia-error.log";
-
-	private static final String SERVER_LOG_LOCATION = "log/ant-media-server.log";
-
-	private static final String LOG_CONTENT = "logContent";
-
-	private static final String LOG_CONTENT_SIZE = "logContentSize";
-
-	private static final String LOG_FILE_SIZE = "logFileSize";
-
-	private static final int MAX_CHAR_SIZE = 512000;
-
-	private static final String LOG_LEVEL_ALL = "ALL";
-
-	private static final String LOG_LEVEL_TRACE = "TRACE";
-
-	private static final String LOG_LEVEL_DEBUG = "DEBUG";
-
-	private static final String LOG_LEVEL_INFO = "INFO";
-
-	private static final String LOG_LEVEL_WARN = "WARN";
-
-	private static final String LOG_LEVEL_ERROR = "ERROR";
-
-	private static final String LOG_LEVEL_OFF = "OFF";
-
-	private static final String USER_PASSWORD = "user.password";
-
-	private static final String USER_EMAIL = "user.email";
-
-	public static final String IS_AUTHENTICATED = "isAuthenticated";
-
-	public static final String SERVER_NAME = "server.name";
-
-	public static final String LICENSE_KEY = "server.licence_key";
-
-	public static final String MARKET_BUILD = "server.market_build";
-	
-	public static final String NODE_GROUP = "nodeGroup";
-
-	Gson gson = new Gson();
-
-	private IDataStore dataStore;
-
-	private static final String LOG_LEVEL = "logLevel";
-
-	private static final String RED5_PROPERTIES_PATH = "conf/red5.properties";
-
-	protected static final Logger logger = LoggerFactory.getLogger(RestService.class);
-
-	private static final String SOFTWARE_VERSION = "softwareVersion";
-
-	protected ApplicationContext applicationContext;
-
-	@Context
-	private ServletContext servletContext;
-
-	@Context
-	private HttpServletRequest servletRequest;
-
-	private DataStoreFactory dataStoreFactory;
-	private ServerSettings serverSettings;
-
-	private ILicenceService licenceService;
-
-
-
 
 	/**
 	 * Add user account on db. 
@@ -647,67 +574,15 @@ public class RestService extends CommonRestService {
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result resetBroadcast(@PathParam("appname") String appname) 
 	{
-
 		return super.resetBroadcast(appname);
 	}
 
-	public void setDataStore(IDataStore dataStore) {
-		this.dataStore = dataStore;
-	}
-
-	public IDataStore getDataStore() {
-		if (dataStore == null) {
-			dataStore = getDataStoreFactory().getDataStore();
-		}
-		return dataStore;
-	}
-
-	private ServerSettings getServerSettingsInternal() {
-
-		if(serverSettings == null) {
-
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			serverSettings = (ServerSettings)ctxt.getBean(ServerSettings.BEAN_NAME);
-		}
-		return serverSettings;
-	}
-
-
-
-	public ILicenceService getLicenceServiceInstance () {
-		if(licenceService == null) {
-
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			licenceService = (ILicenceService)ctxt.getBean(ILicenceService.BeanName.LICENCE_SERVICE.toString());
-		}
-		return licenceService;
-	}
-
-
-	public AdminApplication getApplication() {
-		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-		return (AdminApplication)ctxt.getBean("web.handler");
-	}
-
-	public DataStoreFactory getDataStoreFactory() {
-		if(dataStoreFactory == null)
-		{
-			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
-		}
-		return dataStoreFactory;
-	}
-
-	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
-		this.dataStoreFactory = dataStoreFactory;
-	}
-	
 	
 	@GET
 	@Path("/isInClusterMode")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result isInClusterMode(){
-
+	public Result isInClusterMode()
+	{
 		return super.isInClusterMode();
 	}
 
@@ -716,21 +591,15 @@ public class RestService extends CommonRestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
-
 		return super.getLogSettings();
 	}
 
 	@GET
 	@Path("/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String changeLogSettings(@PathParam("level") String logLevel){
-
+	public String changeLogSettings(@PathParam("level") String logLevel)
+	{
 		return super.changeLogSettings(logLevel);
-	}
-
-	public Level currentLevelDetect(String logLevel) {
-
-		return super.currentLevelDetect(logLevel);
 	}
 
 	@GET

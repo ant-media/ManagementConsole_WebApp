@@ -312,7 +312,6 @@ public class RestService {
 			session.setAttribute(IS_AUTHENTICATED, true);
 			session.setAttribute(USER_EMAIL, user.getEmail());
 			session.setAttribute(USER_PASSWORD, getMD5Hash(user.getPassword()));
-			logger.info("session attributes e-mail = " + session.getAttribute(USER_EMAIL).toString() + " pass " + session.getAttribute(USER_PASSWORD));
 
 		}
 		return new Result(result);

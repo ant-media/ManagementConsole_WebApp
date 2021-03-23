@@ -1,34 +1,19 @@
 package io.antmedia.console.rest;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
+import ch.qos.logback.classic.Level;
+import com.google.gson.Gson;
+import io.antmedia.AntMediaApplicationAdapter;
+import io.antmedia.AppSettings;
+import io.antmedia.console.AdminApplication;
+import io.antmedia.console.datastore.DataStoreFactory;
+import io.antmedia.console.datastore.IDataStore;
+import io.antmedia.datastore.db.types.Licence;
+import io.antmedia.licence.ILicenceService;
+import io.antmedia.rest.model.Result;
+import io.antmedia.rest.model.User;
+import io.antmedia.settings.LogSettings;
+import io.antmedia.settings.ServerSettings;
 import org.apache.commons.codec.binary.Hex;
-import org.red5.server.api.scope.IScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -36,60 +21,24 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
-import ch.qos.logback.classic.Level;
-import io.antmedia.AntMediaApplicationAdapter;
-import io.antmedia.AppSettings;
-import io.antmedia.IApplicationAdaptorFactory;
-import io.antmedia.SystemUtils;
-import io.antmedia.cluster.IClusterNotifier;
-import io.antmedia.console.AdminApplication;
-import io.antmedia.console.AdminApplication.ApplicationInfo;
-import io.antmedia.console.AdminApplication.BroadcastInfo;
-import io.antmedia.console.datastore.DataStoreFactory;
-import io.antmedia.console.datastore.IDataStore;
-import io.antmedia.datastore.db.types.Licence;
-import io.antmedia.datastore.preference.PreferenceStore;
-import io.antmedia.licence.ILicenceService;
-import io.antmedia.rest.RestServiceBase;
-import io.antmedia.rest.model.Result;
-import io.antmedia.rest.model.User;
-import io.antmedia.rest.model.UserType;
-import io.antmedia.settings.LogSettings;
-import io.antmedia.settings.ServerSettings;
-import io.antmedia.statistic.StatsCollector;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @Component
-@Path("/")
-public class RestService extends CommonRestService {
+@Path("/v2")
+public class RestServiceV2 extends CommonRestService {
 
-
-	/**
-	 * Add user account on db. 
-	 * Username must be unique,
-	 * if there is a user with the same name, user will not be created
-	 * 
-	 * userType = 0 means ready only account
-	 * userType = 1 means read-write account
-	 * 
-	 * Post method should be used.
-	 * 
-	 * application/json
-	 * 
-	 * form parameters - case sensitive
-	 * "userName", "password", "userType
-	 * 
-	 * @param user: The user to be added
-	 * @return JSON data
-	 * if user is added success will be true
-	 * if user is not added success will be false
-	 * 	if user is not added, errorId = 1 means username already exist
-	 */
 	@POST
-	@Path("/addUser")
+	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addUser(User user) {
@@ -99,7 +48,7 @@ public class RestService extends CommonRestService {
 
 
 	@POST
-	@Path("/addInitialUser")
+	@Path("/users/initial")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addInitialUser(User user) {
@@ -108,81 +57,13 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/isFirstLogin")
+	@Path("/first-login-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result isFirstLogin() 
 	{
-
 		return super.isFirstLogin();
 	}
-
-	/**
-	 * Edit user account on db. 
-	 * Username cannot be changed, password or userType can be changed
-	 * userType = 0 means ready only account
-	 * userType = 1 means read-write account
-	 * 
-	 * Post method should be used.
-	 * 
-	 * application/x-www-form-urlencoded
-	 * 
-	 * form parameters - case sensitive
-	 * "userName", "password", "userType
-	 * 
-	 * @param userName
-	 * @return JSON data
-	 * if user is edited, success will be true
-	 * if not, success will be false
-	 * 	errorId = 2 means user does not exist
-	 */
-	/*
-	@POST
-	@Path("/editUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult editUser(@FormParam("userName") String userName, @FormParam("password") String password, @FormParam("userType") Integer userType) {
-		//TODO: check that request is coming from authorized user
-		boolean result = false;
-		int errorId = -1;
-		if (userName != null && getDataStore().doesUsernameExist(userName)) {
-			result = getDataStore().editUser(userName, password, userType);
-		}
-		else {
-			errorId = 2;
-		}
-
-		OperationResult operationResult = new OperationResult(result);
-		operationResult.setErrorId(errorId);
-		return operationResult;
-	}
-	 */
-
-	/**
-	 * Deletes user account from db
-	 * 
-	 * Post method should be used.
-	 * 
-	 * application/x-www-form-urlencoded
-	 * 
-	 * form parameters - case sensitive
-	 * "userName"
-	 * 
-	 * @param userName
-	 * @return
-	 */
-	/*
-	@POST
-	@Path("/deleteUser")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public OperationResult deleteUser(@FormParam("userName") String userName) {
-		//TODO: check that request is coming from authorized user
-		boolean result = getDataStore().deleteUser(userName);
-		return new OperationResult(result);
-	}
-	 */
-
 
 
 	/**
@@ -193,7 +74,7 @@ public class RestService extends CommonRestService {
 	 * @return json that shows user is authenticated or not
 	 */
 	@POST
-	@Path("/authenticateUser")
+	@Path("/users/authenticate")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result authenticateUser(User user) {
@@ -203,7 +84,7 @@ public class RestService extends CommonRestService {
 
 
 	@POST
-	@Path("/changeUserPassword")
+	@Path("/users/password")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result changeUserPassword(User user) {
@@ -221,7 +102,7 @@ public class RestService extends CommonRestService {
 
 
 	@GET
-	@Path("/isAuthenticated")
+	@Path("/authentication-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isAuthenticatedRest(){
 		return super.isAuthenticatedRest();
@@ -261,7 +142,7 @@ public class RestService extends CommonRestService {
 
 
 	@GET
-	@Path("/getSystemInfo")
+	@Path("/system-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemInfo() {
 		return super.getSystemInfo();
@@ -278,7 +159,7 @@ public class RestService extends CommonRestService {
 	 * 	availableProcessors()		: Total Processors available
 	 */
 	@GET
-	@Path("/getJVMMemoryInfo")
+	@Path("/jvm-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getJVMMemoryInfo() {
 		return super.getJVMMemoryInfo();
@@ -295,7 +176,7 @@ public class RestService extends CommonRestService {
 	 *  osInUseSwapSpace()			: In Use Swap Space
 	 */
 	@GET
-	@Path("/getSystemMemoryInfo")
+	@Path("/system-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemMemoryInfo() {
 		return super.getSystemMemoryInfo();
@@ -311,7 +192,7 @@ public class RestService extends CommonRestService {
 	 *	osHDInUseSpace()			: In Use Space
 	 **/
 	@GET
-	@Path("/getFileSystemInfo")
+	@Path("/file-system-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getFileSystemInfo() {
 		return super.getFileSystemInfo();
@@ -326,21 +207,21 @@ public class RestService extends CommonRestService {
 	 * @return the CPU load info
 	 */
 	@GET
-	@Path("/getCPUInfo")
+	@Path("/cpu-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getCPUInfo() {
 		return super.getCPUInfo();
 	}
 	
 	@GET
-	@Path("/thread-dump-raw")
+	@Path("/thread-dump")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getThreadDump() {
 		return super.getThreadDump();
 	}
 	
 	@GET
-	@Path("/thread-dump-json")
+	@Path("/thread-dump")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getThreadDumpJSON() {
 		return super.getThreadDumpJSON();
@@ -348,12 +229,16 @@ public class RestService extends CommonRestService {
 	
 	
 	@GET
-	@Path("/threads-info")
+	@Path("/threads")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getThreadsInfo() {
 		return super.getThreadsInfo();
 	}
-	
+
+
+
+	// method path was already Restful
+	// v2 is added to prevent clashes with older RestService.java
 	@GET
 	@Path("/heap-dump")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
@@ -368,6 +253,9 @@ public class RestService extends CommonRestService {
 	 * Return server uptime and startime in milliseconds
 	 * @return JSON object contains the server uptime and start time
 	 */
+
+	// method path was already Restful
+	// v2 is added to prevent clashes with older RestService.java
 	@GET
 	@Path("/server-time")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -376,7 +264,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getSystemResourcesInfo")
+	@Path("/system-resources")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getSystemResourcesInfo() {
 
@@ -384,7 +272,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getGPUInfo")
+	@Path("/gpu-status")
 	@Produces(MediaType.APPLICATION_JSON) 
 	public String getGPUInfo() 
 	{
@@ -393,15 +281,15 @@ public class RestService extends CommonRestService {
 
 
 	@GET
-	@Path("/getVersion")
-	@Produces(MediaType.APPLICATION_JSON) 
+	@Path("/version")
+	@Produces(MediaType.APPLICATION_JSON)
 	public String getVersion() {
 		return super.getVersion();
 	}
 
 
 	@GET
-	@Path("/getApplications")
+	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getApplications() {
 
@@ -414,7 +302,7 @@ public class RestService extends CommonRestService {
 	 * @return the number of live clients
 	 */
 	@GET
-	@Path("/getLiveClientsSize")
+	@Path("/live-clients-size")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLiveClientsSize() 
 	{
@@ -423,7 +311,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getApplicationsInfo")
+	@Path("/applications-info")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getApplicationInfo() {
 
@@ -437,7 +325,7 @@ public class RestService extends CommonRestService {
 	 * @return live streams in the application
 	 */
 	@GET
-	@Path("/getAppLiveStreams/{appname}")
+	@Path("/applications/live-streams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getAppLiveStreams(@PathParam("appname") String name) {
 
@@ -445,41 +333,13 @@ public class RestService extends CommonRestService {
 	}
 
 
-	/**
-	 * Refactor remove this function and use ProxyServlet to get this info
-	 * Before deleting check web panel does not use it
-	 * @param name application name
-	 * @param streamName the stream name to be deleted
-	 * @return operation value
-	 */
-	@Deprecated
 	@POST
-	@Path("/deleteVoDStream/{appname}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public String deleteVoDStream(@PathParam("appname") String name, @FormParam("streamName") String streamName) {
-
-		return super.deleteVoDStream(name, streamName);
-	}
-
-
-	@POST
-	@Path("/changeSettings/{appname}")
+	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
 
 		return super.changeSettings(appname, newSettings);
-	}
-	
-	
-	@Deprecated
-	@GET
-	@Path("/isShutdownProperly")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
-
-		return super.getShutdownStatus(appNamesArray);
 	}
 	
 	public AntMediaApplicationAdapter getAppAdaptor(String appName) {
@@ -489,7 +349,7 @@ public class RestService extends CommonRestService {
 	
 	
 	@GET
-	@Path("/shutdown-properly")
+	@Path("/shutdown-proper-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Response isShutdownProperly(@QueryParam("appNames") String appNamesArray)
@@ -500,7 +360,7 @@ public class RestService extends CommonRestService {
 	
 	
 	@GET
-	@Path("/setShutdownProperly")
+	@Path("/shutdown-properly")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public boolean setShutdownStatus(@QueryParam("appNames") String appNamesArray){
@@ -509,7 +369,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@POST
-	@Path("/changeServerSettings")
+	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public String changeServerSettings(ServerSettings serverSettings){
@@ -518,7 +378,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/isEnterpriseEdition")
+	@Path("/enterprise-edition")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result isEnterpriseEdition(){
 
@@ -526,7 +386,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getSettings/{appname}")
+	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public AppSettings getSettings(@PathParam("appname") String appname) 
 	{
@@ -535,7 +395,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getServerSettings")
+	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	public ServerSettings getServerSettings() 
 	{
@@ -543,7 +403,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getLicenceStatus")
+	@Path("/licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus(@QueryParam("key") String key) 
@@ -553,7 +413,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getLastLicenceStatus")
+	@Path("/last-licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Licence getLicenceStatus() 
@@ -569,7 +429,7 @@ public class RestService extends CommonRestService {
 	 * @return
 	 */
 	@POST
-	@Path("/reset-broadcasts/{appname}")
+	@Path("/applications/{appname}/reset")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result resetBroadcast(@PathParam("appname") String appname) 
@@ -577,33 +437,34 @@ public class RestService extends CommonRestService {
 		return super.resetBroadcast(appname);
 	}
 
-	
+
 	@GET
-	@Path("/isInClusterMode")
+	@Path("/cluster-mode-status")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Result isInClusterMode()
-	{
+	public Result isInClusterMode(){
+
 		return super.isInClusterMode();
 	}
 
 	@GET
-	@Path("/getLogLevel")
+	@Path("/log-level")
 	@Produces(MediaType.APPLICATION_JSON)
 	public LogSettings getLogSettings() 
 	{
+
 		return super.getLogSettings();
 	}
 
-	@GET
-	@Path("/changeLogLevel/{level}")
+	@POST
+	@Path("/log-level/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String changeLogSettings(@PathParam("level") String logLevel)
-	{
+	public String changeLogSettings(@PathParam("level") String logLevel){
+
 		return super.changeLogSettings(logLevel);
 	}
 
 	@GET
-	@Path("/getLogFile/{offsetSize}/{charSize}")
+	@Path("/log-file/{offsetSize}/{charSize}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLogFile(@PathParam("charSize") int charSize, @QueryParam("logType") String logType,
 			@PathParam("offsetSize") long offsetSize) throws IOException {
@@ -624,21 +485,53 @@ public class RestService extends CommonRestService {
 		}
 		return passResult;
 	}
-	
-	@POST
-	@Path("/applications")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Result createApplication(@QueryParam("appName") String appName) {
 
-		return super.createApplication(appName);
+
+	@POST
+	@Path("/applications/{appName}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Result createApplication(@PathParam("appName") String appName) 
+	{
+		Result result;
+		if (appName != null && appName.matches("^[a-zA-Z0-9]*$")) 
+		{
+			List<String> applications = getApplication().getApplications();
+
+			boolean applicationAlreadyExist = false;
+			for (String applicationName : applications) 
+			{
+				if (applicationName.equalsIgnoreCase(appName)) 
+				{
+					applicationAlreadyExist = true;
+					break;
+				}
+			}
+			
+			if (!applicationAlreadyExist) 
+			{
+				result = super.createApplication(appName);
+			}
+			else 
+			{
+				result = new Result(false, "Application with the same name already exists");
+			}
+		}
+		else {
+			result = new Result(false, "Application name is not alphanumeric. Please provide alphanumeric characters");
+		}
+		
+		return result;
 	}
-	
+
+
 	@DELETE
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Result deleteApplication(@PathParam("appName") String appName) {
-
-		return super.deleteApplication(appName);
+		if (appName != null) {
+			return super.deleteApplication(appName);
+		}
+		return new Result(false, "Application name is not defined");
 	}
 
 }

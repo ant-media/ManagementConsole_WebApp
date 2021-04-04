@@ -1023,6 +1023,7 @@ public class CommonRestService {
 
 
 	public Result deleteApplication(@PathParam("appName") String appName) {
+		logger.info("delete application http request:{}", appName);
 		AppSettings appSettings = getSettings(appName);
 		appSettings.setToBeDeleted(true);
 		changeSettings(appName, appSettings);

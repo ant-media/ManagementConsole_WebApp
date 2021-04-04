@@ -74,8 +74,14 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		
 		if(isCluster) {
 			IClusterNotifier clusterNotifier = (IClusterNotifier) app.getContext().getBean(IClusterNotifier.BEAN_NAME);
-			clusterNotifier.registerCreateAppListener(appName -> createApplication(appName));
-			clusterNotifier.registerDeleteAppListener(appName -> deleteApplication(appName));
+			clusterNotifier.registerCreateAppListener(appName -> {
+				log.info("Creating application with name {}", appName);
+				return createApplication(appName);
+			});
+			clusterNotifier.registerDeleteAppListener(appName -> {
+				log.info("Deleting application with name {}", appName);
+				return deleteApplication(appName);
+			});
 		}
 		
 		return super.appStart(app);

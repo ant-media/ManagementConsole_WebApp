@@ -3,6 +3,7 @@ package io.antmedia.console.rest;
 import ch.qos.logback.classic.Level;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
@@ -107,8 +108,8 @@ public class CommonRestService {
 
 	protected static final Logger logger = LoggerFactory.getLogger(CommonRestService.class);
 
-	private static final String SOFTWARE_VERSION = "softwareVersion";
-
+	private static final String LICENSE_STATUS = "license";
+	
 	protected ApplicationContext applicationContext;
 
 	@Context
@@ -490,6 +491,8 @@ public class CommonRestService {
 		JsonObject jsonObject = StatsCollector.getSystemResourcesInfo(scopes);
 
 		jsonObject.addProperty(StatsCollector.TOTAL_LIVE_STREAMS, totalLiveStreams);
+		 
+		jsonObject.add(LICENSE_STATUS, gson.toJsonTree(getLicenceStatus()));
 
 		return gson.toJson(jsonObject);
 	}

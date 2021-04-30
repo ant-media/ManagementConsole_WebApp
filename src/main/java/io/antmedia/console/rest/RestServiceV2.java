@@ -1,30 +1,17 @@
 package io.antmedia.console.rest;
 
-import ch.qos.logback.classic.Level;
-import com.google.gson.Gson;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.console.AdminApplication;
-import io.antmedia.console.datastore.DataStoreFactory;
-import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.db.types.Licence;
-import io.antmedia.licence.ILicenceService;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
 import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
+import io.swagger.annotations.*;
 import org.apache.commons.codec.binary.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -33,6 +20,21 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
+
+@Api(value = "BroadcastRestService")
+@SwaggerDefinition(
+		info = @Info(
+				description = "Ant Media Server REST API Reference",
+				version = "v2.0",
+				title = "Ant Media Server REST API Reference",
+				contact = @Contact(name = "Ant Media Info", email = "contact@antmedia.io", url = "https://antmedia.io"),
+				license = @License(name = "Apache 2.0", url = "http://www.apache.org")),
+		consumes = {"application/json"},
+		produces = {"application/json"},
+		schemes = {SwaggerDefinition.Scheme.HTTP, SwaggerDefinition.Scheme.HTTPS},
+		externalDocs = @ExternalDocs(value = "External Docs", url = "https://antmedia.io"),
+		basePath = "/v2"
+)
 @Component
 @Path("/v2")
 public class RestServiceV2 extends CommonRestService {

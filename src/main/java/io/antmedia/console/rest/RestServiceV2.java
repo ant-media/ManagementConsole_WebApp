@@ -21,7 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 
-@Api(value = "BroadcastRestService")
+@Api(value = "ManagementRestService")
 @SwaggerDefinition(
 		info = @Info(
 				description = "Ant Media Server REST API Reference",

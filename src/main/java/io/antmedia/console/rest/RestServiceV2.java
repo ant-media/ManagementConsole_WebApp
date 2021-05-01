@@ -2,7 +2,6 @@ package io.antmedia.console.rest;
 
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;

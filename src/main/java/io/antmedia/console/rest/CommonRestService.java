@@ -46,6 +46,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -271,15 +272,66 @@ public class CommonRestService {
 	 */
 
 	public Result authenticateUser(User user) {
-		boolean result=getDataStore().doesUserExist(user.getEmail(), user.getPassword()) ||
-				       getDataStore().doesUserExist(user.getEmail(), getMD5Hash(user.getPassword()));
-		if (result) {
-			HttpSession session = servletRequest.getSession();
-			session.setAttribute(IS_AUTHENTICATED, true);
-			session.setAttribute(USER_EMAIL, user.getEmail());
-			session.setAttribute(USER_PASSWORD, getMD5Hash(user.getPassword()));
+
+		logger.info("Attempted user e-mail is: {}",user.getEmail());
+		logger.info("The time is: {}", Instant.now().getEpochSecond());
+
+
+		if (getDataStore().doesUsernameExist(user.getEmail())) {
+			if (!getDataStoreFactory().isBlockedMap.containsKey(user.getEmail())) {
+				getDataStoreFactory().isBlockedMap.put(user.getEmail(), false);
+			}
+			logger.info("Is the user blocked?: {}", getDataStoreFactory().isUserBlocked(user.getEmail()));
+
+
+			if (getDataStore().doesUsernameExist(user.getEmail())) {
+				if (!getDataStoreFactory().invalidLoginCountMap.containsKey(user.getEmail())) {
+					getDataStoreFactory().invalidLoginCountMap.put(user.getEmail(), 0);
+				}
+				logger.info("User current invalid login count {}", getDataStoreFactory().getInvalidLoginCount(user.getEmail()));
+			}
+
+
+			if (getDataStoreFactory().isUserBlocked(user.getEmail()) && (Instant.now().getEpochSecond() - getDataStoreFactory().getBlockTime(user.getEmail())) > 15) {
+				logger.info("Unblocking the user");
+				getDataStoreFactory().setUnBlocked(user.getEmail());
+				getDataStoreFactory().resetInvalidLoginCount(user.getEmail());
+			}
+
+			if (!getDataStoreFactory().isUserBlocked(user.getEmail())) {
+				boolean result = getDataStore().doesUserExist(user.getEmail(), user.getPassword()) ||
+						getDataStore().doesUserExist(user.getEmail(), getMD5Hash(user.getPassword()));
+				if (result) {
+					HttpSession session = servletRequest.getSession();
+					session.setAttribute(IS_AUTHENTICATED, true);
+					session.setAttribute(USER_EMAIL, user.getEmail());
+					session.setAttribute(USER_PASSWORD, getMD5Hash(user.getPassword()));
+					getDataStoreFactory().resetInvalidLoginCount(user.getEmail());
+				} else {
+
+					//logger.info("User exists?: {}", getDataStore().doesUsernameExist(user.getEmail()));
+					//if (getDataStore().doesUsernameExist(user.getEmail())) {
+						getDataStoreFactory().incrementInvalidLoginCount(user.getEmail());
+						logger.info("Increased invalid login count to: {}", getDataStoreFactory().getInvalidLoginCount(user.getEmail()));
+						if (getDataStoreFactory().getInvalidLoginCount(user.getEmail()) > 2) {
+							getDataStoreFactory().setBlocked(user.getEmail());
+							getDataStoreFactory().setBlockTime(user.getEmail(), Instant.now().getEpochSecond());
+							logger.info("User is blocked: {}", getDataStore().doesUsernameExist(user.getEmail()));
+
+						}
+					//}
+				}
+				return new Result(result);
+			} else {
+				logger.info("User is blocked for invalid login");
+
+				logger.info("Please wait for {} seconds to reattempt login", 15 - (Instant.now().getEpochSecond() - getDataStoreFactory().getBlockTime(user.getEmail())));
+				return new Result(false);
+			}
 		}
-		return new Result(result);
+		else{
+			return new Result(false);
+		}
 	}
 
 

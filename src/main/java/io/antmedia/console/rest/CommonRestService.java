@@ -125,7 +125,6 @@ public class CommonRestService {
 
 
 
-
 	/**
 	 * Add user account on db. 
 	 * Username must be unique,

@@ -34,18 +34,6 @@ before_install:
 - mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dgpg.skip=true --quiet
 - cd ..
 
-#Checkout Service Project
-- (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server-Service.git $TRAVIS_BRANCH  | wc -l) == "1" ];  
-   then 
-     echo " $TRAVIS_BRANCH branch found";  
-     git clone --depth=1 -b $TRAVIS_BRANCH https://github.com/ant-media/Ant-Media-Server-Service.git; 
-     cd Ant-Media-Server-Service; 
-     mvn install -DskipTests=true -Dmaven.javadoc.skip=true -Dgpg.skip=true -B -V --quiet;
-     cd ..;
-   else
-     echo "branch not found. Using version in sonatype"; 
-  fi) 
-
 # Checkout Ant Media Server from git, in order to fix dependency issue
 - (if [ $(git ls-remote https://github.com/ant-media/Ant-Media-Server.git $TRAVIS_BRANCH  | wc -l) == "1" ];
     then

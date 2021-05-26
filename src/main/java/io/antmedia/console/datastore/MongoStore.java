@@ -1,6 +1,10 @@
 package io.antmedia.console.datastore;
 
 
+import dev.morphia.query.FindOptions;
+import io.antmedia.datastore.db.types.Broadcast;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +19,9 @@ import dev.morphia.query.UpdateOperations;
 import dev.morphia.query.UpdateResults;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
+
+import java.util.List;
+import java.util.ArrayList;
 
 public class MongoStore implements IDataStore {
 
@@ -37,8 +44,19 @@ public class MongoStore implements IDataStore {
 		datastore = morphia.createDatastore(client, dbName);
 		datastore.ensureIndexes();
 	}
-	
-	
+
+	@Override
+	public List<User> getUserList(){
+		List<User> users = new ArrayList<User>();
+		try {
+			Query<User> query = datastore.find(User.class);
+			users = query.find(new FindOptions()).toList();
+		}
+		catch (Exception e) {
+			logger.error(ExceptionUtils.getStackTrace(e));
+		}
+		return users;
+	}
 
 	@Override
 	public boolean addUser(String username, String password, UserType userType) {

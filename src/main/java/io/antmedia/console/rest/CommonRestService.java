@@ -46,6 +46,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -95,7 +96,7 @@ public class CommonRestService {
 	public static final String LICENSE_KEY = "server.licence_key";
 
 	public static final String MARKET_BUILD = "server.market_build";
-	
+
 	public static final String NODE_GROUP = "nodeGroup";
 
 	Gson gson = new Gson();
@@ -109,7 +110,7 @@ public class CommonRestService {
 	protected static final Logger logger = LoggerFactory.getLogger(CommonRestService.class);
 
 	private static final String LICENSE_STATUS = "license";
-	
+
 	protected ApplicationContext applicationContext;
 
 	@Context
@@ -149,26 +150,33 @@ public class CommonRestService {
 	 */
 
 	public Result addUser(User user) {
-		//TODO: check that request is coming from authorized user
 		boolean result = false;
-		int errorId = -1;
-		if (user != null && !getDataStore().doesUsernameExist(user.getEmail())) {
-			result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), UserType.ADMIN);
-		}
-		else {
-			if (user == null) {
-				logger.info("user variable null");
+		String message = "";
+		HttpSession session = servletRequest.getSession();
+		User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+		if (user != null) 
+		{
+			if (!getDataStore().doesUsernameExist(user.getEmail())) 
+			{
+				result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), user.getUserType());
+				logger.info("added user = {} password = {} user type = {}", user.getEmail(), user.getPassword()  ,user.getUserType());
+				logger.info("current user = {} user type = {}", currentUser.getEmail(),  currentUser.getUserType());
 			}
 			else {
-				logger.info("user already exist in db");
+				message = "User with the same e-mail already exists";
 			}
-
-			errorId = 1;
 		}
+		else {
+			message = "User object is null";
+		}
+
+
 		Result operationResult = new Result(result);
-		operationResult.setErrorId(errorId);
+		operationResult.setMessage(message);
+
 		return operationResult;
 	}
+
 
 
 
@@ -272,7 +280,7 @@ public class CommonRestService {
 
 	public Result authenticateUser(User user) {
 		boolean result=getDataStore().doesUserExist(user.getEmail(), user.getPassword()) ||
-				       getDataStore().doesUserExist(user.getEmail(), getMD5Hash(user.getPassword()));
+				getDataStore().doesUserExist(user.getEmail(), getMD5Hash(user.getPassword()));
 		if (result) {
 			HttpSession session = servletRequest.getSession();
 			session.setAttribute(IS_AUTHENTICATED, true);
@@ -282,6 +290,76 @@ public class CommonRestService {
 		return new Result(result);
 	}
 
+	public Result isAdmin() {
+		HttpSession session = servletRequest.getSession();
+		if(isAuthenticated(session)) {
+			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+			if (currentUser.getUserType().equals(UserType.ADMIN)) {
+				return new Result(true, "User is admin");
+			}
+		}
+		return new Result(false, "User is not admin");
+	}
+
+	public Result editUser(User user) 
+	{
+		boolean result = false;
+		String message = "";
+		HttpSession session = servletRequest.getSession();
+		String userEmail = (String)session.getAttribute(USER_EMAIL);
+
+		if (user != null && user.getEmail() != null && getDataStore().doesUsernameExist(user.getEmail())) 
+		{
+			if (!userEmail.equals(user.getEmail())) 
+			{
+				User oldUser = getDataStore().getUser(user.getEmail());
+				getDataStore().deleteUser(user.getEmail());
+				if(user.getNewPassword() != null && !user.getNewPassword().isEmpty()) {
+					logger.info("Changing password of user: {}",  user.getEmail());
+					result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getNewPassword()), user.getUserType());
+				}
+				else {
+					logger.info("Changing type of user: {}" , user.getEmail());
+					result = getDataStore().addUser(user.getEmail(), oldUser.getPassword(), user.getUserType());
+				}
+			}
+			else {
+				message = "User cannot edit itself";
+			}
+			
+		} 
+		else {
+			message = "Edited user is not found in database";
+		}
+		
+		return new Result(result, message);
+	}
+
+	public Result deleteUser(String userName) {
+		HttpSession session = servletRequest.getSession();
+		String userEmail = (String) session.getAttribute(USER_EMAIL);
+		boolean result = false;
+		String message = "";
+
+		if (!userEmail.equals(userName)) {
+			result = getDataStore().deleteUser(userName);
+		}
+		else {
+			message = "You cannot delete yourself";
+		}
+
+		if(result)
+			logger.info("Deleted user: {} ", userName);
+		else
+			logger.info("Could not find and delete user: {}" , userName);
+
+		return new Result(result, message);
+	}
+
+
+	public List<User> getUserList() {
+		return getDataStore().getUserList();
+	}
 
 
 	public Result changeUserPassword(User user) {
@@ -320,17 +398,12 @@ public class CommonRestService {
 		return new Result(result, message);
 	}
 
-
-
-
-
 	public Result isAuthenticatedRest(){
 		return new Result(isAuthenticated(servletRequest.getSession()));
 	}
 
 	public static boolean isAuthenticated(HttpSession session) 
 	{
-
 		Object isAuthenticated = session.getAttribute(IS_AUTHENTICATED);
 		Object userEmail = session.getAttribute(USER_EMAIL);
 		Object userPassword = session.getAttribute(USER_PASSWORD);
@@ -434,33 +507,33 @@ public class CommonRestService {
 	public String getCPUInfo() {
 		return gson.toJson(StatsCollector.getCPUInfoJSObject());
 	}
-	
+
 
 	public String getThreadDump() {
 		return Arrays.toString(StatsCollector.getThreadDump());
 	}
-	
+
 
 	public String getThreadDumpJSON() {
 		return gson.toJson(StatsCollector.getThreadDumpJSON());
 	}
-	
-	
+
+
 
 	public String getThreadsInfo() {
 		return gson.toJson(StatsCollector.getThreadInfoJSONObject());
 	}
-	
+
 
 	public Response getHeapDump() {
 		SystemUtils.getHeapDump(SystemUtils.HEAPDUMP_HPROF);
 		File file = new File(SystemUtils.HEAPDUMP_HPROF);
 		return Response.ok(file, MediaType.APPLICATION_OCTET_STREAM)
-			      .header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"" ) //optional
-			      .build();
+				.header("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"" ) //optional
+				.build();
 	}
-	
-	
+
+
 
 	/**
 	 * Return server uptime and startime in milliseconds
@@ -491,7 +564,7 @@ public class CommonRestService {
 		JsonObject jsonObject = StatsCollector.getSystemResourcesInfo(scopes);
 
 		jsonObject.addProperty(StatsCollector.TOTAL_LIVE_STREAMS, totalLiveStreams);
-		 
+
 		jsonObject.add(LICENSE_STATUS, gson.toJsonTree(getLicenceStatus()));
 
 		return gson.toJson(jsonObject);
@@ -580,16 +653,16 @@ public class CommonRestService {
 		AntMediaApplicationAdapter adapter = ((IApplicationAdaptorFactory) getApplication().getApplicationContext(appname).getBean(AntMediaApplicationAdapter.BEAN_NAME)).getAppAdaptor();
 		return gson.toJson(new Result(adapter.updateSettings(newSettings, true)));
 	}
-	
-	
+
+
 
 	public boolean getShutdownStatus(@QueryParam("appNames") String appNamesArray){
-		
+
 		boolean appShutdownProblemExists = false;
 		if (appNamesArray != null) 
 		{
 			String[] appNames = appNamesArray.split(",");
-			
+
 			if (appNames != null) 
 			{
 				for (String appName : appNames) 
@@ -600,16 +673,16 @@ public class CommonRestService {
 						appShutdownProblemExists = true;
 						break;
 					};
-										
+
 				}
 			}
 		}
-		
+
 		return !appShutdownProblemExists;
 	}
-	
+
 	public AntMediaApplicationAdapter getAppAdaptor(String appName) {
-		
+
 		AntMediaApplicationAdapter appAdaptor = null;
 		AdminApplication application = getApplication();
 		if (application != null) 
@@ -626,18 +699,18 @@ public class CommonRestService {
 		}
 		return appAdaptor;
 	}
-	
-	
+
+
 
 	public Response isShutdownProperly(@QueryParam("appNames") String appNamesArray)
 	{
 		boolean appShutdownProblemExists = false;
 		Response response = null;
-		
+
 		if (appNamesArray != null) 
 		{
 			String[] appNames = appNamesArray.split(",");
-			
+
 			if (appNames != null) 
 			{
 				for (String appName : appNames) 
@@ -660,23 +733,23 @@ public class CommonRestService {
 			else {
 				response = Response.status(Status.BAD_REQUEST).entity(new Result(false, "Bad parameter for appNames. ")).build();
 			}
-			
+
 		}
 		else {
 			response = Response.status(Status.BAD_REQUEST).entity(new Result(false, "Bad parameter for appNames. ")).build();
 		}
-		
+
 		if (response == null) {
 			response = Response.status(Status.OK).entity(new Result(!appShutdownProblemExists)).build();
 		}
-		
+
 		return response; 
 	}
-	
-	
+
+
 
 	public boolean setShutdownStatus(@QueryParam("appNames") String appNamesArray){
-		
+
 		String[] appNames = appNamesArray.split(",");
 		boolean result = true;
 
@@ -766,7 +839,7 @@ public class CommonRestService {
 	{
 		return getLicenceServiceInstance().getLastLicenseStatus();
 	}
-	
+
 	/**
 	 * This method resets the viewers counts and broadcast status in the db. 
 	 * This should be used to recover db after server crashes. 
@@ -1017,11 +1090,10 @@ public class CommonRestService {
 		}
 		return passResult;
 	}
-	
+
 
 	public Result createApplication(@QueryParam("appName") String appName) {
-		Result operationResult = new Result(getApplication().createApplication(appName));
-		return operationResult;
+		return new Result(getApplication().createApplication(appName));
 	}
 
 

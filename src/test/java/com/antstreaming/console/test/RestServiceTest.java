@@ -10,6 +10,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import dev.morphia.Datastore;
+import dev.morphia.query.Query;
+import io.antmedia.datastore.db.DataStore;
+import io.antmedia.datastore.db.MongoStore;
+import io.antmedia.datastore.db.types.Broadcast;
 import org.json.simple.*;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -77,10 +82,31 @@ public class RestServiceTest {
 			}
 		}
 	}
+	@Test
+	public void getUserList(){
+		String password = "password";
+		String userName = "username" + (int) (Math.random() * 1000000000);
+		User user = new User(userName, password, UserType.ADMIN);
+		Result result = restService.addUser(user);
+
+		// System.out.println("error id: " + result.errorId);
+		assertTrue(result.isSuccess());
+		assertEquals(1, restService.getUserList().size());
+
+		assertNotNull(restService.getUserList());
+
+		userName = "username" + (int) (Math.random() * 1000000000);
+		user = new User(userName, "second pass", UserType.ADMIN);
+
+		user.setPassword("second pass");
+		user.setUserType(UserType.ADMIN);
+		result = restService.addUser(user);
+		assertEquals(2, restService.getUserList().size());
+	}
 
 	@Test
 	public void testAddUser() {
-		Integer userType = 0;
+
 		String password = "password";
 		String userName = "username" + (int) (Math.random() * 1000000000);
 		User user = new User(userName, password, UserType.ADMIN);

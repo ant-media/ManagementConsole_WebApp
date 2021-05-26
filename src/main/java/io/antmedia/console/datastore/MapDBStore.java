@@ -1,10 +1,14 @@
 package io.antmedia.console.datastore;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 
+import io.antmedia.datastore.db.types.Broadcast;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -123,6 +127,17 @@ public class MapDBStore implements IDataStore {
 		}
 		return result;
 	}
+	public List<User> getUserList(){
+		ArrayList<User> list = new ArrayList<>();
+		synchronized (this) {
+			Collection<String> users = userMap.getValues();
+			for (String userString : users) {
+				User user = gson.fromJson(userString, User.class);
+				list.add(user);
+			}
+		}
+		return list;
+	}
 
 	public User getUser(String username) 
 	{
@@ -134,7 +149,7 @@ public class MapDBStore implements IDataStore {
 				}
 			}
 			catch (Exception e) {
-				e.printStackTrace();
+				logger.error(ExceptionUtils.getStackTrace(e));
 			}
 		}
 		return null;

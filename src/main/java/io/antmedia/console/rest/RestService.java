@@ -92,7 +92,7 @@ public class RestService extends CommonRestService {
 	 * 	if user is not added, errorId = 1 means username already exist
 	 */
 	@POST
-	@Path("/write/addUser")
+	@Path("/admin/addUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -142,7 +142,7 @@ public class RestService extends CommonRestService {
 	 */
 
 	@POST
-	@Path("/write/editUser")
+	@Path("/admin/editUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -156,7 +156,7 @@ public class RestService extends CommonRestService {
 	 * @return
 	 */
 	@DELETE
-	@Path("/write/deleteUser/{username}")
+	@Path("/admin/deleteUser/{username}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Override
@@ -194,7 +194,7 @@ public class RestService extends CommonRestService {
 
 	}
 	@GET
-	@Path("/write/userList")
+	@Path("/admin/userList")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public List<User> getUserList() {
@@ -463,7 +463,7 @@ public class RestService extends CommonRestService {
 
 
 	@POST
-	@Path("/write/changeSettings/{appname}")
+	@Path("/admin/changeSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -505,7 +505,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@POST
-	@Path("/write/changeServerSettings")
+	@Path("/admin/changeServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -599,7 +599,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/write/changeLogLevel/{level}")
+	@Path("/admin/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public String changeLogSettings(@PathParam("level") String logLevel)

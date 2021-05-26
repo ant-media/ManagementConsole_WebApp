@@ -88,7 +88,12 @@
 .
 	<filter-mapping>
 		<filter-name>AdminFilter</filter-name>
-		<url-pattern>/rest/write/*</url-pattern>
+		<url-pattern>/rest/v2/admin/*</url-pattern>
+	</filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>AdminFilter</filter-name>
+		<url-pattern>/rest/admin/*</url-pattern>
 	</filter-mapping>
 	
 	<filter>
@@ -121,6 +126,11 @@
 	<servlet-mapping>
 	  <servlet-name>RequestDispatherFilter</servlet-name>
 	  <url-pattern>/rest/request/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+	  <servlet-name>RequestDispatherFilter</servlet-name>
+	  <url-pattern>/rest/v2/request/*</url-pattern>
 	</servlet-mapping>
 	
 	<!-- 

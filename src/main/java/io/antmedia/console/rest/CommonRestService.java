@@ -153,28 +153,23 @@ public class CommonRestService {
 		boolean result = false;
 		String message = "";
 		HttpSession session = servletRequest.getSession();
-		if(isAuthenticated(session))
+		User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
+		if (user != null) 
 		{
-			User currentUser = getDataStore().getUser(session.getAttribute(USER_EMAIL).toString());
-			if (user != null) 
+			if (!getDataStore().doesUsernameExist(user.getEmail())) 
 			{
-				if (!getDataStore().doesUsernameExist(user.getEmail())) 
-				{
-					result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), user.getUserType());
-					logger.info("added user = {} password = {} user type = {}", user.getEmail(), user.getPassword()  ,user.getUserType());
-					logger.info("current user = {} user type = {}", currentUser.getEmail(),  currentUser.getUserType());
-				}
-				else {
-					message = "User with the same e-mail already exists";
-				}
+				result = getDataStore().addUser(user.getEmail(), getMD5Hash(user.getPassword()), user.getUserType());
+				logger.info("added user = {} password = {} user type = {}", user.getEmail(), user.getPassword()  ,user.getUserType());
+				logger.info("current user = {} user type = {}", currentUser.getEmail(),  currentUser.getUserType());
 			}
 			else {
-				message = "User object is null";
+				message = "User with the same e-mail already exists";
 			}
 		}
 		else {
-			message = "Current user is not authenticated";
+			message = "User object is null";
 		}
+
 
 		Result operationResult = new Result(result);
 		operationResult.setMessage(message);
@@ -305,14 +300,17 @@ public class CommonRestService {
 		}
 		return new Result(false, "User is not admin");
 	}
-	
+
 	public Result editUser(User user) 
 	{
 		boolean result = false;
+		String message = "";
 		HttpSession session = servletRequest.getSession();
-		if(isAuthenticated(session)) 
+		String userEmail = (String)session.getAttribute(USER_EMAIL);
+
+		if (user != null && user.getEmail() != null && getDataStore().doesUsernameExist(user.getEmail())) 
 		{
-			if (user != null && user.getEmail() != null && getDataStore().doesUsernameExist(user.getEmail())) 
+			if (!userEmail.equals(user.getEmail())) 
 			{
 				User oldUser = getDataStore().getUser(user.getEmail());
 				getDataStore().deleteUser(user.getEmail());
@@ -324,34 +322,43 @@ public class CommonRestService {
 					logger.info("Changing type of user: {}" , user.getEmail());
 					result = getDataStore().addUser(user.getEmail(), oldUser.getPassword(), user.getUserType());
 				}
-				return new Result(result, "Sucessfully edited");
-			} 
-			else {
-				return new Result(false, "Edited user is not found in database");
 			}
+			else {
+				message = "User cannot edit itself";
+			}
+			
+		} 
+		else {
+			message = "Edited user is not found in database";
 		}
-		return new Result(false, "Session is not authenticated");
+		
+		return new Result(result, message);
 	}
-	
+
 	public Result deleteUser(String userName) {
 		HttpSession session = servletRequest.getSession();
+		String userEmail = (String) session.getAttribute(USER_EMAIL);
 		boolean result = false;
-		if(isAuthenticated(session)) {
+		String message = "";
+
+		if (!userEmail.equals(userName)) {
 			result = getDataStore().deleteUser(userName);
 		}
+		else {
+			message = "You cannot delete yourself";
+		}
+
 		if(result)
 			logger.info("Deleted user: {} ", userName);
 		else
 			logger.info("Could not find and delete user: {}" , userName);
-		return new Result(result);
+
+		return new Result(result, message);
 	}
-	
+
+
 	public List<User> getUserList() {
-		HttpSession session = servletRequest.getSession();
-		if(isAuthenticated(session)) {
-			return getDataStore().getUserList();
-		}
-		return new ArrayList<>();
+		return getDataStore().getUserList();
 	}
 
 
@@ -391,17 +398,12 @@ public class CommonRestService {
 		return new Result(result, message);
 	}
 
-
-
-
-
 	public Result isAuthenticatedRest(){
 		return new Result(isAuthenticated(servletRequest.getSession()));
 	}
 
 	public static boolean isAuthenticated(HttpSession session) 
 	{
-
 		Object isAuthenticated = session.getAttribute(IS_AUTHENTICATED);
 		Object userEmail = session.getAttribute(USER_EMAIL);
 		Object userPassword = session.getAttribute(USER_PASSWORD);
@@ -1091,8 +1093,7 @@ public class CommonRestService {
 
 
 	public Result createApplication(@QueryParam("appName") String appName) {
-		Result operationResult = new Result(getApplication().createApplication(appName));
-		return operationResult;
+		return new Result(getApplication().createApplication(appName));
 	}
 
 

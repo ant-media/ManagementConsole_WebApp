@@ -29,7 +29,6 @@ import io.antmedia.console.rest.RestService;
 import io.antmedia.datastore.db.types.Broadcast;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
-import io.antmedia.settings.LogSettings;
 
 
 public class RestServiceHttpTest {
@@ -44,8 +43,6 @@ public class RestServiceHttpTest {
 	
 	private static final String GET_LEVEL_URL = "http://localhost:5080/rest/getLogLevel/";
 	
-	public LogSettings logSettings ;
-
 	Gson gson = new Gson();
 	
 	RestService restService = new RestService();

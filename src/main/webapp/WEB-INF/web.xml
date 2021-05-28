@@ -113,6 +113,11 @@
 	  <url-pattern>/rest/request/*</url-pattern>
 	</servlet-mapping>
 	
+	<servlet-mapping>
+	  <servlet-name>RequestDispatherFilter</servlet-name>
+	  <url-pattern>/rest/v2/request/*</url-pattern>
+	</servlet-mapping>
+	
 	<!-- 
 	<filter>
     		<filter-name>CorsHeaderFilter</filter-name>

@@ -1,11 +1,27 @@
 package io.antmedia.console.rest;
 
 import io.antmedia.AntMediaApplicationAdapter;
+import java.io.IOException;
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.springframework.stereotype.Component;
+
 import io.antmedia.AppSettings;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
-import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 import io.swagger.annotations.*;
 import org.apache.commons.codec.binary.Hex;
@@ -19,6 +35,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+
 
 
 @Api(value = "ManagementRestService")
@@ -45,24 +62,149 @@ public class RestServiceV2 extends CommonRestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public Result addUser(@ApiParam(value = "User object. If it is null, new user won't be created.", required = true) User user) {
-
 		return super.addUser(user);
 	}
+	
+	@PUT
+	@Path("/users")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	public Result editUser(User user) {
+		return super.editUser(user);
+	}
+	
+	@DELETE
+	@Path("/users/{username}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Override
+	public Result deleteUser(@PathParam("username") String userName) {
+		return super.deleteUser(userName);
+	}
+	
+	
+	@GET
+	@Path("/user-list")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public List<User> getUserList() {
+		return super.getUserList();
+	}
+	
+	
+	@POST
+	@Path("/applications/settings/{appname}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	public String changeSettings(@PathParam("appname") String appname, AppSettings newSettings){
 
-	@ApiOperation(value = "Creates initial user. This is a one time scenario when initial user creation required and shouldn't be used otherwise. User object is required and can't be null", response = Result.class)
+		return super.changeSettings(appname, newSettings);
+	}
+	
+	@POST
+	@Path("/server-settings")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	public String changeServerSettings(ServerSettings serverSettings){
+
+		return super.changeServerSettings(serverSettings);
+	}
+	
+	/**
+	 * This method resets the viewers counts and broadcast status in the db. 
+	 * This should be used to recover db after server crashes. 
+	 * It's not intended to use to ignore the crash
+	 * @param appname the application name that broadcasts will be reset
+	 * @return
+	 */
+	@POST
+	@Path("/applications/{appname}/reset")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	public Result resetBroadcast(@PathParam("appname") String appname) 
+	{
+		return super.resetBroadcast(appname);
+	}
+	
+	
+	@DELETE
+	@Path("/applications/{appName}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public Result deleteApplication(@PathParam("appName") String appName) {
+		if (appName != null) {
+			return super.deleteApplication(appName);
+		}
+		return new Result(false, "Application name is not defined");
+	}
+	
+	@POST
+	@Path("/applications/{appName}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Override
+	public Result createApplication(@PathParam("appName") String appName) 
+	{
+		Result result;
+		if (appName != null && appName.matches("^[a-zA-Z0-9]*$")) 
+		{
+			List<String> applications = getApplication().getApplications();
+
+			boolean applicationAlreadyExist = false;
+			for (String applicationName : applications) 
+			{
+				if (applicationName.equalsIgnoreCase(appName)) 
+				{
+					applicationAlreadyExist = true;
+					break;
+				}
+			}
+			
+			if (!applicationAlreadyExist) 
+			{
+				result = super.createApplication(appName);
+			}
+			else 
+			{
+				result = new Result(false, "Application with the same name already exists");
+			}
+		}
+		else {
+			result = new Result(false, "Application name is not alphanumeric. Please provide alphanumeric characters");
+		}
+		
+		return result;
+	}
+
+
+	@GET
+	@Path("/admin-status")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
+	public Result isAdmin(){
+		return super.isAdmin();
+	}
+
+  @ApiOperation(value = "Creates initial user. This is a one time scenario when initial user creation required and shouldn't be used otherwise. User object is required and can't be null", response = Result.class)
 	@POST
 	@Path("/users/initial")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+  @Override
 	public Result addInitialUser(@ApiParam(value = "User object. If it is null, new user won't be created.", required = true)User user) {
-
 		return super.addInitialUser(user);
 	}
+  
 	@ApiOperation(value = "Checks first login status. If server being logged in first time, it returns true, otherwise false.", response = Result.class)
 	@GET
 	@Path("/first-login-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
 	public Result isFirstLogin() 
 	{
 		return super.isFirstLogin();
@@ -81,8 +223,8 @@ public class RestServiceV2 extends CommonRestService {
 	@Path("/users/authenticate")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+  @Override
 	public Result authenticateUser(@ApiParam(value = "User object to authenticate", required = true) User user) {
-
 		return super.authenticateUser(user);
 	}
 
@@ -91,23 +233,17 @@ public class RestServiceV2 extends CommonRestService {
 	@Path("/users/password")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+  @Override
 	public Result changeUserPassword(@ApiParam(value = "User object to change the password", required = true)User user) {
-
 		return super.changeUserPassword(user);
-
 	}
-
-	public Result changeUserPasswordInternal(String userMail, User user) {
-
-		return super.changeUserPasswordInternal(userMail, user);
-	}
-
 
 	
 	@ApiOperation(value = "Returns true if user is authenticated to call rest api operations.", response = Result.class)
 	@GET
 	@Path("/authentication-status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public Result isAuthenticatedRest(){
 		return super.isAuthenticatedRest();
 	}
@@ -148,6 +284,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/system-status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getSystemInfo() {
 		return super.getSystemInfo();
 	}
@@ -166,6 +303,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/jvm-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getJVMMemoryInfo() {
 		return super.getJVMMemoryInfo();
 	}
@@ -184,6 +322,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/system-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getSystemMemoryInfo() {
 		return super.getSystemMemoryInfo();
 	}
@@ -201,6 +340,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/file-system-status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getFileSystemInfo() {
 		return super.getFileSystemInfo();
 	}
@@ -217,6 +357,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/cpu-status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getCPUInfo() {
 		return super.getCPUInfo();
 	}
@@ -225,6 +366,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/thread-dump")
 	@Produces(MediaType.TEXT_PLAIN)
+	@Override
 	public String getThreadDump() {
 		return super.getThreadDump();
 	}
@@ -233,6 +375,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/thread-dump")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getThreadDumpJSON() {
 		return super.getThreadDumpJSON();
 	}
@@ -241,6 +384,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/threads")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getThreadsInfo() {
 		return super.getThreadsInfo();
 	}
@@ -254,6 +398,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/heap-dump")
 	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	@Override
 	public Response getHeapDump() {
 
 		return super.getHeapDump();
@@ -272,6 +417,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/server-time")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getServerTime() {
 		return super.getServerTime();
 	}
@@ -280,6 +426,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/system-resources")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getSystemResourcesInfo() {
 
 		return super.getSystemResourcesInfo();
@@ -288,6 +435,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/gpu-status")
 	@Produces(MediaType.APPLICATION_JSON) 
+	@Override
 	public String getGPUInfo() 
 	{
 		return super.getGPUInfo();
@@ -297,6 +445,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/version")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getVersion() {
 		return super.getVersion();
 	}
@@ -305,6 +454,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getApplications() {
 
 		return super.getApplications();
@@ -319,6 +469,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/live-clients-size")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getLiveClientsSize() 
 	{
 
@@ -328,6 +479,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/applications-info")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public String getApplicationInfo() {
 
 		return super.getApplicationInfo();
@@ -343,6 +495,7 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/applications/live-streams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
+  @Override
 	public String getAppLiveStreams(@ApiParam(value = "Application name", required = true) @PathParam("appname") String name) {
 
 		return super.getAppLiveStreams(name);
@@ -362,16 +515,17 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.getAppAdaptor(appName);
 	}
+  
 	@ApiOperation(value = "Checks whether application or applications have shutdown properly or not.", response = Result.class)
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Returns the shutdown status of entered applications."),
-			@ApiResponse(code = 400, message = "Either entered in wrong format or typed incorrectly application names")})
+	@ApiResponse(code = 400, message = "Either entered in wrong format or typed incorrectly application names")})
 	@GET
 	@Path("/shutdown-proper-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+  @Override
 	public Response isShutdownProperly(@ApiParam(value = "Application name", required = true) @QueryParam("appNames") String appNamesArray)
 	{
-
 		return super.isShutdownProperly(appNamesArray);
 	}
 
@@ -380,6 +534,7 @@ public class RestServiceV2 extends CommonRestService {
 	@Path("/shutdown-properly")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+  @Override
 	public boolean setShutdownStatus(@ApiParam(value = "Application name", required = true) @QueryParam("appNames") String appNamesArray){
 
 		return super.setShutdownStatus(appNamesArray);
@@ -393,10 +548,12 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.changeServerSettings(serverSettings);
 	}
+  
 	@ApiOperation(value = "Returns true if the server is enterprise edition.", response = Result.class)
 	@GET
 	@Path("/enterprise-edition")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public Result isEnterpriseEdition(){
 
 		return super.isEnterpriseEdition();
@@ -405,15 +562,16 @@ public class RestServiceV2 extends CommonRestService {
 	@GET
 	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public AppSettings getSettings(@ApiParam(value = "Application name", required = true) @PathParam("appname") String appname) 
+  @Override
+	public AppSettings getSettings(@ApiParam(value = "Application name", required = true) @PathParam("appname") String appname) 	
 	{
-
 		return super.getSettings(appname);
 	}
 	@ApiOperation(value = "Returns the server settings. From log level to measurement period of cpu, license key of the server host address and many more settings are returned at once.", response = Result.class)
 	@GET
 	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public ServerSettings getServerSettings() 
 	{
 		return super.getServerSettings();
@@ -424,9 +582,9 @@ public class RestServiceV2 extends CommonRestService {
 	@Path("/licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Licence getLicenceStatus(@ApiParam(value = "License key", required = true) @QueryParam("key") String key) 
+  @Override
+	public Licence getLicenceStatus(@ApiParam(value = "License key", required = true) @QueryParam("key") String key) 	
 	{
-
 		return super.getLicenceStatus(key);
 	}
 	
@@ -435,6 +593,7 @@ public class RestServiceV2 extends CommonRestService {
 	@Path("/last-licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Override
 	public Licence getLicenceStatus() 
 	{
 		return super.getLicenceStatus();
@@ -457,10 +616,11 @@ public class RestServiceV2 extends CommonRestService {
 		return super.resetBroadcast(appname);
 	}
 
-	@ApiOperation(value = "Returns the status of cluster check of the server. If it is in the cluster mode, result will be true.", response = Result.class)
+	@ApiOperation(value = "Returns the server mode. If it is in the cluster mode, result will be true.", response = Result.class)
 	@GET
 	@Path("/cluster-mode-status")
 	@Produces(MediaType.APPLICATION_JSON)
+	@Override
 	public Result isInClusterMode(){
 
 		return super.isInClusterMode();
@@ -480,7 +640,6 @@ public class RestServiceV2 extends CommonRestService {
 	@Path("/log-level/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String changeLogSettings(@ApiParam(value = "Log level", required = true) @PathParam("level") String logLevel){
-
 		return super.changeLogSettings(logLevel);
 	}
 	
@@ -490,7 +649,6 @@ public class RestServiceV2 extends CommonRestService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public String getLogFile(@ApiParam(value = "Char size of the log", required = true) @PathParam("charSize") int charSize, @ApiParam(value = "Log type. ERROR can be used to get only error logs", required = true) @QueryParam("logType") String logType,
 							 @ApiParam(value = "Offset of the retrieved log", required = true) @PathParam("offsetSize") long offsetSize) throws IOException {
-
 		return super.getLogFile(charSize,logType, offsetSize);
 	}
 
@@ -556,5 +714,5 @@ public class RestServiceV2 extends CommonRestService {
 		}
 		return new Result(false, "Application name is not defined");
 	}
-
+	
 }

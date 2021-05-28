@@ -3,10 +3,11 @@ package io.antmedia.console.datastore;
 import org.springframework.beans.factory.annotation.Value;
 
 import io.antmedia.AppSettings;
+import io.antmedia.datastore.db.IDataStoreFactory;
 
-public class DataStoreFactory {
+public class ConsoleDataStoreFactory  {
 
-	private IDataStore dataStore;
+	private IConsoleDataStore dataStore;
 	
 	@Value( "${"+AppSettings.SETTINGS_DB_APP_NAME+":#{null}}" )
 	private String appName;
@@ -74,7 +75,7 @@ public class DataStoreFactory {
 		this.dbPassword = dbPassword;
 	}
 
-	public IDataStore getDataStore() {
+	public IConsoleDataStore getDataStore() {
 		if (dataStore == null) {
 			if(dbType.contentEquals("mongodb"))
 			{

@@ -29,7 +29,7 @@
 		<property name="handler" ref="web.handler" />
 	</bean>
 	
-	<bean id="dataStoreFactory" class="io.antmedia.console.datastore.DataStoreFactory"/>
+	<bean id="dataStoreFactory" class="io.antmedia.console.datastore.ConsoleDataStoreFactory"/>
 
 	<!--
 	Defines the web handler which acts as an applications endpoint

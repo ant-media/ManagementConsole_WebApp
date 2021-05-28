@@ -25,7 +25,7 @@ import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.IApplicationAdaptorFactory;
 import io.antmedia.SystemUtils;
 import io.antmedia.cluster.IClusterNotifier;
-import io.antmedia.console.datastore.DataStoreFactory;
+import io.antmedia.console.datastore.ConsoleDataStoreFactory;
 import io.antmedia.datastore.db.DataStore;
 import io.antmedia.settings.ServerSettings;
 import io.vertx.core.Vertx;
@@ -41,7 +41,7 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 
 
 	public static final String APP_NAME = "ConsoleApp";
-	private DataStoreFactory dataStoreFactory;
+	private ConsoleDataStoreFactory dataStoreFactory;
 
 	public static class ApplicationInfo {
 		public String name;
@@ -276,11 +276,11 @@ public class AdminApplication extends MultiThreadedApplicationAdapter {
 		return null;
 	}
 
-	public DataStoreFactory getDataStoreFactory() {
+	public ConsoleDataStoreFactory getDataStoreFactory() {
 		return dataStoreFactory;
 	}
 
-	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
+	public void setDataStoreFactory(ConsoleDataStoreFactory dataStoreFactory) {
 		this.dataStoreFactory = dataStoreFactory;
 	}
 

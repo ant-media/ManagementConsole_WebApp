@@ -24,9 +24,9 @@ import java.util.List;
 @Api(value = "ManagementRestService")
 @SwaggerDefinition(
 		info = @Info(
-				description = "Ant Media Server REST API Reference",
+				description = "Ant Media Server Management Panel REST API",
 				version = "v2.0",
-				title = "Ant Media Server REST API Reference",
+				title = "Ant Media Server Management Panel REST API",
 				contact = @Contact(name = "Ant Media Info", email = "contact@antmedia.io", url = "https://antmedia.io"),
 				license = @License(name = "Apache 2.0", url = "http://www.apache.org")),
 		consumes = {"application/json"},
@@ -36,10 +36,10 @@ import java.util.List;
 		basePath = "/v2"
 )
 @Component
-@Path("/v2/management")
+@Path("/v2")
 public class RestServiceV2 extends CommonRestService {
 
-	@ApiOperation(value = "Creates a new user", response = Result.class)
+	@ApiOperation(value = "Creates a new user. If user object is null or if user is not authenticated, new user won't be created.", response = Result.class)
 	@POST
 	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -49,7 +49,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.addUser(user);
 	}
 
-	@ApiOperation(value = "Creates initial user", response = Result.class)
+	@ApiOperation(value = "Creates initial user. This is a one time scenario when initial user creation required and shouldn't be used otherwise. User object is required and can't be null", response = Result.class)
 	@POST
 	@Path("/users/initial")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -58,7 +58,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.addInitialUser(user);
 	}
-	@ApiOperation(value = "Checks first login status", response = Result.class)
+	@ApiOperation(value = "Checks first login status. If server being logged in first time, it returns true, otherwise false.", response = Result.class)
 	@GET
 	@Path("/first-login-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -76,7 +76,7 @@ public class RestServiceV2 extends CommonRestService {
 	 * @param user: The User object to be authenticated 
 	 * @return json that shows user is authenticated or not
 	 */
-	@ApiOperation(value = "Shows whether user is authenticated or not", response = Result.class)
+	@ApiOperation(value = "Authenticates user with given username and password. Requires user object to authenticate.", response = Result.class)
 	@POST
 	@Path("/users/authenticate")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -86,7 +86,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.authenticateUser(user);
 	}
 
-	@ApiOperation(value = "Changes the user password", response = Result.class)
+	@ApiOperation(value = "Changes the given user's password.", response = Result.class)
 	@POST
 	@Path("/users/password")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -103,8 +103,8 @@ public class RestServiceV2 extends CommonRestService {
 	}
 
 
-	//TODO add apioperation value, currently I don't know what isauthenticatedRest does.
-	@ApiOperation(value = "", response = Result.class)
+	
+	@ApiOperation(value = "Returns true if user is authenticated to call rest api operations.", response = Result.class)
 	@GET
 	@Path("/authentication-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -144,7 +144,7 @@ public class RestServiceV2 extends CommonRestService {
 	 *	osHDInUseSpace()			: In Use Space
 	 **/
 
-	@ApiOperation(value = "Gets system information", response = Result.class)
+	@ApiOperation(value = "Returns system information which includes many information such as JVM memory, OS information, Available File Space, Physical memory informations in detail.", response = Result.class)
 	@GET
 	@Path("/system-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -162,7 +162,7 @@ public class RestServiceV2 extends CommonRestService {
 	 * 	totalMemory()-freeMemory()	: In Use
 	 * 	availableProcessors()		: Total Processors available
 	 */
-	@ApiOperation(value = "Gets JVM memory status", response = Result.class)
+	@ApiOperation(value = "Returns JVM memory informations. Max, total, free, in-use and available processors are returned.", response = Result.class)
 	@GET
 	@Path("/jvm-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -180,7 +180,7 @@ public class RestServiceV2 extends CommonRestService {
 	 *  osFreeSwapSpace()			: Available Swap Space
 	 *  osInUseSwapSpace()			: In Use Swap Space
 	 */
-	@ApiOperation(value = "Gets system memory status", response = Result.class)
+	@ApiOperation(value = "Gets system memory status. Returns Virtual, total physical, available physical, currently in use, total swap space, available swap space and in use swap space. ", response = Result.class)
 	@GET
 	@Path("/system-memory-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -197,7 +197,7 @@ public class RestServiceV2 extends CommonRestService {
 	 *	osHDFreeSpace()				: Available Space
 	 *	osHDInUseSpace()			: In Use Space
 	 **/
-	@ApiOperation(value = "Gets system file status", response = Result.class)
+	@ApiOperation(value = "Gets system file status. Returns usable space, total space, available space and in use space.", response = Result.class)
 	@GET
 	@Path("/file-system-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -213,7 +213,7 @@ public class RestServiceV2 extends CommonRestService {
 	 * getProcessCpuLoad: "% recent cpu usage" for the Java Virtual Machine process. 
 	 * @return the CPU load info
 	 */
-	@ApiOperation(value = "Gets system and process cpu load", response = Result.class)
+	@ApiOperation(value = "Returns system cpu load, process cpu load and process cpu time.", response = Result.class)
 	@GET
 	@Path("/cpu-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -221,7 +221,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getCPUInfo();
 	}
 	
-	@ApiOperation(value = "Gets thread dump in plain text", response = Result.class)
+	@ApiOperation(value = "Gets thread dump in plain text.Includes very detailed information such as thread name, thread id, blocked time of thread, thread state and many more information are returned.", response = Result.class)
 	@GET
 	@Path("/thread-dump")
 	@Produces(MediaType.TEXT_PLAIN)
@@ -229,7 +229,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getThreadDump();
 	}
 
-	@ApiOperation(value = "Gets thread dump in json format", response = Result.class)
+	@ApiOperation(value = "Gets thread dump in json format. Includes very detailed information such as thread name, thread id, blocked time of thread, thread state and many more information are returned.", response = Result.class)
 	@GET
 	@Path("/thread-dump")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -237,7 +237,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getThreadDumpJSON();
 	}
 
-	@ApiOperation(value = "Gets thread information", response = Result.class)
+	@ApiOperation(value = "Returns processor's thread information. Includes number of dead locked threads, thread count, and thread peek count.", response = Result.class)
 	@GET
 	@Path("/threads")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -249,7 +249,7 @@ public class RestServiceV2 extends CommonRestService {
 
 	// method path was already Restful
 	// v2 is added to prevent clashes with older RestService.java
-	@ApiOperation(value = "Gets heap dump", response = Result.class)
+	@ApiOperation(value = "Returns heap dump.", response = Result.class)
 	@ApiResponses(value = {@ApiResponse(code = 200, message = "Returns the heap dump")})
 	@GET
 	@Path("/heap-dump")
@@ -268,7 +268,7 @@ public class RestServiceV2 extends CommonRestService {
 
 	// method path was already Restful
 	// v2 is added to prevent clashes with older RestService.java
-	@ApiOperation(value = "Gets server time", response = Result.class)
+	@ApiOperation(value = "Gets server time. Returns server uptime and start time in milliseconds in JSON.", response = Result.class)
 	@GET
 	@Path("/server-time")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -276,7 +276,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getServerTime();
 	}
 
-	@ApiOperation(value = "Gets system resource information", response = Result.class)
+	@ApiOperation(value = "Gets system resource information. Returns number of total live streams, cpu usage, system information, jvm information, file system information, license status, gpu status etc. Basically returns most of the information in one package.", response = Result.class)
 	@GET
 	@Path("/system-resources")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -284,7 +284,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.getSystemResourcesInfo();
 	}
-	@ApiOperation(value = "Gets GPU information", response = Result.class)
+	@ApiOperation(value = "Gets GPU information. Returns whether you have GPU or not. If yes, information of the gpu and the number of total gpus.", response = Result.class)
 	@GET
 	@Path("/gpu-status")
 	@Produces(MediaType.APPLICATION_JSON) 
@@ -293,7 +293,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getGPUInfo();
 	}
 
-	@ApiOperation(value = "Gets software version", response = Result.class)
+	@ApiOperation(value = "Returns the version of Ant Media Server.", response = Result.class)
 	@GET
 	@Path("/version")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -301,7 +301,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getVersion();
 	}
 
-	@ApiOperation(value = "Gets the applications in the server", response = Result.class)
+	@ApiOperation(value = "Gets the applications in the server. Returns the name of the applications in JSON format.", response = Result.class)
 	@GET
 	@Path("/applications")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -315,7 +315,7 @@ public class RestServiceV2 extends CommonRestService {
 	 * only return totalLiveStreamSize
 	 * @return the number of live clients
 	 */
-	@ApiOperation(value = "Gets total amount of live streams", response = Result.class)
+	@ApiOperation(value = "Returns total number of live streams and total number of connections.", response = Result.class)
 	@GET
 	@Path("/live-clients-size")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -324,7 +324,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.getLiveClientsSize();
 	}
-	@ApiOperation(value = "Gets application info", response = Result.class)
+	@ApiOperation(value = "Gets application info. Application info includes live stream count, vod count and application name.", response = Result.class)
 	@GET
 	@Path("/applications-info")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -339,7 +339,7 @@ public class RestServiceV2 extends CommonRestService {
 	 * @param name: application name 
 	 * @return live streams in the application
 	 */
-	@ApiOperation(value = "Gets live streams in the application", response = Result.class)
+	@ApiOperation(value = "Returns live streams in the specified application. Retrieves broadcast names and the consumer size.", response = Result.class)
 	@GET
 	@Path("/applications/live-streams/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -348,7 +348,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getAppLiveStreams(name);
 	}
 
-	@ApiOperation(value = "Changes the application settings", response = Result.class)
+	@ApiOperation(value = "Changes the application settings with the given settings. Null fields will be set to default values.", response = Result.class)
 	@POST
 	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -362,7 +362,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.getAppAdaptor(appName);
 	}
-	@ApiOperation(value = "Checks whether application or applications have shutdown properly or not", response = Result.class)
+	@ApiOperation(value = "Checks whether application or applications have shutdown properly or not.", response = Result.class)
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Returns the shutdown status of entered applications."),
 			@ApiResponse(code = 400, message = "Either entered in wrong format or typed incorrectly application names")})
 	@GET
@@ -384,7 +384,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.setShutdownStatus(appNamesArray);
 	}
-	@ApiOperation(value = "Changes server settings", response = Result.class)
+	@ApiOperation(value = "Changes server settings. Sets Server Name, license key, market build status and node group.", response = Result.class)
 	@POST
 	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -393,7 +393,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.changeServerSettings(serverSettings);
 	}
-	@ApiOperation(value = "Checks whether its enterprise edition or not", response = Result.class)
+	@ApiOperation(value = "Returns true if the server is enterprise edition.", response = Result.class)
 	@GET
 	@Path("/enterprise-edition")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -401,7 +401,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.isEnterpriseEdition();
 	}
-	@ApiOperation(value = "Gets application settings", response = Result.class)
+	@ApiOperation(value = "Returns the specified application settings", response = Result.class)
 	@GET
 	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -410,7 +410,7 @@ public class RestServiceV2 extends CommonRestService {
 
 		return super.getSettings(appname);
 	}
-	@ApiOperation(value = "Gets server settings", response = Result.class)
+	@ApiOperation(value = "Returns the server settings. From log level to measurement period of cpu, license key of the server host address and many more settings are returned at once.", response = Result.class)
 	@GET
 	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -419,7 +419,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getServerSettings();
 	}
 
-	@ApiOperation(value = "Gets license status", response = Result.class)
+	@ApiOperation(value = "Returns license status. Includes license ID, status, owner, start date, end date, type and license count.", response = Result.class)
 	@GET
 	@Path("/licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -430,7 +430,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.getLicenceStatus(key);
 	}
 	
-	@ApiOperation(value = "Gets last license status", response = Result.class)
+	@ApiOperation(value = "Returns the last checked license status. Includes license ID, owner, start date, end date, type and license count.", response = Result.class)
 	@GET
 	@Path("/last-licence-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -457,7 +457,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.resetBroadcast(appname);
 	}
 
-	@ApiOperation(value = "Checks whether server in cluster mode or not", response = Result.class)
+	@ApiOperation(value = "Returns the status of cluster check of the server. If it is in the cluster mode, result will be true.", response = Result.class)
 	@GET
 	@Path("/cluster-mode-status")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -466,7 +466,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.isInClusterMode();
 	}
 	
-	@ApiOperation(value = "Gets log level of server", response = Result.class)
+	@ApiOperation(value = "Returns the log level of server. It can be one of the following: ALL, INFO, TRACE, DEBUG, WARN, ERROR and OFF.", response = Result.class)
 	@GET
 	@Path("/log-level")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -484,7 +484,7 @@ public class RestServiceV2 extends CommonRestService {
 		return super.changeLogSettings(logLevel);
 	}
 	
-	@ApiOperation(value = "Gets log file", response = Result.class)
+	@ApiOperation(value = "Gets log file. Char size of the log, offset or log type can be specified.", response = Result.class)
 	@GET
 	@Path("/log-file/{offsetSize}/{charSize}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -508,7 +508,7 @@ public class RestServiceV2 extends CommonRestService {
 		return passResult;
 	}
 
-	@ApiOperation(value = "Creates a new application with given name", response = Result.class)
+	@ApiOperation(value = "Creates a new application with given name.", response = Result.class)
 	@POST
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -546,7 +546,7 @@ public class RestServiceV2 extends CommonRestService {
 	}
 
 
-	@ApiOperation(value = "Deletes application with given name", response = Result.class)
+	@ApiOperation(value = "Deletes application with the given name.", response = Result.class)
 	@DELETE
 	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)

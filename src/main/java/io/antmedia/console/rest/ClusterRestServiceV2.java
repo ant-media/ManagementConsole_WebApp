@@ -4,8 +4,8 @@ import java.util.List;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
@@ -24,34 +24,36 @@ import io.antmedia.rest.BroadcastRestService.SimpleStat;
 import io.antmedia.rest.model.Result;
 
 @Component
-@Path("/cluster")
-public class ClusterRestService extends ClusterRestServiceV2 {
-	protected static Logger logger = LoggerFactory.getLogger(ClusterRestService.class);
+@Path("/v2/cluster")
+public class ClusterRestServiceV2 {
+	protected static Logger logger = LoggerFactory.getLogger(ClusterRestServiceV2.class);
 	
 	@Context
 	private ServletContext servletContext;
 	
+	private IClusterStore getClusterStore() {
+		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+		IClusterNotifier clusterNotifier = (IClusterNotifier) ctxt.getBean(IClusterNotifier.BEAN_NAME);
+		return clusterNotifier.getClusterStore();
+	}
 	
 	@GET
 	@Path("/node-count")
-	@Override
 	public SimpleStat getNodeCount() {
-		return super.getNodeCount();
+		return new SimpleStat(getClusterStore().getNodeCount());
 	}
 	
 	@GET
 	@Path("/nodes/{offset}/{size}")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Override
 	public List<ClusterNode> getNodeList(@PathParam("offset") int offset, @PathParam("size") int size) {
-		return super.getNodeList(offset, size);
+		return getClusterStore().getClusterNodes(offset, size);
 	}	
 	
-	@GET
-	@Path("/deleteNode/{id}")
+	@DELETE
+	@Path("/node/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	@Override
 	public Result deleteNode(@PathParam("id") String nodeId) {
-		return super.deleteNode(nodeId);
+		return new Result(getClusterStore().deleteNode(nodeId));
 	}
 }

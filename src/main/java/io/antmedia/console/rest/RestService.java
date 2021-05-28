@@ -1,18 +1,8 @@
 package io.antmedia.console.rest;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.List;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -22,48 +12,16 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
-import io.antmedia.datastore.db.types.Broadcast;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.apache.commons.codec.binary.Hex;
-import org.red5.server.api.scope.IScope;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
-import ch.qos.logback.classic.Level;
-import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
-import io.antmedia.IApplicationAdaptorFactory;
-import io.antmedia.SystemUtils;
-import io.antmedia.cluster.IClusterNotifier;
-import io.antmedia.console.AdminApplication;
-import io.antmedia.console.AdminApplication.ApplicationInfo;
-import io.antmedia.console.AdminApplication.BroadcastInfo;
-import io.antmedia.console.datastore.DataStoreFactory;
-import io.antmedia.console.datastore.IDataStore;
 import io.antmedia.datastore.db.types.Licence;
-import io.antmedia.datastore.preference.PreferenceStore;
-import io.antmedia.licence.ILicenceService;
-import io.antmedia.rest.RestServiceBase;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
-import io.antmedia.rest.model.UserType;
-import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
-import io.antmedia.statistic.StatsCollector;
 
 @Component
 @Path("/")
@@ -92,7 +50,7 @@ public class RestService extends CommonRestService {
 	 * 	if user is not added, errorId = 1 means username already exist
 	 */
 	@POST
-	@Path("/admin/addUser")
+	@Path("/addUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -142,7 +100,7 @@ public class RestService extends CommonRestService {
 	 */
 
 	@POST
-	@Path("/admin/editUser")
+	@Path("/editUser")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -156,7 +114,7 @@ public class RestService extends CommonRestService {
 	 * @return
 	 */
 	@DELETE
-	@Path("/admin/deleteUser/{username}")
+	@Path("/deleteUser/{username}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Override
@@ -194,7 +152,7 @@ public class RestService extends CommonRestService {
 
 	}
 	@GET
-	@Path("/admin/userList")
+	@Path("/userList")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public List<User> getUserList() {
@@ -463,7 +421,7 @@ public class RestService extends CommonRestService {
 
 
 	@POST
-	@Path("/admin/changeSettings/{appname}")
+	@Path("/changeSettings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -505,7 +463,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@POST
-	@Path("/admin/changeServerSettings")
+	@Path("/changeServerSettings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -590,16 +548,7 @@ public class RestService extends CommonRestService {
 	}
 
 	@GET
-	@Path("/getLogLevel")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Override
-	public LogSettings getLogSettings() 
-	{
-		return super.getLogSettings();
-	}
-
-	@GET
-	@Path("/admin/changeLogLevel/{level}")
+	@Path("/changeLogLevel/{level}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public String changeLogSettings(@PathParam("level") String logLevel)

@@ -1,10 +1,42 @@
 package io.antmedia.console.rest;
 
-import ch.qos.logback.classic.Level;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import org.apache.commons.codec.binary.Hex;
+import org.red5.server.api.scope.IScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import ch.qos.logback.classic.Level;
 import io.antmedia.AntMediaApplicationAdapter;
 import io.antmedia.AppSettings;
 import io.antmedia.IApplicationAdaptorFactory;
@@ -13,8 +45,8 @@ import io.antmedia.cluster.IClusterNotifier;
 import io.antmedia.console.AdminApplication;
 import io.antmedia.console.AdminApplication.ApplicationInfo;
 import io.antmedia.console.AdminApplication.BroadcastInfo;
-import io.antmedia.console.datastore.DataStoreFactory;
-import io.antmedia.console.datastore.IDataStore;
+import io.antmedia.console.datastore.ConsoleDataStoreFactory;
+import io.antmedia.console.datastore.IConsoleDataStore;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.datastore.preference.PreferenceStore;
 import io.antmedia.licence.ILicenceService;
@@ -22,35 +54,8 @@ import io.antmedia.rest.RestServiceBase;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
 import io.antmedia.rest.model.UserType;
-import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 import io.antmedia.statistic.StatsCollector;
-import org.apache.commons.codec.binary.Hex;
-import org.red5.server.api.scope.IScope;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import java.io.*;
-import java.nio.charset.Charset;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 
 
 public class CommonRestService {
@@ -87,7 +92,7 @@ public class CommonRestService {
 
 	private static final String USER_PASSWORD = "user.password";
 
-	private static final String USER_EMAIL = "user.email";
+	public static final String USER_EMAIL = "user.email";
 
 	public static final String IS_AUTHENTICATED = "isAuthenticated";
 
@@ -101,7 +106,7 @@ public class CommonRestService {
 
 	Gson gson = new Gson();
 
-	private IDataStore dataStore;
+	private IConsoleDataStore dataStore;
 
 	private static final String LOG_LEVEL = "logLevel";
 
@@ -119,7 +124,7 @@ public class CommonRestService {
 	@Context
 	private HttpServletRequest servletRequest;
 
-	private DataStoreFactory dataStoreFactory;
+	private ConsoleDataStoreFactory dataStoreFactory;
 	private ServerSettings serverSettings;
 
 	private ILicenceService licenceService;
@@ -789,8 +794,24 @@ public class CommonRestService {
 
 		store.put(NODE_GROUP, String.valueOf(serverSettings.getNodeGroup()));
 		getServerSettingsInternal().setNodeGroup(serverSettings.getNodeGroup());
+		
+		ch.qos.logback.classic.Logger rootLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
+
+		if(LOG_LEVEL_ALL.equals(serverSettings.getLogLevel()) || LOG_LEVEL_TRACE.equals(serverSettings.getLogLevel()) 
+				|| LOG_LEVEL_DEBUG.equals(serverSettings.getLogLevel()) || LOG_LEVEL_INFO.equals(serverSettings.getLogLevel()) 
+				|| LOG_LEVEL_WARN.equals(serverSettings.getLogLevel())  || LOG_LEVEL_ERROR.equals(serverSettings.getLogLevel())
+				|| LOG_LEVEL_OFF.equals(serverSettings.getLogLevel())) 
+		{
+
+			rootLogger.setLevel(currentLevelDetect(serverSettings.getLogLevel()));
+
+			store.put(LOG_LEVEL, serverSettings.getLogLevel());
+			getServerSettingsInternal().setLogLevel(serverSettings.getLogLevel());
+		}
 
 		return gson.toJson(new Result(store.save()));
+		
+
 	}
 
 
@@ -854,11 +875,11 @@ public class CommonRestService {
 		return appAdaptor.resetBroadcasts();
 	}
 
-	public void setDataStore(IDataStore dataStore) {
+	public void setDataStore(IConsoleDataStore dataStore) {
 		this.dataStore = dataStore;
 	}
 
-	public IDataStore getDataStore() {
+	public IConsoleDataStore getDataStore() {
 		if (dataStore == null) {
 			dataStore = getDataStoreFactory().getDataStore();
 		}
@@ -892,41 +913,24 @@ public class CommonRestService {
 		return (AdminApplication)ctxt.getBean("web.handler");
 	}
 
-	public DataStoreFactory getDataStoreFactory() {
+	public ConsoleDataStoreFactory getDataStoreFactory() {
 		if(dataStoreFactory == null)
 		{
 			WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext); 
-			dataStoreFactory = (DataStoreFactory) ctxt.getBean("dataStoreFactory");
+			dataStoreFactory = (ConsoleDataStoreFactory) ctxt.getBean("dataStoreFactory");
 		}
 		return dataStoreFactory;
 	}
 
-	public void setDataStoreFactory(DataStoreFactory dataStoreFactory) {
+	public void setDataStoreFactory(ConsoleDataStoreFactory dataStoreFactory) {
 		this.dataStoreFactory = dataStoreFactory;
 	}
 
 
-	public Result isInClusterMode(){
-
+	public Result isInClusterMode()
+	{
 		return new Result(isClusterMode(), "");
 	}
-
-
-	public LogSettings getLogSettings() 
-	{
-
-		PreferenceStore store = new PreferenceStore(RED5_PROPERTIES_PATH);
-
-		LogSettings logSettings = new LogSettings();
-
-
-		if (store.get(LOG_LEVEL) != null) {
-			logSettings.setLogLevel(String.valueOf(store.get(LOG_LEVEL)));
-		}
-
-		return logSettings;
-	}
-
 
 	public String changeLogSettings(@PathParam("level") String logLevel){
 
@@ -943,10 +947,7 @@ public class CommonRestService {
 
 			store.put(LOG_LEVEL, logLevel);
 
-			LogSettings logSettings = new LogSettings();
-
-			logSettings.setLogLevel(String.valueOf(logLevel));
-
+	
 		}
 
 		return gson.toJson(new Result(store.save()));

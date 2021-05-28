@@ -21,7 +21,6 @@ import io.antmedia.AppSettings;
 import io.antmedia.datastore.db.types.Licence;
 import io.antmedia.rest.model.Result;
 import io.antmedia.rest.model.User;
-import io.antmedia.settings.LogSettings;
 import io.antmedia.settings.ServerSettings;
 
 @Component
@@ -29,7 +28,7 @@ import io.antmedia.settings.ServerSettings;
 public class RestServiceV2 extends CommonRestService {
 
 	@POST
-	@Path("/admin/users")
+	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -39,7 +38,7 @@ public class RestServiceV2 extends CommonRestService {
 	}
 	
 	@PUT
-	@Path("/admin/users")
+	@Path("/users")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -48,7 +47,7 @@ public class RestServiceV2 extends CommonRestService {
 	}
 	
 	@DELETE
-	@Path("/admin/users/{username}")
+	@Path("/users/{username}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Override
@@ -58,7 +57,7 @@ public class RestServiceV2 extends CommonRestService {
 	
 	
 	@GET
-	@Path("/admin/user-list")
+	@Path("/user-list")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public List<User> getUserList() {
@@ -67,7 +66,7 @@ public class RestServiceV2 extends CommonRestService {
 	
 	
 	@POST
-	@Path("/admin/applications/settings/{appname}")
+	@Path("/applications/settings/{appname}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -77,7 +76,7 @@ public class RestServiceV2 extends CommonRestService {
 	}
 	
 	@POST
-	@Path("/admin/server-settings")
+	@Path("/server-settings")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -94,7 +93,7 @@ public class RestServiceV2 extends CommonRestService {
 	 * @return
 	 */
 	@POST
-	@Path("/admin/applications/{appname}/reset")
+	@Path("/applications/{appname}/reset")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Override
@@ -105,7 +104,7 @@ public class RestServiceV2 extends CommonRestService {
 	
 	
 	@DELETE
-	@Path("/admin/applications/{appName}")
+	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public Result deleteApplication(@PathParam("appName") String appName) {
@@ -116,7 +115,7 @@ public class RestServiceV2 extends CommonRestService {
 	}
 	
 	@POST
-	@Path("/admin/applications/{appName}")
+	@Path("/applications/{appName}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Override
 	public Result createApplication(@PathParam("appName") String appName) 
@@ -544,14 +543,6 @@ public class RestServiceV2 extends CommonRestService {
 		return super.isInClusterMode();
 	}
 
-	@GET
-	@Path("/log-level")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Override
-	public LogSettings getLogSettings() 
-	{
-		return super.getLogSettings();
-	}
 
 	@POST
 	@Path("/log-level/{level}")

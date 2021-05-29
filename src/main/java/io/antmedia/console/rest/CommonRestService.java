@@ -130,6 +130,7 @@ public class CommonRestService {
 
 	private static int blockLoginTime = 300 ; // in seconds
 
+	private static int allowedLoginAttempts = 2 ; // in seconds
 
 
 
@@ -326,7 +327,7 @@ public class CommonRestService {
 						//if (getDataStore().doesUsernameExist(user.getEmail())) {
 						getDataStoreFactory().incrementInvalidLoginCount(user.getEmail());
 						logger.info("Increased invalid login count to: {}", getDataStoreFactory().getInvalidLoginCount(user.getEmail()));
-						if (getDataStoreFactory().getInvalidLoginCount(user.getEmail()) > 1) {
+						if (getDataStoreFactory().getInvalidLoginCount(user.getEmail()) > allowedLoginAttempts) {
 							getDataStoreFactory().setBlocked(user.getEmail());
 							getDataStoreFactory().setBlockTime(user.getEmail(), Instant.now().getEpochSecond());
 							logger.info("User is blocked: {}", getDataStore().doesUsernameExist(user.getEmail()));

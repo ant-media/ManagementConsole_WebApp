@@ -5,6 +5,9 @@ import org.springframework.beans.factory.annotation.Value;
 import io.antmedia.AppSettings;
 import io.antmedia.datastore.db.IDataStoreFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ConsoleDataStoreFactory  {
 
 	private IConsoleDataStore dataStore;
@@ -89,5 +92,40 @@ public class ConsoleDataStoreFactory  {
 		}
 		return dataStore;
 	}
+
+	public Map<String, Integer> invalidLoginCountMap = new HashMap<String, Integer>();
+
+	public Map<String, Long> blockTimeMap = new HashMap<String, Long>();
+
+	public Map<String, Boolean> isBlockedMap = new HashMap<String, Boolean>();
+
+
+	public long getBlockTime(String usermail) {
+		return blockTimeMap.get(usermail);
+	}
+	public int getInvalidLoginCount(String usermail){
+		return invalidLoginCountMap.get(usermail);
+	}
+	public boolean isUserBlocked(String usermail){
+		return isBlockedMap.get(usermail);
+	}
+
+	public void setBlockTime(String usermail, long blockTime){
+		blockTimeMap.put(usermail,blockTime);
+	}
+	public void incrementInvalidLoginCount(String usermail){
+		invalidLoginCountMap.put(usermail, getInvalidLoginCount(usermail)+1);
+	}
+
+	public void resetInvalidLoginCount(String usermail){
+		invalidLoginCountMap.put(usermail, 0);
+	}
+	public void setBlocked(String usermail){
+		isBlockedMap.put(usermail,true);
+	}
+	public void setUnBlocked(String usermail){
+		isBlockedMap.put(usermail,false);
+	}
+
 }
 	

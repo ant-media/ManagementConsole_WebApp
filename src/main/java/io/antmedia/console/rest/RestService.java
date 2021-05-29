@@ -585,4 +585,13 @@ public class RestService extends CommonRestService {
 		return super.deleteApplication(appName);
 	}
 
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/getBlockedStatus/{usermail}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public boolean getBlockedStatus(@PathParam("usermail") String usermail) {
+		return super.getBlockedStatus(usermail);
+	}
+
+
 }

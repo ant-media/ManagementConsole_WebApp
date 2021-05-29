@@ -17,9 +17,7 @@ import java.util.Queue;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -129,6 +127,8 @@ public class CommonRestService {
 	private ServerSettings serverSettings;
 
 	private ILicenceService licenceService;
+
+	private static int blockLoginTime = 300 ; // in seconds
 
 
 
@@ -305,7 +305,7 @@ public class CommonRestService {
 				}
 
 
-				if (getDataStoreFactory().isUserBlocked(user.getEmail()) && (Instant.now().getEpochSecond() - getDataStoreFactory().getBlockTime(user.getEmail())) > 15) {
+				if (getDataStoreFactory().isUserBlocked(user.getEmail()) && (Instant.now().getEpochSecond() - getDataStoreFactory().getBlockTime(user.getEmail())) > blockLoginTime) {
 					logger.info("Unblocking the user");
 					getDataStoreFactory().setUnBlocked(user.getEmail());
 					getDataStoreFactory().resetInvalidLoginCount(user.getEmail());
@@ -326,7 +326,7 @@ public class CommonRestService {
 						//if (getDataStore().doesUsernameExist(user.getEmail())) {
 						getDataStoreFactory().incrementInvalidLoginCount(user.getEmail());
 						logger.info("Increased invalid login count to: {}", getDataStoreFactory().getInvalidLoginCount(user.getEmail()));
-						if (getDataStoreFactory().getInvalidLoginCount(user.getEmail()) > 2) {
+						if (getDataStoreFactory().getInvalidLoginCount(user.getEmail()) > 1) {
 							getDataStoreFactory().setBlocked(user.getEmail());
 							getDataStoreFactory().setBlockTime(user.getEmail(), Instant.now().getEpochSecond());
 							logger.info("User is blocked: {}", getDataStore().doesUsernameExist(user.getEmail()));
@@ -338,7 +338,7 @@ public class CommonRestService {
 				} else {
 					logger.info("User is blocked for invalid login");
 
-					logger.info("Please wait for {} seconds to reattempt login", 15 - (Instant.now().getEpochSecond() - getDataStoreFactory().getBlockTime(user.getEmail())));
+					logger.info("Please wait for {} seconds to reattempt login", blockLoginTime - (Instant.now().getEpochSecond() - getDataStoreFactory().getBlockTime(user.getEmail())));
 					return new Result(false);
 				}
 			}
@@ -1167,6 +1167,10 @@ public class CommonRestService {
 	public boolean isClusterMode() {
 		WebApplicationContext ctxt = WebApplicationContextUtils.getWebApplicationContext(servletContext);
 		return ctxt.containsBean(IClusterNotifier.BEAN_NAME);
+	}
+
+	public boolean getBlockedStatus(String usermail) {
+		return getDataStoreFactory().isUserBlocked(usermail);
 	}
 
 }

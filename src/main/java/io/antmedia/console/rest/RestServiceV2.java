@@ -606,4 +606,12 @@ public class RestServiceV2 extends CommonRestService {
 		return new Result(false, "Application name is not defined");
 	}
 
+	@GET
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/blockedStatus/{usermail}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public boolean getBlockedStatus(@PathParam("usermail") String usermail) {
+		return super.getBlockedStatus(usermail);
+	}
+
 }
